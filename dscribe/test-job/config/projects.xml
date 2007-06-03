@@ -1,0 +1,44 @@
+<group name="Global" xmlns="http://ideanest.com/reef/ns/config">
+	
+	<group name="Java">
+		
+		<group name="SourceExtraction">
+			<job type="project" name="testSourceExtractor1">
+				<test/>
+				<java-extract-source/>
+			</job>
+		</group>
+		
+		<group name="OrphanAdoption">
+			<job type="project" name="testDiagramAssignerEmpty">
+				<test/>
+				<assign-diagrams>
+					<calculator class="com.ideanest.reef.java.PackageAssignmentCalculator"/>
+				</assign-diagrams>
+			</job>
+			<job type="project" name="testDiagramAssignerFirstAndOnly">
+				<test/>
+				<assign-diagrams>
+					<calculator class="com.ideanest.reef.java.PackageAssignmentCalculator"/>
+				</assign-diagrams>
+			</job>
+			<job type="project" name="testDiagramAssignerOnePackageToExistingDiagram">
+				<test/>
+				<assign-diagrams>
+					<calculator class="com.ideanest.reef.java.PackageAssignmentCalculator"/>
+				</assign-diagrams>
+			</job>
+		</group>
+		
+	</group>
+
+	<job name="update-config" phases="check agree update load expand schedule" debug-dump="true">
+		<filesystem dir="../../../config" quiet-period="PT30S"/>
+		<agree-checkpoint/>
+		<load-files/>
+		<schedule-jobs/>
+	</job>
+		
+</group>
+
+

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rules:ruleset xmlns:rules="http://ideanest.com/reef/ns/rules" stage="global">
+    <rules:rule diagram="d1.1" kind="class" type="createDiagram" xml:id="r1.2"/>
+    <rules:rule diagram="d1.1" target="j1.1" type="assignJavaElementToDiagram" xml:id="r1.3"/>
+    <rules:rule diagram="d1.1" target="j1.2" type="assignJavaElementToDiagram" xml:id="r1.4"/>
+    <rules:rule diagram="d1.1" target="j1.3" type="assignJavaElementToDiagram" xml:id="r1.5"/>
+    <rules:rule diagram="d1.1" target="j1.4" type="assignJavaElementToDiagram" xml:id="r1.6"/>
+</rules:ruleset>

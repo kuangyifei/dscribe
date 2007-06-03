@@ -1,0 +1,7 @@
+<packages xmlns="http://ideanest.com/reef/ns/java">
+	<package xml:id='j1.1'>com.ideanest.reef.job</package>
+	<package xml:id='j1.2'>com.ideanest.reef</package>
+	<package xml:id='j1.3'>com.ideanest.reef.db</package>
+	<package xml:id='j1.4'>com.ideanest.reef.java</package>
+	<package xml:id='j2.1'>com.ideanest.reef.test</package>
+</packages>
