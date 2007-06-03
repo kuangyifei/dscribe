@@ -1,0 +1,45 @@
+<project basedir="." default="all" name="Reef">
+
+	<property file="build.properties"/>
+
+	<property name="lib" value="./lib"/>
+	<property name="build" value="./build"/>
+	<property name="build.classes" value="./build/classes"/>
+	<property name="src" value="./src"/>
+	<property name="resources" value="./resources"/>
+
+	<path id="classpath.core">
+		<fileset dir="${lib}">
+			<include name="*.jar"/>
+		</fileset>
+		<pathelement path="${java.class.path}"/>
+	</path>
+
+	<target name="prepare">
+		<mkdir dir="${build}"/>
+		<mkdir dir="${build.classes}"/>
+	</target>
+
+	<target depends="prepare" name="compile">
+		<echo message="Compiling with Java ${ant.java.version}, debug ${build.debug}, optimize ${build.optimize}, deprecation ${build.deprecation}"/>
+		<javac debug="${build.debug}" deprecation="${build.deprecation}" 
+			destdir="${build.classes}" encoding="UTF-8"
+			optimize="${build.optimize}" srcdir="${src}" source="1.4" target="1.4">
+			<classpath>
+				<path refid="classpath.core"/>
+			</classpath>
+		</javac>
+	</target>
+
+	<target name="jar" depends="compile">
+		<copy todir="${build.classes}">
+			<fileset dir="${resources}"/>
+		</copy>
+
+		<echo message="Creating reef.jar ..."/>
+		<jar basedir="${build.classes}" compress="true" jarfile="${build}/reef.jar"/>
+	</target>
+
+	<target name="all" depends="jar"/>
+
+</project>

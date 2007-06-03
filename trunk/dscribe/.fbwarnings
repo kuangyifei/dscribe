@@ -1,0 +1,1213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<BugCollection version="0.9.6" sequence="0" timestamp="-1" analysisTimestamp="1145142934750" release="">
+  <Project filename="&lt;&lt;unnamed project&gt;&gt;">
+    <AuxClasspathEntry>C:\Code\Projects\Reef\bin</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Projects\javacvs\bin</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Projects\Reef\lib\qdox-1.6-SNAPSHOT.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Projects\Reef\lib\asm-2.1.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Projects\Reef\lib\jargp-custom.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Projects\Reef\lib\test\cglib-nodep-2.1_3.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Projects\Reef\lib\test\jmock-1.0.1.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Projects\Reef\lib\test\jmock-cglib-1.0.1.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Projects\Reef\lib\quartz-1.5.2.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\build\classes</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\core\jEdit-syntax.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\core\antlr.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\core\commons-pool-1.2.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\core\excalibur-cli-1.0.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\core\javax.servlet.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\core\jgroups-all.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\core\resolver.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\core\sunxacml.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\core\xmldb.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\core\xmlrpc-1.2-patched.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\avalon-framework-api-4.1.5.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\avalon-framework-impl-4.1.5.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\axis-ant.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\axis-schema.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\axis.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\cocoon-2.1.7-deprecated.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\cocoon-2.1.7.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\cocoon-databases-block.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\cocoon-xmldb-block.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\cocoon-xsp-block.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\commons-collections-3.1.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\commons-discovery-0.2.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\commons-fileupload-1.1.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\commons-httpclient-3.0.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\commons-io-1.1.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\commons-jexl-1.0.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\commons-jxpath-1.2.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\commons-lang-2.0-20041007T2305.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\commons-logging-1.0.4.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\ehcache-1.1.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\excalibur-component-1.2.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\excalibur-datasource-1.1.1.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\excalibur-i18n-1.1.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\excalibur-instrument-1.0.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\excalibur-instrument-manager-1.0.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\excalibur-instrument-manager-interfaces-1.0.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\excalibur-io-1.1.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\excalibur-logger-1.1.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\excalibur-naming-1.0.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\excalibur-pool-1.2.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\excalibur-sourceresolve-1.1.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\excalibur-store-1.0.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\excalibur-xmlutil-1.0.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\javacApi-0.9.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\javacImpl-0.9.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\jaxrpc.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\jug-lgpl-2.0.0.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\logkit-1.2.2.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\saaj.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\util.concurrent-1.3.4.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\optional\wsdl4j-1.5.1.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\thirdparty\tomcat5\bin\jmx.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\thirdparty\tomcat5\server\lib\catalina-5.0.28.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\tools\jetty\lib\org.mortbay.jetty.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\tools\lib\ant.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\tools\lib\junit.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\tools\lib\xmlunit1.0.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\tools\wrapper\lib\wrapper.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\core\jline-0_9_5.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Libraries\eXist-svn\lib\core\log4j-1.2.13.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Projects\Reef\lib\ant-1.6.5.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Projects\Reef\lib\log4j-1.2.13.jar</AuxClasspathEntry>
+    <AuxClasspathEntry>C:\Code\Projects\Reef\lib\test\junit-3.8.1.jar</AuxClasspathEntry>
+  </Project>
+  <BugInstance type="DM_EXIT" priority="2" abbrev="Dm" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.Main">
+      <SourceLine classname="com.ideanest.reef.Main" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.Main" name="bootstrapConfig" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.Main" start="89" end="103" startBytecode="0" endBytecode="131" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.Main" start="101" end="101" startBytecode="128" endBytecode="128" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+  </BugInstance>
+  <BugInstance type="DM_EXIT" priority="2" abbrev="Dm" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.Main">
+      <SourceLine classname="com.ideanest.reef.Main" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.Main" name="checkCommandLine" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.Main" start="46" end="55" startBytecode="0" endBytecode="57" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.Main" start="53" end="53" startBytecode="54" endBytecode="54" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+  </BugInstance>
+  <BugInstance type="DM_EXIT" priority="2" abbrev="Dm" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.Main">
+      <SourceLine classname="com.ideanest.reef.Main" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.Main" name="initDatabase" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.Main" start="71" end="77" startBytecode="0" endBytecode="50" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.Main" start="75" end="75" startBytecode="47" endBytecode="47" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+  </BugInstance>
+  <BugInstance type="DM_EXIT" priority="2" abbrev="Dm" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.Main">
+      <SourceLine classname="com.ideanest.reef.Main" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.Main" name="initScheduler" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.Main" start="81" end="86" startBytecode="0" endBytecode="29" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.Main" start="84" end="84" startBytecode="26" endBytecode="26" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+  </BugInstance>
+  <BugInstance type="NP_UNWRITTEN_FIELD" priority="2" abbrev="NP" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.Main">
+      <SourceLine classname="com.ideanest.reef.Main" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.Main" name="checkCommandLine" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.Main" start="46" end="55" startBytecode="0" endBytecode="57" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.Main" start="46" end="46" startBytecode="4" endBytecode="4" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+  </BugInstance>
+  <BugInstance type="NP_UNWRITTEN_FIELD" priority="2" abbrev="NP" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.Main">
+      <SourceLine classname="com.ideanest.reef.Main" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.Main" name="checkCommandLine" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.Main" start="46" end="55" startBytecode="0" endBytecode="57" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.Main" start="52" end="52" startBytecode="50" endBytecode="50" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="3" abbrev="REC" category="STYLE">
+    <Class classname="com.ideanest.reef.Main">
+      <SourceLine classname="com.ideanest.reef.Main" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.Main" name="bootstrapConfig" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.Main" start="89" end="103" startBytecode="0" endBytecode="131" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.Main" start="99" end="99" startBytecode="116" endBytecode="116" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+  </BugInstance>
+  <BugInstance type="UWF_UNWRITTEN_FIELD" priority="2" abbrev="UwF" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.Main">
+      <SourceLine classname="com.ideanest.reef.Main" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.Main" name="argumentProcessor" signature="Lorg/jargp/ArgumentProcessor;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.Main" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="DM_CONVERT_CASE" priority="3" abbrev="Dm" category="I18N">
+    <Class classname="com.ideanest.reef.Main$1">
+      <SourceLine classname="com.ideanest.reef.Main$1" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.Main$1" name="accept" signature="(Ljava/io/File;Ljava/lang/String;)Z" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.Main$1" start="112" end="112" startBytecode="0" endBytecode="9" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.Main$1" start="112" end="112" startBytecode="1" endBytecode="1" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.Main$1">
+      <SourceLine classname="com.ideanest.reef.Main$1" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Main.java" sourcepath="com/ideanest/reef/Main.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SE_COMPARATOR_SHOULD_BE_SERIALIZABLE" priority="3" abbrev="Se" category="STYLE">
+    <Class classname="com.ideanest.reef.db.DataUtils$1">
+      <SourceLine classname="com.ideanest.reef.db.DataUtils$1" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="DataUtils.java" sourcepath="com/ideanest/reef/db/DataUtils.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.db.Database">
+      <SourceLine classname="com.ideanest.reef.db.Database" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Database.java" sourcepath="com/ideanest/reef/db/Database.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.db.Database" name="pool" signature="Lorg/exist/storage/BrokerPool;" isStatic="true">
+      <SourceLine classname="com.ideanest.reef.db.Database" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Database.java" sourcepath="com/ideanest/reef/db/Database.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="BC_UNCONFIRMED_CAST" priority="3" abbrev="BC" category="STYLE">
+    <Class classname="com.ideanest.reef.db.Document">
+      <SourceLine classname="com.ideanest.reef.db.Document" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Document.java" sourcepath="com/ideanest/reef/db/Document.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.db.Document" name="write" signature="(Ljava/io/OutputStream;)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.db.Document" start="252" end="258" startBytecode="0" endBytecode="17" sourcefile="Document.java" sourcepath="com/ideanest/reef/db/Document.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.db.Document" start="254" end="254" startBytecode="10" endBytecode="10" sourcefile="Document.java" sourcepath="com/ideanest/reef/db/Document.java"/>
+    <Class classname="org.exist.dom.DocumentImpl">
+      <SourceLine classname="org.exist.dom.DocumentImpl" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="DocumentImpl.java" sourcepath="org/exist/dom/DocumentImpl.java"/>
+    </Class>
+    <Class classname="org.exist.dom.BinaryDocument">
+      <SourceLine classname="org.exist.dom.BinaryDocument" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="BinaryDocument.java" sourcepath="org/exist/dom/BinaryDocument.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$1">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$1" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$10">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$10" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$11">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$11" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$12">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$12" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$13">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$13" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$14">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$14" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$15">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$15" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$16">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$16" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$17">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$17" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$18">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$18" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$19">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$19" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$2">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$2" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$20">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$20" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$21">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$21" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$22">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$22" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$23">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$23" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$24">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$24" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$3">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$3" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$4">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$4" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$5">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$5" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$6">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$6" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$7">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$7" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$8">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$8" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ElementBuilder$9">
+      <SourceLine classname="com.ideanest.reef.db.ElementBuilder$9" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ElementBuilder.java" sourcepath="com/ideanest/reef/db/ElementBuilder.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="CN_IDIOM_NO_SUPER_CALL" priority="2" abbrev="CN" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.db.Folder">
+      <SourceLine classname="com.ideanest.reef.db.Folder" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Folder.java" sourcepath="com/ideanest/reef/db/Folder.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.db.Folder" name="clone" signature="()Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.db.Folder" start="561" end="562" startBytecode="0" endBytecode="26" sourcefile="Folder.java" sourcepath="com/ideanest/reef/db/Folder.java"/>
+    </Method>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="3" abbrev="REC" category="STYLE">
+    <Class classname="com.ideanest.reef.db.Folder">
+      <SourceLine classname="com.ideanest.reef.db.Folder" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Folder.java" sourcepath="com/ideanest/reef/db/Folder.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.db.Folder" name="move" signature="(Lcom/ideanest/reef/db/Folder;Lcom/ideanest/reef/db/Name;)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.db.Folder" start="711" end="727" startBytecode="0" endBytecode="102" sourcefile="Folder.java" sourcepath="com/ideanest/reef/db/Folder.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.db.Folder" start="719" end="719" startBytecode="63" endBytecode="63" sourcefile="Folder.java" sourcepath="com/ideanest/reef/db/Folder.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="3" abbrev="REC" category="STYLE">
+    <Class classname="com.ideanest.reef.db.Folder">
+      <SourceLine classname="com.ideanest.reef.db.Folder" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Folder.java" sourcepath="com/ideanest/reef/db/Folder.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.db.Folder" name="removeDocument" signature="(Lorg/exist/dom/DocumentImpl;)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.db.Folder" start="866" end="879" startBytecode="0" endBytecode="84" sourcefile="Folder.java" sourcepath="com/ideanest/reef/db/Folder.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.db.Folder" start="874" end="874" startBytecode="63" endBytecode="63" sourcefile="Folder.java" sourcepath="com/ideanest/reef/db/Folder.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="3" abbrev="REC" category="STYLE">
+    <Class classname="com.ideanest.reef.db.Folder$2">
+      <SourceLine classname="com.ideanest.reef.db.Folder$2" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Folder.java" sourcepath="com/ideanest/reef/db/Folder.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.db.Folder$2" name="completed" signature="([Lorg/w3c/dom/Node;)Lcom/ideanest/reef/db/XMLDocument;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.db.Folder$2" start="286" end="300" startBytecode="0" endBytecode="212" sourcefile="Folder.java" sourcepath="com/ideanest/reef/db/Folder.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.db.Folder$2" start="295" end="295" startBytecode="160" endBytecode="160" sourcefile="Folder.java" sourcepath="com/ideanest/reef/db/Folder.java"/>
+  </BugInstance>
+  <BugInstance type="PZLA_PREFER_ZERO_LENGTH_ARRAYS" priority="3" abbrev="PZLA" category="STYLE">
+    <Class classname="com.ideanest.reef.db.ItemList$ValuesFacet">
+      <SourceLine classname="com.ideanest.reef.db.ItemList$ValuesFacet" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ItemList.java" sourcepath="com/ideanest/reef/db/ItemList.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.db.ItemList$ValuesFacet" name="toArray" signature="([Ljava/lang/String;)[Ljava/lang/String;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.db.ItemList$ValuesFacet" start="48" end="58" startBytecode="0" endBytecode="119" sourcefile="ItemList.java" sourcepath="com/ideanest/reef/db/ItemList.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.db.ItemList$ValuesFacet" start="48" end="48" startBytecode="15" endBytecode="15" sourcefile="ItemList.java" sourcepath="com/ideanest/reef/db/ItemList.java"/>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ListenerManager$1">
+      <SourceLine classname="com.ideanest.reef.db.ListenerManager$1" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ListenerManager.java" sourcepath="com/ideanest/reef/db/ListenerManager.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ListenerManager$2">
+      <SourceLine classname="com.ideanest.reef.db.ListenerManager$2" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ListenerManager.java" sourcepath="com/ideanest/reef/db/ListenerManager.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ListenerManager$3">
+      <SourceLine classname="com.ideanest.reef.db.ListenerManager$3" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ListenerManager.java" sourcepath="com/ideanest/reef/db/ListenerManager.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.db.ListenerManager$4">
+      <SourceLine classname="com.ideanest.reef.db.ListenerManager$4" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ListenerManager.java" sourcepath="com/ideanest/reef/db/ListenerManager.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.db.ListenerManager$Test">
+      <SourceLine classname="com.ideanest.reef.db.ListenerManager$Test" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ListenerManager.java" sourcepath="com/ideanest/reef/db/ListenerManager.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.db.ListenerManager$Test" name="documentListener" signature="Lorg/jmock/Mock;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.db.ListenerManager$Test" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ListenerManager.java" sourcepath="com/ideanest/reef/db/ListenerManager.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.db.ListenerManager$Test">
+      <SourceLine classname="com.ideanest.reef.db.ListenerManager$Test" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ListenerManager.java" sourcepath="com/ideanest/reef/db/ListenerManager.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.db.ListenerManager$Test" name="folderListener" signature="Lorg/jmock/Mock;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.db.ListenerManager$Test" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ListenerManager.java" sourcepath="com/ideanest/reef/db/ListenerManager.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.db.ListenerManager$TriggerDispatcher">
+      <SourceLine classname="com.ideanest.reef.db.ListenerManager$TriggerDispatcher" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ListenerManager.java" sourcepath="com/ideanest/reef/db/ListenerManager.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.db.ListenerManager$TriggerDispatcher" name="contentHandler" signature="Lorg/xml/sax/ContentHandler;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.db.ListenerManager$TriggerDispatcher" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ListenerManager.java" sourcepath="com/ideanest/reef/db/ListenerManager.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.db.ListenerManager$TriggerDispatcher">
+      <SourceLine classname="com.ideanest.reef.db.ListenerManager$TriggerDispatcher" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ListenerManager.java" sourcepath="com/ideanest/reef/db/ListenerManager.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.db.ListenerManager$TriggerDispatcher" name="lexicalHandler" signature="Lorg/xml/sax/ext/LexicalHandler;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.db.ListenerManager$TriggerDispatcher" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ListenerManager.java" sourcepath="com/ideanest/reef/db/ListenerManager.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="CN_IDIOM_NO_SUPER_CALL" priority="2" abbrev="CN" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.db.NamespaceMap">
+      <SourceLine classname="com.ideanest.reef.db.NamespaceMap" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="NamespaceMap.java" sourcepath="com/ideanest/reef/db/NamespaceMap.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.db.NamespaceMap" name="clone" signature="()Lcom/ideanest/reef/db/NamespaceMap;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.db.NamespaceMap" start="80" end="82" startBytecode="0" endBytecode="21" sourcefile="NamespaceMap.java" sourcepath="com/ideanest/reef/db/NamespaceMap.java"/>
+    </Method>
+  </BugInstance>
+  <BugInstance type="RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE" priority="3" abbrev="RCN" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.db.NamespaceMap">
+      <SourceLine classname="com.ideanest.reef.db.NamespaceMap" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="NamespaceMap.java" sourcepath="com/ideanest/reef/db/NamespaceMap.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.db.NamespaceMap" name="get" signature="(Ljava/lang/String;)Ljava/lang/String;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.db.NamespaceMap" start="93" end="97" startBytecode="0" endBytecode="31" sourcefile="NamespaceMap.java" sourcepath="com/ideanest/reef/db/NamespaceMap.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.db.NamespaceMap" start="95" end="95" startBytecode="17" endBytecode="17" sourcefile="NamespaceMap.java" sourcepath="com/ideanest/reef/db/NamespaceMap.java" role="SOURCE_REDUNDANT_NULL_CHECK"/>
+  </BugInstance>
+  <BugInstance type="SE_NO_SERIALVERSIONID" priority="3" abbrev="SnVI" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.db.QName">
+      <SourceLine classname="com.ideanest.reef.db.QName" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="QName.java" sourcepath="com/ideanest/reef/db/QName.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="IC_INIT_CIRCULARITY" priority="2" abbrev="IC" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.db.XDatabase">
+      <SourceLine classname="com.ideanest.reef.db.XDatabase" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="XDatabase.java" sourcepath="com/ideanest/reef/db/XDatabase.java"/>
+    </Class>
+    <Class classname="com.ideanest.reef.db.XDatabase$1">
+      <SourceLine classname="com.ideanest.reef.db.XDatabase$1" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="XDatabase.java" sourcepath="com/ideanest/reef/db/XDatabase.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.db.XDatabase">
+      <SourceLine classname="com.ideanest.reef.db.XDatabase" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="XDatabase.java" sourcepath="com/ideanest/reef/db/XDatabase.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.db.XDatabase" name="pool" signature="Lorg/exist/storage/BrokerPool;" isStatic="true">
+      <SourceLine classname="com.ideanest.reef.db.XDatabase" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="XDatabase.java" sourcepath="com/ideanest/reef/db/XDatabase.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="RI_REDUNDANT_INTERFACES" priority="3" abbrev="RI" category="STYLE">
+    <Class classname="com.ideanest.reef.db.XDocument">
+      <SourceLine classname="com.ideanest.reef.db.XDocument" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="XDocument.java" sourcepath="com/ideanest/reef/db/XDocument.java"/>
+    </Class>
+    <Class classname="com.ideanest.reef.db.XQueryable" role="INTERFACE_TYPE">
+      <SourceLine classname="com.ideanest.reef.db.XQueryable" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="XQueryable.java" sourcepath="com/ideanest/reef/db/XQueryable.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="DLS_DEAD_LOCAL_STORE" priority="1" abbrev="DLS" category="STYLE">
+    <Class classname="com.ideanest.reef.java.CodeBuilder">
+      <SourceLine classname="com.ideanest.reef.java.CodeBuilder" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CodeBuilder.java" sourcepath="com/ideanest/reef/java/CodeBuilder.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.java.CodeBuilder" name="buildAdHoc" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.CodeBuilder" start="93" end="102" startBytecode="0" endBytecode="5" sourcefile="CodeBuilder.java" sourcepath="com/ideanest/reef/java/CodeBuilder.java"/>
+    </Method>
+    <LocalVariable name="compiler" register="1" pc="9" role="LOCAL_VARIABLE_NAMED"/>
+    <SourceLine classname="com.ideanest.reef.java.CodeBuilder" start="93" end="93" startBytecode="8" endBytecode="8" sourcefile="CodeBuilder.java" sourcepath="com/ideanest/reef/java/CodeBuilder.java"/>
+  </BugInstance>
+  <BugInstance type="DP_CREATE_CLASSLOADER_INSIDE_DO_PRIVILEDGED" priority="2" abbrev="DP" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.java.CodeBuilder$Compiler">
+      <SourceLine classname="com.ideanest.reef.java.CodeBuilder$Compiler" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CodeBuilder.java" sourcepath="com/ideanest/reef/java/CodeBuilder.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.java.CodeBuilder$Compiler" name="loadCompiler" signature="(Ljava/io/File;)Ljava/lang/reflect/Method;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.CodeBuilder$Compiler" start="141" end="148" startBytecode="0" endBytecode="155" sourcefile="CodeBuilder.java" sourcepath="com/ideanest/reef/java/CodeBuilder.java"/>
+    </Method>
+    <Class classname="java.net.URLClassLoader">
+      <SourceLine classname="java.net.URLClassLoader" start="-1" end="-1" startBytecode="-1" endBytecode="-1"/>
+    </Class>
+    <SourceLine classname="com.ideanest.reef.java.CodeBuilder$Compiler" start="142" end="142" startBytecode="37" endBytecode="37" sourcefile="CodeBuilder.java" sourcepath="com/ideanest/reef/java/CodeBuilder.java"/>
+  </BugInstance>
+  <BugInstance type="URF_UNREAD_FIELD" priority="2" abbrev="UrF" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.java.CodeBuilder$Compiler">
+      <SourceLine classname="com.ideanest.reef.java.CodeBuilder$Compiler" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CodeBuilder.java" sourcepath="com/ideanest/reef/java/CodeBuilder.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.java.CodeBuilder$Compiler" name="compileMethod" signature="Ljava/lang/reflect/Method;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.CodeBuilder$Compiler" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CodeBuilder.java" sourcepath="com/ideanest/reef/java/CodeBuilder.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UPM_UNCALLED_PRIVATE_METHOD" priority="3" abbrev="UPM" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.java.DiagramExtractor">
+      <SourceLine classname="com.ideanest.reef.java.DiagramExtractor" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="DiagramExtractor.java" sourcepath="com/ideanest/reef/java/DiagramExtractor.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.java.DiagramExtractor" name="snapshotDiagrams" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.DiagramExtractor" start="64" end="69" startBytecode="0" endBytecode="105" sourcefile="DiagramExtractor.java" sourcepath="com/ideanest/reef/java/DiagramExtractor.java"/>
+    </Method>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.java.DiagramExtractor">
+      <SourceLine classname="com.ideanest.reef.java.DiagramExtractor" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="DiagramExtractor.java" sourcepath="com/ideanest/reef/java/DiagramExtractor.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.java.DiagramExtractor" name="prevspace" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.DiagramExtractor" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="DiagramExtractor.java" sourcepath="com/ideanest/reef/java/DiagramExtractor.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.java.DiagramExtractor">
+      <SourceLine classname="com.ideanest.reef.java.DiagramExtractor" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="DiagramExtractor.java" sourcepath="com/ideanest/reef/java/DiagramExtractor.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.java.DiagramExtractor" name="workspace" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.DiagramExtractor" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="DiagramExtractor.java" sourcepath="com/ideanest/reef/java/DiagramExtractor.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.java.SimpleOriginAnalyzer">
+      <SourceLine classname="com.ideanest.reef.java.SimpleOriginAnalyzer" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="SimpleOriginAnalyzer.java" sourcepath="com/ideanest/reef/java/SimpleOriginAnalyzer.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.java.SimpleOriginAnalyzer" name="changes" signature="Lcom/ideanest/reef/db/Node;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.SimpleOriginAnalyzer" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="SimpleOriginAnalyzer.java" sourcepath="com/ideanest/reef/java/SimpleOriginAnalyzer.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.java.SimpleOriginAnalyzer">
+      <SourceLine classname="com.ideanest.reef.java.SimpleOriginAnalyzer" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="SimpleOriginAnalyzer.java" sourcepath="com/ideanest/reef/java/SimpleOriginAnalyzer.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.java.SimpleOriginAnalyzer" name="prevspace" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.SimpleOriginAnalyzer" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="SimpleOriginAnalyzer.java" sourcepath="com/ideanest/reef/java/SimpleOriginAnalyzer.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.java.SimpleOriginAnalyzer">
+      <SourceLine classname="com.ideanest.reef.java.SimpleOriginAnalyzer" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="SimpleOriginAnalyzer.java" sourcepath="com/ideanest/reef/java/SimpleOriginAnalyzer.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.java.SimpleOriginAnalyzer" name="workspace" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.SimpleOriginAnalyzer" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="SimpleOriginAnalyzer.java" sourcepath="com/ideanest/reef/java/SimpleOriginAnalyzer.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="RCN_REDUNDANT_NULLCHECK_WOULD_HAVE_BEEN_A_NPE" priority="2" abbrev="RCN" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.java.SourceExtractor">
+      <SourceLine classname="com.ideanest.reef.java.SourceExtractor" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="SourceExtractor.java" sourcepath="com/ideanest/reef/java/SourceExtractor.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.java.SourceExtractor" name="extract" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.SourceExtractor" start="50" end="108" startBytecode="0" endBytecode="262" sourcefile="SourceExtractor.java" sourcepath="com/ideanest/reef/java/SourceExtractor.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.java.SourceExtractor" start="61" end="61" startBytecode="118" endBytecode="118" sourcefile="SourceExtractor.java" sourcepath="com/ideanest/reef/java/SourceExtractor.java"/>
+    <SourceLine classname="com.ideanest.reef.java.SourceExtractor" start="75" end="75" startBytecode="269" endBytecode="269" sourcefile="SourceExtractor.java" sourcepath="com/ideanest/reef/java/SourceExtractor.java" role="SOURCE_REDUNDANT_NULL_CHECK"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="3" abbrev="REC" category="STYLE">
+    <Class classname="com.ideanest.reef.java.SourceExtractor">
+      <SourceLine classname="com.ideanest.reef.java.SourceExtractor" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="SourceExtractor.java" sourcepath="com/ideanest/reef/java/SourceExtractor.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.java.SourceExtractor" name="extract" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.SourceExtractor" start="50" end="108" startBytecode="0" endBytecode="561" sourcefile="SourceExtractor.java" sourcepath="com/ideanest/reef/java/SourceExtractor.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.java.SourceExtractor" start="68" end="68" startBytecode="201" endBytecode="201" sourcefile="SourceExtractor.java" sourcepath="com/ideanest/reef/java/SourceExtractor.java"/>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.java.SourceExtractor">
+      <SourceLine classname="com.ideanest.reef.java.SourceExtractor" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="SourceExtractor.java" sourcepath="com/ideanest/reef/java/SourceExtractor.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.java.SourceExtractor" name="codespace" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.SourceExtractor" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="SourceExtractor.java" sourcepath="com/ideanest/reef/java/SourceExtractor.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.java.SourceExtractor">
+      <SourceLine classname="com.ideanest.reef.java.SourceExtractor" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="SourceExtractor.java" sourcepath="com/ideanest/reef/java/SourceExtractor.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.java.SourceExtractor" name="prevspace" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.SourceExtractor" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="SourceExtractor.java" sourcepath="com/ideanest/reef/java/SourceExtractor.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.java.SourceExtractor">
+      <SourceLine classname="com.ideanest.reef.java.SourceExtractor" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="SourceExtractor.java" sourcepath="com/ideanest/reef/java/SourceExtractor.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.java.SourceExtractor" name="workspace" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.SourceExtractor" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="SourceExtractor.java" sourcepath="com/ideanest/reef/java/SourceExtractor.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.java.TypeResolver">
+      <SourceLine classname="com.ideanest.reef.java.TypeResolver" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="TypeResolver.java" sourcepath="com/ideanest/reef/java/TypeResolver.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.java.TypeResolver" name="resultStore" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.java.TypeResolver" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="TypeResolver.java" sourcepath="com/ideanest/reef/java/TypeResolver.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="IS2_INCONSISTENT_SYNC" priority="2" abbrev="IS2" category="MT_CORRECTNESS">
+    <Class classname="com.ideanest.reef.job.Cycle">
+      <SourceLine classname="com.ideanest.reef.job.Cycle" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.job.Cycle" name="interrupted" signature="Z" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.Cycle" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java"/>
+    </Field>
+    <Int value="60" role="INT_SYNC_PERCENT"/>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="354" end="354" startBytecode="7" endBytecode="7" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java" role="SOURCE_LINE_UNSYNC_ACCESS"/>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="359" end="359" startBytecode="87" endBytecode="87" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java" role="SOURCE_LINE_UNSYNC_ACCESS"/>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="567" end="567" startBytecode="57" endBytecode="57" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java" role="SOURCE_LINE_SYNC_ACCESS"/>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="416" end="416" startBytecode="27" endBytecode="27" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java" role="SOURCE_LINE_SYNC_ACCESS"/>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="282" end="282" startBytecode="10" endBytecode="10" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java" role="SOURCE_LINE_SYNC_ACCESS"/>
+  </BugInstance>
+  <BugInstance type="IS2_INCONSISTENT_SYNC" priority="2" abbrev="IS2" category="MT_CORRECTNESS">
+    <Class classname="com.ideanest.reef.job.Cycle">
+      <SourceLine classname="com.ideanest.reef.job.Cycle" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.job.Cycle" name="myThread" signature="Ljava/lang/Thread;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.Cycle" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java"/>
+    </Field>
+    <Int value="66" role="INT_SYNC_PERCENT"/>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="226" end="226" startBytecode="42" endBytecode="42" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java" role="SOURCE_LINE_UNSYNC_ACCESS"/>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="274" end="274" startBytecode="226" endBytecode="226" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java" role="SOURCE_LINE_UNSYNC_ACCESS"/>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="274" end="274" startBytecode="296" endBytecode="296" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java" role="SOURCE_LINE_UNSYNC_ACCESS"/>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="566" end="566" startBytecode="46" endBytecode="46" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java" role="SOURCE_LINE_SYNC_ACCESS"/>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="565" end="565" startBytecode="28" endBytecode="28" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java" role="SOURCE_LINE_SYNC_ACCESS"/>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="223" end="223" startBytecode="30" endBytecode="30" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java" role="SOURCE_LINE_SYNC_ACCESS"/>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="283" end="283" startBytecode="14" endBytecode="14" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java" role="SOURCE_LINE_SYNC_ACCESS"/>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="284" end="284" startBytecode="22" endBytecode="22" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java" role="SOURCE_LINE_SYNC_ACCESS"/>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="285" end="285" startBytecode="29" endBytecode="29" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java" role="SOURCE_LINE_SYNC_ACCESS"/>
+  </BugInstance>
+  <BugInstance type="PS_PUBLIC_SEMAPHORES" priority="2" abbrev="PS" category="STYLE">
+    <Class classname="com.ideanest.reef.job.Cycle">
+      <SourceLine classname="com.ideanest.reef.job.Cycle" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.job.Cycle" name="execute" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.Cycle" start="220" end="278" startBytecode="0" endBytecode="320" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="271" end="271" startBytecode="209" endBytecode="209" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java"/>
+  </BugInstance>
+  <BugInstance type="WA_NOT_IN_LOOP" priority="3" abbrev="Wa" category="MT_CORRECTNESS">
+    <Class classname="com.ideanest.reef.job.Cycle">
+      <SourceLine classname="com.ideanest.reef.job.Cycle" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.job.Cycle" name="interrupt" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.Cycle" start="281" end="292" startBytecode="0" endBytecode="75" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.job.Cycle" start="287" end="287" startBytecode="50" endBytecode="50" sourcefile="Cycle.java" sourcepath="com/ideanest/reef/job/Cycle.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="3" abbrev="REC" category="STYLE">
+    <Class classname="com.ideanest.reef.job.Job">
+      <SourceLine classname="com.ideanest.reef.job.Job" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Job.java" sourcepath="com/ideanest/reef/job/Job.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.job.Job" name="configuredTriggers" signature="()Ljava/util/List;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.Job" start="198" end="210" startBytecode="0" endBytecode="157" sourcefile="Job.java" sourcepath="com/ideanest/reef/job/Job.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.job.Job" start="206" end="206" startBytecode="109" endBytecode="109" sourcefile="Job.java" sourcepath="com/ideanest/reef/job/Job.java"/>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.job.LoadFiles">
+      <SourceLine classname="com.ideanest.reef.job.LoadFiles" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="LoadFiles.java" sourcepath="com/ideanest/reef/job/LoadFiles.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.job.LoadFiles" name="dst" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.LoadFiles" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="LoadFiles.java" sourcepath="com/ideanest/reef/job/LoadFiles.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.job.LoadFiles">
+      <SourceLine classname="com.ideanest.reef.job.LoadFiles" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="LoadFiles.java" sourcepath="com/ideanest/reef/job/LoadFiles.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.job.LoadFiles" name="notes" signature="Lcom/ideanest/reef/db/Node;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.LoadFiles" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="LoadFiles.java" sourcepath="com/ideanest/reef/job/LoadFiles.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.job.LoadFiles">
+      <SourceLine classname="com.ideanest.reef.job.LoadFiles" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="LoadFiles.java" sourcepath="com/ideanest/reef/job/LoadFiles.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.job.LoadFiles" name="prevspace" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.LoadFiles" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="LoadFiles.java" sourcepath="com/ideanest/reef/job/LoadFiles.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.job.LoadFiles">
+      <SourceLine classname="com.ideanest.reef.job.LoadFiles" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="LoadFiles.java" sourcepath="com/ideanest/reef/job/LoadFiles.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.job.LoadFiles" name="scanner" signature="Lorg/apache/tools/ant/DirectoryScanner;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.LoadFiles" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="LoadFiles.java" sourcepath="com/ideanest/reef/job/LoadFiles.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.job.LoadFiles">
+      <SourceLine classname="com.ideanest.reef.job.LoadFiles" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="LoadFiles.java" sourcepath="com/ideanest/reef/job/LoadFiles.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.job.LoadFiles" name="workdirPrefix" signature="Ljava/lang/String;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.LoadFiles" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="LoadFiles.java" sourcepath="com/ideanest/reef/job/LoadFiles.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.job.LoadFiles">
+      <SourceLine classname="com.ideanest.reef.job.LoadFiles" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="LoadFiles.java" sourcepath="com/ideanest/reef/job/LoadFiles.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.job.LoadFiles" name="workspace" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.LoadFiles" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="LoadFiles.java" sourcepath="com/ideanest/reef/job/LoadFiles.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.job.QuartzCycle">
+      <SourceLine classname="com.ideanest.reef.job.QuartzCycle" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="QuartzCycle.java" sourcepath="com/ideanest/reef/job/QuartzCycle.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.job.QuartzCycle" name="cycle" signature="Lcom/ideanest/reef/job/Cycle;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.QuartzCycle" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="QuartzCycle.java" sourcepath="com/ideanest/reef/job/QuartzCycle.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.job.ScheduleJobs">
+      <SourceLine classname="com.ideanest.reef.job.ScheduleJobs" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ScheduleJobs.java" sourcepath="com/ideanest/reef/job/ScheduleJobs.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.job.ScheduleJobs" name="prevspace" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.ScheduleJobs" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ScheduleJobs.java" sourcepath="com/ideanest/reef/job/ScheduleJobs.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.job.ScheduleJobs">
+      <SourceLine classname="com.ideanest.reef.job.ScheduleJobs" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ScheduleJobs.java" sourcepath="com/ideanest/reef/job/ScheduleJobs.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.job.ScheduleJobs" name="workspace" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.ScheduleJobs" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ScheduleJobs.java" sourcepath="com/ideanest/reef/job/ScheduleJobs.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="BC_UNCONFIRMED_CAST" priority="3" abbrev="BC" category="STYLE">
+    <Class classname="com.ideanest.reef.job.TaskBase">
+      <SourceLine classname="com.ideanest.reef.job.TaskBase" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="TaskBase.java" sourcepath="com/ideanest/reef/job/TaskBase.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.job.TaskBase" name="execute" signature="(Ljava/lang/String;)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.TaskBase" start="71" end="76" startBytecode="0" endBytecode="23" sourcefile="TaskBase.java" sourcepath="com/ideanest/reef/job/TaskBase.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.job.TaskBase" start="73" end="73" startBytecode="39" endBytecode="39" sourcefile="TaskBase.java" sourcepath="com/ideanest/reef/job/TaskBase.java"/>
+    <Class classname="java.lang.Throwable">
+      <SourceLine classname="java.lang.Throwable" start="-1" end="-1" startBytecode="-1" endBytecode="-1"/>
+    </Class>
+    <Class classname="java.lang.Exception">
+      <SourceLine classname="java.lang.Exception" start="-1" end="-1" startBytecode="-1" endBytecode="-1"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.job.WipeDir">
+      <SourceLine classname="com.ideanest.reef.job.WipeDir" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="WipeDir.java" sourcepath="com/ideanest/reef/job/WipeDir.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.job.WipeDir" name="targetDir" signature="Ljava/io/File;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.job.WipeDir" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="WipeDir.java" sourcepath="com/ideanest/reef/job/WipeDir.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="URF_UNREAD_FIELD" priority="2" abbrev="UrF" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.mixt.Engine">
+      <SourceLine classname="com.ideanest.reef.mixt.Engine" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Engine.java" sourcepath="com/ideanest/reef/mixt/Engine.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.Engine" name="modifiedFocus" signature="Lcom/ideanest/reef/db/QueryService;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.Engine" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Engine.java" sourcepath="com/ideanest/reef/mixt/Engine.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="NP_UNWRITTEN_FIELD" priority="2" abbrev="NP" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.mixt.Mod">
+      <SourceLine classname="com.ideanest.reef.mixt.Mod" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Mod.java" sourcepath="com/ideanest/reef/mixt/Mod.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.mixt.Mod" name="decorate" signature="(Lcom/ideanest/reef/db/Node;Ljava/lang/String;Z)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.Mod" start="69" end="70" startBytecode="0" endBytecode="65" sourcefile="Mod.java" sourcepath="com/ideanest/reef/mixt/Mod.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.mixt.Mod" start="69" end="69" startBytecode="21" endBytecode="21" sourcefile="Mod.java" sourcepath="com/ideanest/reef/mixt/Mod.java"/>
+  </BugInstance>
+  <BugInstance type="NP_UNWRITTEN_FIELD" priority="2" abbrev="NP" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.mixt.Mod">
+      <SourceLine classname="com.ideanest.reef.mixt.Mod" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Mod.java" sourcepath="com/ideanest/reef/mixt/Mod.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.mixt.Mod" name="process" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.Mod" start="35" end="36" startBytecode="0" endBytecode="37" sourcefile="Mod.java" sourcepath="com/ideanest/reef/mixt/Mod.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.mixt.Mod" start="35" end="35" startBytecode="4" endBytecode="4" sourcefile="Mod.java" sourcepath="com/ideanest/reef/mixt/Mod.java"/>
+  </BugInstance>
+  <BugInstance type="UUF_UNUSED_FIELD" priority="2" abbrev="UuF" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.mixt.Mod">
+      <SourceLine classname="com.ideanest.reef.mixt.Mod" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Mod.java" sourcepath="com/ideanest/reef/mixt/Mod.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.Mod" name="sourceQueryService" signature="Lcom/ideanest/reef/db/QueryService;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.Mod" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Mod.java" sourcepath="com/ideanest/reef/mixt/Mod.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UUF_UNUSED_FIELD" priority="2" abbrev="UuF" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.mixt.Mod">
+      <SourceLine classname="com.ideanest.reef.mixt.Mod" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Mod.java" sourcepath="com/ideanest/reef/mixt/Mod.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.Mod" name="target" signature="Lcom/ideanest/reef/db/Node;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.Mod" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Mod.java" sourcepath="com/ideanest/reef/mixt/Mod.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_UNWRITTEN_FIELD" priority="2" abbrev="UwF" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.mixt.Mod">
+      <SourceLine classname="com.ideanest.reef.mixt.Mod" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Mod.java" sourcepath="com/ideanest/reef/mixt/Mod.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.Mod" name="rule" signature="Lcom/ideanest/reef/mixt/Rule;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.Mod" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Mod.java" sourcepath="com/ideanest/reef/mixt/Mod.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_UNWRITTEN_FIELD" priority="2" abbrev="UwF" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.mixt.Mod">
+      <SourceLine classname="com.ideanest.reef.mixt.Mod" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Mod.java" sourcepath="com/ideanest/reef/mixt/Mod.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.Mod" name="source" signature="Lcom/ideanest/reef/db/Node;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.Mod" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Mod.java" sourcepath="com/ideanest/reef/mixt/Mod.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UUF_UNUSED_FIELD" priority="2" abbrev="UuF" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.mixt.ModStub">
+      <SourceLine classname="com.ideanest.reef.mixt.ModStub" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ModStub.java" sourcepath="com/ideanest/reef/mixt/ModStub.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.ModStub" name="level" signature="I" isStatic="true">
+      <SourceLine classname="com.ideanest.reef.mixt.ModStub" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="ModStub.java" sourcepath="com/ideanest/reef/mixt/ModStub.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="BC_UNCONFIRMED_CAST" priority="3" abbrev="BC" category="STYLE">
+    <Class classname="com.ideanest.reef.mixt.Rule">
+      <SourceLine classname="com.ideanest.reef.mixt.Rule" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Rule.java" sourcepath="com/ideanest/reef/mixt/Rule.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.mixt.Rule" name="defineMultiple" signature="(Lcom/ideanest/reef/db/ItemList;Ljava/lang/Class;)Ljava/util/List;" isStatic="true">
+      <SourceLine classname="com.ideanest.reef.mixt.Rule" start="44" end="60" startBytecode="0" endBytecode="80" sourcefile="Rule.java" sourcepath="com/ideanest/reef/mixt/Rule.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.mixt.Rule" start="59" end="59" startBytecode="144" endBytecode="144" sourcefile="Rule.java" sourcepath="com/ideanest/reef/mixt/Rule.java"/>
+    <Class classname="java.lang.Throwable">
+      <SourceLine classname="java.lang.Throwable" start="-1" end="-1" startBytecode="-1" endBytecode="-1"/>
+    </Class>
+    <Class classname="java.lang.RuntimeException">
+      <SourceLine classname="java.lang.RuntimeException" start="-1" end="-1" startBytecode="-1" endBytecode="-1"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="UUF_UNUSED_FIELD" priority="2" abbrev="UuF" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.mixt.Rule">
+      <SourceLine classname="com.ideanest.reef.mixt.Rule" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Rule.java" sourcepath="com/ideanest/reef/mixt/Rule.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.Rule" name="futureChangeTracker" signature="Lcom/ideanest/reef/mixt/ChangeTracker;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.Rule" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Rule.java" sourcepath="com/ideanest/reef/mixt/Rule.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="URF_UNREAD_FIELD" priority="2" abbrev="UrF" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.mixt.StructureRule">
+      <SourceLine classname="com.ideanest.reef.mixt.StructureRule" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="StructureRule.java" sourcepath="com/ideanest/reef/mixt/StructureRule.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.StructureRule" name="inserts" signature="Ljava/util/List;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.StructureRule" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="StructureRule.java" sourcepath="com/ideanest/reef/mixt/StructureRule.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UUF_UNUSED_FIELD" priority="2" abbrev="UuF" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.mixt.StructureRule$DocumentTarget">
+      <SourceLine classname="com.ideanest.reef.mixt.StructureRule$DocumentTarget" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="StructureRule.java" sourcepath="com/ideanest/reef/mixt/StructureRule.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.StructureRule$DocumentTarget" name="TARGETS" signature="[Lcom/ideanest/reef/db/Node;" isStatic="true">
+      <SourceLine classname="com.ideanest.reef.mixt.StructureRule$DocumentTarget" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="StructureRule.java" sourcepath="com/ideanest/reef/mixt/StructureRule.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UUF_UNUSED_FIELD" priority="2" abbrev="UuF" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.mixt.StructureRule$DocumentTarget">
+      <SourceLine classname="com.ideanest.reef.mixt.StructureRule$DocumentTarget" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="StructureRule.java" sourcepath="com/ideanest/reef/mixt/StructureRule.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.StructureRule$DocumentTarget" name="query" signature="Ljava/lang/String;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.StructureRule$DocumentTarget" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="StructureRule.java" sourcepath="com/ideanest/reef/mixt/StructureRule.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_UNWRITTEN_FIELD" priority="2" abbrev="UwF" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.mixt.StructureRule$ElementTarget">
+      <SourceLine classname="com.ideanest.reef.mixt.StructureRule$ElementTarget" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="StructureRule.java" sourcepath="com/ideanest/reef/mixt/StructureRule.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.StructureRule$ElementTarget" name="query" signature="Ljava/lang/String;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.StructureRule$ElementTarget" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="StructureRule.java" sourcepath="com/ideanest/reef/mixt/StructureRule.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_UNWRITTEN_FIELD" priority="3" abbrev="UwF" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.mixt.StructureRule$ElementTarget">
+      <SourceLine classname="com.ideanest.reef.mixt.StructureRule$ElementTarget" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="StructureRule.java" sourcepath="com/ideanest/reef/mixt/StructureRule.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.StructureRule$ElementTarget" name="unique" signature="Z" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.StructureRule$ElementTarget" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="StructureRule.java" sourcepath="com/ideanest/reef/mixt/StructureRule.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="URF_UNREAD_FIELD" priority="2" abbrev="UrF" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.mixt.StructureRule$Insert">
+      <SourceLine classname="com.ideanest.reef.mixt.StructureRule$Insert" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="StructureRule.java" sourcepath="com/ideanest/reef/mixt/StructureRule.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.StructureRule$Insert" name="orderWeight" signature="I" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.StructureRule$Insert" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="StructureRule.java" sourcepath="com/ideanest/reef/mixt/StructureRule.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.mixt.TransformTask">
+      <SourceLine classname="com.ideanest.reef.mixt.TransformTask" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="TransformTask.java" sourcepath="com/ideanest/reef/mixt/TransformTask.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.TransformTask" name="prevspace" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.TransformTask" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="TransformTask.java" sourcepath="com/ideanest/reef/mixt/TransformTask.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.mixt.TransformTask">
+      <SourceLine classname="com.ideanest.reef.mixt.TransformTask" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="TransformTask.java" sourcepath="com/ideanest/reef/mixt/TransformTask.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.mixt.TransformTask" name="workspace" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.mixt.TransformTask" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="TransformTask.java" sourcepath="com/ideanest/reef/mixt/TransformTask.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="3" abbrev="REC" category="STYLE">
+    <Class classname="com.ideanest.reef.opti.AnnealingDiagramAssigner">
+      <SourceLine classname="com.ideanest.reef.opti.AnnealingDiagramAssigner" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="AnnealingDiagramAssigner.java" sourcepath="com/ideanest/reef/opti/AnnealingDiagramAssigner.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.opti.AnnealingDiagramAssigner" name="init" signature="(Lcom/ideanest/reef/db/Node;)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.opti.AnnealingDiagramAssigner" start="66" end="75" startBytecode="0" endBytecode="123" sourcefile="AnnealingDiagramAssigner.java" sourcepath="com/ideanest/reef/opti/AnnealingDiagramAssigner.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.opti.AnnealingDiagramAssigner" start="71" end="71" startBytecode="88" endBytecode="88" sourcefile="AnnealingDiagramAssigner.java" sourcepath="com/ideanest/reef/opti/AnnealingDiagramAssigner.java"/>
+  </BugInstance>
+  <BugInstance type="FE_FLOATING_POINT_EQUALITY" priority="3" abbrev="FE" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.opti.AnnealingDiagramAssigner$AssignmentRun">
+      <SourceLine classname="com.ideanest.reef.opti.AnnealingDiagramAssigner$AssignmentRun" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="AnnealingDiagramAssigner.java" sourcepath="com/ideanest/reef/opti/AnnealingDiagramAssigner.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.opti.AnnealingDiagramAssigner$AssignmentRun" name="initDiagrams" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.opti.AnnealingDiagramAssigner$AssignmentRun" start="181" end="203" startBytecode="0" endBytecode="270" sourcefile="AnnealingDiagramAssigner.java" sourcepath="com/ideanest/reef/opti/AnnealingDiagramAssigner.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.opti.AnnealingDiagramAssigner$AssignmentRun" start="199" end="199" startBytecode="214" endBytecode="214" sourcefile="AnnealingDiagramAssigner.java" sourcepath="com/ideanest/reef/opti/AnnealingDiagramAssigner.java"/>
+  </BugInstance>
+  <BugInstance type="SBSC_USE_STRINGBUFFER_CONCATENATION" priority="2" abbrev="SBSC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.rip.java.TypeResolver">
+      <SourceLine classname="com.ideanest.reef.rip.java.TypeResolver" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="TypeResolver.java" sourcepath="com/ideanest/reef/rip/java/TypeResolver.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.rip.java.TypeResolver" name="resolveInternal" signature="(Ljava/lang/String;Lcom/ideanest/reef/db/XResource;)Ljava/lang/String;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.rip.java.TypeResolver" start="121" end="148" startBytecode="0" endBytecode="205" sourcefile="TypeResolver.java" sourcepath="com/ideanest/reef/rip/java/TypeResolver.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.rip.java.TypeResolver" start="143" end="143" startBytecode="161" endBytecode="161" sourcefile="TypeResolver.java" sourcepath="com/ideanest/reef/rip/java/TypeResolver.java"/>
+  </BugInstance>
+  <BugInstance type="SE_BAD_FIELD" priority="2" abbrev="Se" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.rip.java.TypeResolver$TypeResolutionException">
+      <SourceLine classname="com.ideanest.reef.rip.java.TypeResolver$TypeResolutionException" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="TypeResolver.java" sourcepath="com/ideanest/reef/rip/java/TypeResolver.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.rip.java.TypeResolver$TypeResolutionException" name="this$0" signature="Lcom/ideanest/reef/rip/java/TypeResolver;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.rip.java.TypeResolver$TypeResolutionException" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="TypeResolver.java" sourcepath="com/ideanest/reef/rip/java/TypeResolver.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC" priority="2" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.rip.java.TypeResolver$TypeResolutionException">
+      <SourceLine classname="com.ideanest.reef.rip.java.TypeResolver$TypeResolutionException" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="TypeResolver.java" sourcepath="com/ideanest/reef/rip/java/TypeResolver.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="3" abbrev="REC" category="STYLE">
+    <Class classname="com.ideanest.reef.sourcecontrol.CVSConnection">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.CVSConnection" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CVSConnection.java" sourcepath="com/ideanest/reef/sourcecontrol/CVSConnection.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.sourcecontrol.CVSConnection" name="getHistory" signature="(Ljava/util/List;)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.CVSConnection" start="70" end="98" startBytecode="0" endBytecode="83" sourcefile="CVSConnection.java" sourcepath="com/ideanest/reef/sourcecontrol/CVSConnection.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.sourcecontrol.CVSConnection" start="94" end="94" startBytecode="71" endBytecode="71" sourcefile="CVSConnection.java" sourcepath="com/ideanest/reef/sourcecontrol/CVSConnection.java"/>
+  </BugInstance>
+  <BugInstance type="RV_RETURN_VALUE_IGNORED" priority="3" abbrev="RV" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.sourcecontrol.CVSConnection">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.CVSConnection" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CVSConnection.java" sourcepath="com/ideanest/reef/sourcecontrol/CVSConnection.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.sourcecontrol.CVSConnection" name="parse" signature="(Ljava/util/List;)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.CVSConnection" start="126" end="159" startBytecode="0" endBytecode="165" sourcefile="CVSConnection.java" sourcepath="com/ideanest/reef/sourcecontrol/CVSConnection.java"/>
+    </Method>
+    <Method classname="java.io.File" name="createNewFile" signature="()Z" isStatic="false" role="METHOD_CALLED">
+      <SourceLine classname="java.io.File" start="-1" end="-1" startBytecode="-1" endBytecode="-1"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.sourcecontrol.CVSConnection" start="142" end="142" startBytecode="74" endBytecode="74" sourcefile="CVSConnection.java" sourcepath="com/ideanest/reef/sourcecontrol/CVSConnection.java"/>
+  </BugInstance>
+  <BugInstance type="ES_COMPARING_STRINGS_WITH_EQ" priority="3" abbrev="ES" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.sourcecontrol.HistoryListener">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.HistoryListener" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="HistoryListener.java" sourcepath="com/ideanest/reef/sourcecontrol/HistoryListener.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.sourcecontrol.HistoryListener" name="messageSent" signature="(Lorg/netbeans/lib/cvsclient/event/MessageEvent;)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.HistoryListener" start="36" end="62" startBytecode="0" endBytecode="35" sourcefile="HistoryListener.java" sourcepath="com/ideanest/reef/sourcecontrol/HistoryListener.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.sourcecontrol.HistoryListener" start="47" end="47" startBytecode="47" endBytecode="47" sourcefile="HistoryListener.java" sourcepath="com/ideanest/reef/sourcecontrol/HistoryListener.java"/>
+    <Class classname="java.lang.String" role="CLASS_REFTYPE">
+      <SourceLine classname="java.lang.String" start="-1" end="-1" startBytecode="-1" endBytecode="-1"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="UUF_UNUSED_FIELD" priority="2" abbrev="UuF" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.sourcecontrol.HistoryListener">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.HistoryListener" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="HistoryListener.java" sourcepath="com/ideanest/reef/sourcecontrol/HistoryListener.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.sourcecontrol.HistoryListener" name="connection" signature="Lcom/ideanest/reef/sourcecontrol/CVSConnection;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.HistoryListener" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="HistoryListener.java" sourcepath="com/ideanest/reef/sourcecontrol/HistoryListener.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="DLS_DEAD_LOCAL_STORE" priority="2" abbrev="DLS" category="STYLE">
+    <Class classname="com.ideanest.reef.sourcecontrol.HistoryNote">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.HistoryNote" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="HistoryNote.java" sourcepath="com/ideanest/reef/sourcecontrol/HistoryNote.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.sourcecontrol.HistoryNote" name="&lt;init&gt;" signature="(Ljava/lang/String;)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.HistoryNote" start="17" end="37" startBytecode="0" endBytecode="64" sourcefile="HistoryNote.java" sourcepath="com/ideanest/reef/sourcecontrol/HistoryNote.java"/>
+    </Method>
+    <LocalVariable name="?" register="5" pc="101" role="LOCAL_VARIABLE_UNKNOWN"/>
+    <SourceLine classname="com.ideanest.reef.sourcecontrol.HistoryNote" start="32" end="32" startBytecode="100" endBytecode="100" sourcefile="HistoryNote.java" sourcepath="com/ideanest/reef/sourcecontrol/HistoryNote.java"/>
+  </BugInstance>
+  <BugInstance type="EI_EXPOSE_REP" priority="2" abbrev="EI" category="MALICIOUS_CODE">
+    <Class classname="com.ideanest.reef.sourcecontrol.HistoryNote">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.HistoryNote" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="HistoryNote.java" sourcepath="com/ideanest/reef/sourcecontrol/HistoryNote.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.sourcecontrol.HistoryNote" name="getDate" signature="()Ljava/util/Date;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.HistoryNote" start="78" end="78" startBytecode="0" endBytecode="4" sourcefile="HistoryNote.java" sourcepath="com/ideanest/reef/sourcecontrol/HistoryNote.java"/>
+    </Method>
+    <Field classname="com.ideanest.reef.sourcecontrol.HistoryNote" name="date" signature="Ljava/util/Date;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.HistoryNote" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="HistoryNote.java" sourcepath="com/ideanest/reef/sourcecontrol/HistoryNote.java"/>
+    </Field>
+    <SourceLine classname="com.ideanest.reef.sourcecontrol.HistoryNote" start="78" end="78" startBytecode="4" endBytecode="4" sourcefile="HistoryNote.java" sourcepath="com/ideanest/reef/sourcecontrol/HistoryNote.java"/>
+  </BugInstance>
+  <BugInstance type="DLS_DEAD_LOCAL_STORE" priority="1" abbrev="DLS" category="STYLE">
+    <Class classname="com.ideanest.reef.sourcecontrol.PasswordDialog">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.PasswordDialog" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CVSClientTest.java" sourcepath="com/ideanest/reef/sourcecontrol/CVSClientTest.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.sourcecontrol.PasswordDialog" name="&lt;init&gt;" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.PasswordDialog" start="18" end="41" startBytecode="0" endBytecode="61" sourcefile="CVSClientTest.java" sourcepath="com/ideanest/reef/sourcecontrol/CVSClientTest.java"/>
+    </Method>
+    <LocalVariable name="toReturn" register="1" pc="70" role="LOCAL_VARIABLE_NAMED"/>
+    <SourceLine classname="com.ideanest.reef.sourcecontrol.PasswordDialog" start="26" end="26" startBytecode="69" endBytecode="69" sourcefile="CVSClientTest.java" sourcepath="com/ideanest/reef/sourcecontrol/CVSClientTest.java"/>
+  </BugInstance>
+  <BugInstance type="SIC_INNER_SHOULD_BE_STATIC_ANON" priority="3" abbrev="SIC" category="PERFORMANCE">
+    <Class classname="com.ideanest.reef.sourcecontrol.PasswordDialog$1">
+      <SourceLine classname="com.ideanest.reef.sourcecontrol.PasswordDialog$1" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CVSClientTest.java" sourcepath="com/ideanest/reef/sourcecontrol/CVSClientTest.java"/>
+    </Class>
+  </BugInstance>
+  <BugInstance type="OS_OPEN_STREAM" priority="2" abbrev="OS" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.test.TestManager">
+      <SourceLine classname="com.ideanest.reef.test.TestManager" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="TestManager.java" sourcepath="com/ideanest/reef/test/TestManager.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.test.TestManager" name="copy" signature="(Ljava/io/File;Ljava/lang/String;)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.test.TestManager" start="70" end="91" startBytecode="0" endBytecode="106" sourcefile="TestManager.java" sourcepath="com/ideanest/reef/test/TestManager.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.test.TestManager" start="80" end="80" startBytecode="126" endBytecode="126" sourcefile="TestManager.java" sourcepath="com/ideanest/reef/test/TestManager.java"/>
+  </BugInstance>
+  <BugInstance type="OS_OPEN_STREAM" priority="2" abbrev="OS" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.test.TestManager">
+      <SourceLine classname="com.ideanest.reef.test.TestManager" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="TestManager.java" sourcepath="com/ideanest/reef/test/TestManager.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.test.TestManager" name="copy" signature="(Ljava/io/File;Ljava/lang/String;)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.test.TestManager" start="70" end="91" startBytecode="0" endBytecode="106" sourcefile="TestManager.java" sourcepath="com/ideanest/reef/test/TestManager.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.test.TestManager" start="82" end="82" startBytecode="151" endBytecode="151" sourcefile="TestManager.java" sourcepath="com/ideanest/reef/test/TestManager.java"/>
+  </BugInstance>
+  <BugInstance type="REC_CATCH_EXCEPTION" priority="3" abbrev="REC" category="STYLE">
+    <Class classname="com.ideanest.reef.vcm.CVS">
+      <SourceLine classname="com.ideanest.reef.vcm.CVS" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CVS.java" sourcepath="com/ideanest/reef/vcm/CVS.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.vcm.CVS" name="update" signature="()V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.vcm.CVS" start="153" end="172" startBytecode="0" endBytecode="169" sourcefile="CVS.java" sourcepath="com/ideanest/reef/vcm/CVS.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.vcm.CVS" start="164" end="164" startBytecode="96" endBytecode="96" sourcefile="CVS.java" sourcepath="com/ideanest/reef/vcm/CVS.java"/>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.vcm.CheckpointMediator">
+      <SourceLine classname="com.ideanest.reef.vcm.CheckpointMediator" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CheckpointMediator.java" sourcepath="com/ideanest/reef/vcm/CheckpointMediator.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.vcm.CheckpointMediator" name="workspace" signature="Lcom/ideanest/reef/db/Folder;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.vcm.CheckpointMediator" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CheckpointMediator.java" sourcepath="com/ideanest/reef/vcm/CheckpointMediator.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.vcm.CheckpointMediator$Test">
+      <SourceLine classname="com.ideanest.reef.vcm.CheckpointMediator$Test" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CheckpointMediator.java" sourcepath="com/ideanest/reef/vcm/CheckpointMediator.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.vcm.CheckpointMediator$Test" name="job" signature="Lorg/jmock/Mock;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.vcm.CheckpointMediator$Test" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CheckpointMediator.java" sourcepath="com/ideanest/reef/vcm/CheckpointMediator.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.vcm.CheckpointMediator$Test">
+      <SourceLine classname="com.ideanest.reef.vcm.CheckpointMediator$Test" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CheckpointMediator.java" sourcepath="com/ideanest/reef/vcm/CheckpointMediator.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.vcm.CheckpointMediator$Test" name="mediator" signature="Lcom/ideanest/reef/vcm/CheckpointMediator;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.vcm.CheckpointMediator$Test" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="CheckpointMediator.java" sourcepath="com/ideanest/reef/vcm/CheckpointMediator.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="OS_OPEN_STREAM" priority="2" abbrev="OS" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.vcm.Filesystem">
+      <SourceLine classname="com.ideanest.reef.vcm.Filesystem" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Filesystem.java" sourcepath="com/ideanest/reef/vcm/Filesystem.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.vcm.Filesystem" name="copy" signature="(Lcom/ideanest/reef/db/Node;Ljava/lang/String;)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.vcm.Filesystem" start="244" end="283" startBytecode="0" endBytecode="145" sourcefile="Filesystem.java" sourcepath="com/ideanest/reef/vcm/Filesystem.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.vcm.Filesystem" start="255" end="255" startBytecode="112" endBytecode="112" sourcefile="Filesystem.java" sourcepath="com/ideanest/reef/vcm/Filesystem.java"/>
+  </BugInstance>
+  <BugInstance type="OS_OPEN_STREAM" priority="2" abbrev="OS" category="CORRECTNESS">
+    <Class classname="com.ideanest.reef.vcm.Filesystem">
+      <SourceLine classname="com.ideanest.reef.vcm.Filesystem" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Filesystem.java" sourcepath="com/ideanest/reef/vcm/Filesystem.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.vcm.Filesystem" name="copy" signature="(Lcom/ideanest/reef/db/Node;Ljava/lang/String;)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.vcm.Filesystem" start="244" end="283" startBytecode="0" endBytecode="145" sourcefile="Filesystem.java" sourcepath="com/ideanest/reef/vcm/Filesystem.java"/>
+    </Method>
+    <SourceLine classname="com.ideanest.reef.vcm.Filesystem" start="268" end="268" startBytecode="229" endBytecode="229" sourcefile="Filesystem.java" sourcepath="com/ideanest/reef/vcm/Filesystem.java"/>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.vcm.Filesystem">
+      <SourceLine classname="com.ideanest.reef.vcm.Filesystem" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Filesystem.java" sourcepath="com/ideanest/reef/vcm/Filesystem.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.vcm.Filesystem" name="quietPeriod" signature="Lcom/ideanest/reef/vcm/QuietPeriod;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.vcm.Filesystem" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Filesystem.java" sourcepath="com/ideanest/reef/vcm/Filesystem.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR" priority="3" abbrev="UwF" category="STYLE">
+    <Class classname="com.ideanest.reef.vcm.Filesystem">
+      <SourceLine classname="com.ideanest.reef.vcm.Filesystem" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Filesystem.java" sourcepath="com/ideanest/reef/vcm/Filesystem.java"/>
+    </Class>
+    <Field classname="com.ideanest.reef.vcm.Filesystem" name="srcDir" signature="Ljava/io/File;" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.vcm.Filesystem" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="Filesystem.java" sourcepath="com/ideanest/reef/vcm/Filesystem.java"/>
+    </Field>
+  </BugInstance>
+  <BugInstance type="EI_EXPOSE_REP2" priority="2" abbrev="EI2" category="MALICIOUS_CODE">
+    <Class classname="com.ideanest.reef.vcm.QuietPeriod">
+      <SourceLine classname="com.ideanest.reef.vcm.QuietPeriod" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="QuietPeriod.java" sourcepath="com/ideanest/reef/vcm/QuietPeriod.java"/>
+    </Class>
+    <Method classname="com.ideanest.reef.vcm.QuietPeriod" name="addChangePoint" signature="(Ljava/util/Date;)V" isStatic="false">
+      <SourceLine classname="com.ideanest.reef.vcm.QuietPeriod" start="91" end="96" startBytecode="0" endBytecode="53" sourcefile="QuietPeriod.java" sourcepath="com/ideanest/reef/vcm/QuietPeriod.java"/>
+    </Method>
+    <Field classname="com.ideanest.reef.vcm.QuietPeriod" name="firstChange" signature="Ljava/util/Date;" isStatic="true">
+      <SourceLine classname="com.ideanest.reef.vcm.QuietPeriod" start="-1" end="-1" startBytecode="-1" endBytecode="-1" sourcefile="QuietPeriod.java" sourcepath="com/ideanest/reef/vcm/QuietPeriod.java"/>
+    </Field>
+    <SourceLine classname="com.ideanest.reef.vcm.QuietPeriod" start="94" end="94" startBytecode="50" endBytecode="50" sourcefile="QuietPeriod.java" sourcepath="com/ideanest/reef/vcm/QuietPeriod.java"/>
+  </BugInstance>
+  <Errors></Errors>
+  <FindBugsSummary timestamp="Thu, 6 Apr 2006 13:27:33 -0700" total_classes="82" total_bugs="129" total_size="0" num_packages="10" cpu_seconds="0.17" clock_seconds="0.26" peak_mbytes="123.97" priority_3="86" priority_2="41" priority_1="2">
+    <PackageStats package="com.ideanest.reef" total_bugs="10" total_types="2" total_size="0" priority_3="3" priority_2="7">
+      <ClassStats class="com.ideanest.reef.Main" interface="false" size="0" bugs="8" priority_3="1" priority_2="7"/>
+      <ClassStats class="com.ideanest.reef.Main$1" interface="false" size="0" bugs="2" priority_3="2"/>
+    </PackageStats>
+    <PackageStats package="com.ideanest.reef.db" total_bugs="46" total_types="43" total_size="0" priority_3="43" priority_2="3">
+      <ClassStats class="com.ideanest.reef.db.DataUtils$1" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.Database" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.Document" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$1" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$10" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$11" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$12" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$13" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$14" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$15" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$16" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$17" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$18" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$19" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$2" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$20" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$21" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$22" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$23" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$24" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$3" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$4" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$5" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$6" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$7" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$8" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ElementBuilder$9" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.Folder" interface="false" size="0" bugs="3" priority_3="2" priority_2="1"/>
+      <ClassStats class="com.ideanest.reef.db.Folder$2" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ItemList$ValuesFacet" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.Listener$Event" interface="false" size="0" bugs="0"/>
+      <ClassStats class="com.ideanest.reef.db.ListenerManager$1" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ListenerManager$2" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ListenerManager$3" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ListenerManager$4" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.ListenerManager$ListenerWrapper" interface="false" size="0" bugs="0"/>
+      <ClassStats class="com.ideanest.reef.db.ListenerManager$Test" interface="false" size="0" bugs="2" priority_3="2"/>
+      <ClassStats class="com.ideanest.reef.db.ListenerManager$TriggerDispatcher" interface="false" size="0" bugs="2" priority_3="2"/>
+      <ClassStats class="com.ideanest.reef.db.NamespaceMap" interface="false" size="0" bugs="2" priority_3="1" priority_2="1"/>
+      <ClassStats class="com.ideanest.reef.db.Node$Test" interface="false" size="0" bugs="0"/>
+      <ClassStats class="com.ideanest.reef.db.QName" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.db.XDatabase" interface="false" size="0" bugs="2" priority_3="1" priority_2="1"/>
+      <ClassStats class="com.ideanest.reef.db.XDocument" interface="false" size="0" bugs="1" priority_3="1"/>
+    </PackageStats>
+    <PackageStats package="com.ideanest.reef.java" total_bugs="15" total_types="6" total_size="0" priority_3="11" priority_2="3" priority_1="1">
+      <ClassStats class="com.ideanest.reef.java.CodeBuilder" interface="false" size="0" bugs="1" priority_1="1"/>
+      <ClassStats class="com.ideanest.reef.java.CodeBuilder$Compiler" interface="false" size="0" bugs="2" priority_2="2"/>
+      <ClassStats class="com.ideanest.reef.java.DiagramExtractor" interface="false" size="0" bugs="3" priority_3="3"/>
+      <ClassStats class="com.ideanest.reef.java.SimpleOriginAnalyzer" interface="false" size="0" bugs="3" priority_3="3"/>
+      <ClassStats class="com.ideanest.reef.java.SourceExtractor" interface="false" size="0" bugs="5" priority_3="4" priority_2="1"/>
+      <ClassStats class="com.ideanest.reef.java.TypeResolver" interface="false" size="0" bugs="1" priority_3="1"/>
+    </PackageStats>
+    <PackageStats package="com.ideanest.reef.job" total_bugs="16" total_types="8" total_size="0" priority_3="13" priority_2="3">
+      <ClassStats class="com.ideanest.reef.job.Cycle" interface="false" size="0" bugs="4" priority_3="1" priority_2="3"/>
+      <ClassStats class="com.ideanest.reef.job.Job" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.job.LoadFiles" interface="false" size="0" bugs="6" priority_3="6"/>
+      <ClassStats class="com.ideanest.reef.job.QuartzCycle" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.job.ScheduleJobs" interface="false" size="0" bugs="2" priority_3="2"/>
+      <ClassStats class="com.ideanest.reef.job.TaskBase" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.job.TaskBase$IllegalTaskPhaseConfigurationException" interface="false" size="0" bugs="0"/>
+      <ClassStats class="com.ideanest.reef.job.WipeDir" interface="false" size="0" bugs="1" priority_3="1"/>
+    </PackageStats>
+    <PackageStats package="com.ideanest.reef.mixt" total_bugs="18" total_types="9" total_size="0" priority_3="4" priority_2="14">
+      <ClassStats class="com.ideanest.reef.mixt.Engine" interface="false" size="0" bugs="1" priority_2="1"/>
+      <ClassStats class="com.ideanest.reef.mixt.Mod" interface="false" size="0" bugs="6" priority_2="6"/>
+      <ClassStats class="com.ideanest.reef.mixt.ModStub" interface="false" size="0" bugs="1" priority_2="1"/>
+      <ClassStats class="com.ideanest.reef.mixt.Rule" interface="false" size="0" bugs="2" priority_3="1" priority_2="1"/>
+      <ClassStats class="com.ideanest.reef.mixt.StructureRule" interface="false" size="0" bugs="1" priority_2="1"/>
+      <ClassStats class="com.ideanest.reef.mixt.StructureRule$DocumentTarget" interface="false" size="0" bugs="2" priority_2="2"/>
+      <ClassStats class="com.ideanest.reef.mixt.StructureRule$ElementTarget" interface="false" size="0" bugs="2" priority_3="1" priority_2="1"/>
+      <ClassStats class="com.ideanest.reef.mixt.StructureRule$Insert" interface="false" size="0" bugs="1" priority_2="1"/>
+      <ClassStats class="com.ideanest.reef.mixt.TransformTask" interface="false" size="0" bugs="2" priority_3="2"/>
+    </PackageStats>
+    <PackageStats package="com.ideanest.reef.opti" total_bugs="2" total_types="2" total_size="0" priority_3="2">
+      <ClassStats class="com.ideanest.reef.opti.AnnealingDiagramAssigner" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.opti.AnnealingDiagramAssigner$AssignmentRun" interface="false" size="0" bugs="1" priority_3="1"/>
+    </PackageStats>
+    <PackageStats package="com.ideanest.reef.rip.java" total_bugs="3" total_types="2" total_size="0" priority_2="3">
+      <ClassStats class="com.ideanest.reef.rip.java.TypeResolver" interface="false" size="0" bugs="1" priority_2="1"/>
+      <ClassStats class="com.ideanest.reef.rip.java.TypeResolver$TypeResolutionException" interface="false" size="0" bugs="2" priority_2="2"/>
+    </PackageStats>
+    <PackageStats package="com.ideanest.reef.sourcecontrol" total_bugs="8" total_types="5" total_size="0" priority_3="4" priority_2="3" priority_1="1">
+      <ClassStats class="com.ideanest.reef.sourcecontrol.CVSConnection" interface="false" size="0" bugs="2" priority_3="2"/>
+      <ClassStats class="com.ideanest.reef.sourcecontrol.HistoryListener" interface="false" size="0" bugs="2" priority_3="1" priority_2="1"/>
+      <ClassStats class="com.ideanest.reef.sourcecontrol.HistoryNote" interface="false" size="0" bugs="2" priority_2="2"/>
+      <ClassStats class="com.ideanest.reef.sourcecontrol.PasswordDialog" interface="false" size="0" bugs="1" priority_1="1"/>
+      <ClassStats class="com.ideanest.reef.sourcecontrol.PasswordDialog$1" interface="false" size="0" bugs="1" priority_3="1"/>
+    </PackageStats>
+    <PackageStats package="com.ideanest.reef.test" total_bugs="2" total_types="1" total_size="0" priority_2="2">
+      <ClassStats class="com.ideanest.reef.test.TestManager" interface="false" size="0" bugs="2" priority_2="2"/>
+    </PackageStats>
+    <PackageStats package="com.ideanest.reef.vcm" total_bugs="9" total_types="5" total_size="0" priority_3="6" priority_2="3">
+      <ClassStats class="com.ideanest.reef.vcm.CVS" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.vcm.CheckpointMediator" interface="false" size="0" bugs="1" priority_3="1"/>
+      <ClassStats class="com.ideanest.reef.vcm.CheckpointMediator$Test" interface="false" size="0" bugs="2" priority_3="2"/>
+      <ClassStats class="com.ideanest.reef.vcm.Filesystem" interface="false" size="0" bugs="4" priority_3="2" priority_2="2"/>
+      <ClassStats class="com.ideanest.reef.vcm.QuietPeriod" interface="false" size="0" bugs="1" priority_2="1"/>
+    </PackageStats>
+  </FindBugsSummary>
+  <ClassFeatures></ClassFeatures>
+  <History></History>
+</BugCollection>

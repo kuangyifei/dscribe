@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- Modelistic Software Ltd. (http://www.modelistic.com) -->
+<jme>
+	<diagram style="standardFilteredStyles.diagramStyle.publicMembersOnly" version="1.3.1">
+		<class yLocation="782" xLocation="776" project="Reef" className="com.ideanest.reef.db.ElementBuilder"/>
+		<class yLocation="3034" xLocation="230" project="Reef" className="com.ideanest.reef.db.QueryService"/>
+		<class yLocation="1355" xLocation="282" project="Reef" className="com.ideanest.reef.db.Folder"/>
+		<class yLocation="3453" xLocation="18" project="Reef" className="com.ideanest.reef.db.DatabaseException"/>
+		<class yLocation="1953" xLocation="-115" project="Reef" className="com.ideanest.reef.db.Document"/>
+		<class yLocation="340" xLocation="392" project="Reef" className="com.ideanest.reef.db.NamespaceMap"/>
+		<class yLocation="1821" xLocation="1084" project="Reef" className="com.ideanest.reef.db.ItemList"/>
+		<class yLocation="3034" xLocation="572" project="Reef" className="com.ideanest.reef.db.Item"/>
+		<class yLocation="1556" xLocation="-64" project="Reef" className="com.ideanest.reef.db.QName"/>
+		<class yLocation="2460" xLocation="762" project="Reef" className="com.ideanest.reef.db.Node"/>
+		<class yLocation="804" xLocation="358" project="Reef" className="com.ideanest.reef.db.Database"/>
+		<class yLocation="3557" xLocation="404" project="Reef" className="com.ideanest.reef.db.Name"/>
+		<class yLocation="2512" xLocation="-106" project="Reef" className="com.ideanest.reef.db.AttributeBuilder"/>
+		<class yLocation="2215" xLocation="762" project="Reef" className="com.ideanest.reef.db.Queryable"/>
+	</diagram>
+</jme>
