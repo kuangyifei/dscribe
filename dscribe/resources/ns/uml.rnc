@@ -1,0 +1,60 @@
+default namespace uml = "http://ideanest.com/reef/ns/uml"
+
+start = Diagram
+
+Diagram = ClassDiagram  # | SequenceDiagram | ....
+
+ClassDiagram = element diagram {
+	attribute kind {"class"} &
+	element name {text} &
+	Package * &
+	Class * &
+	ClassStub * &
+	Association * &
+	Note *
+}
+
+Annotations = (
+	element name {text} &	# marked-up text, actually
+	element stereotype {text}* &
+	element constraint {text}*
+)
+
+Package = element package {
+	Annotations
+}
+
+ClassStub = element class-stub {
+	element owner {text}? &
+	Annotations
+}
+
+Class = element class {
+	element owner {text}? &
+	Annotations &
+	Compartment *
+}
+
+Compartment = element compartment {
+		(attribute of {"attribute"} & Attribute * )
+	|	(attribute of {"operation"} & Operation * )
+}
+
+Attribute = element attribute {
+	Annotations &
+	Type ?
+}
+
+Operation = element operation {
+	Annotations &
+	element param {
+		Annotations &
+		Type ?
+	} * &
+	Type ?
+}
+
+Type = element type {
+	
+}
+

@@ -1,0 +1,59 @@
+default namespace vcm = "http://ideanest.com/reef/ns/vcm"
+
+start = Modification* & Checkpoint-proposal* & Checkpoint?
+
+Modification = element modification {
+
+	## whether the modification unit was explicitly picked by the user (atomic commit),
+	## whether it was synthesized from other available data,
+	## or whether no demarcation was attempted and the modification unit is bogus
+	attribute demarcation { "user" | "synthetic" | "bogus" } &
+
+	## the type of vcm system this modification was extracted from	
+	attribute type { text } &
+	
+	element revision { text } ? &
+	element user { text } ? &
+	element date { xsd:dateTime } ? &
+	element description { text } ? &
+
+	File+
+
+}
+
+File = element file {
+	File.contents
+}
+
+File.contents =
+	attribute action { "add" | "delete" | "edit" } &
+	element filename { text } &
+	element revision { text } ?
+
+## A checkpoint timing proposal from one task.  It may hold any number of
+## checkpoint spans that the task could agree to (i.e. that it could retrieve
+## the files for, and that do not break its consistency rules).  Each checkpoint
+## is bounded by the current and previous (successful) job run's timestamps.
+## A checkpoint is marked as interesting only if the task thinks it's worthwhile
+## to checkpoint there, otherwise it's merely acceptable.  A checkpoint is selected
+## if it falls within one acceptable span for each proposal element, and if at least
+## one of those spans is interesting.  Otherwise, if there is at least one proposal
+## with a postpone-until attribute, the job run is postponed until the latest of
+## the postponement stamps.  Otherwise, the job run is abandoned until the next
+## regularly scheduled execution.
+Checkpoint-proposal = element checkpoint-proposal {
+	element checkpoint-range {
+		attribute from { xsd:dateTime } &		## inclusive
+		attribute to { xsd:dateTime } &			## exclusive
+		attribute interesting { xsd:boolean } ?
+	} * &
+	attribute postpone-until { xsd:dateTime } ?
+}
+
+## The checkpoint selected for a given job run, appears on the notes element
+## after the 'agree' phase.  In all subsequent phases, tasks must operate on the
+## project as it was up to and including the given checkpoint.
+Checkpoint = element checkpoint {
+	attribute at {xsd:dateTime} &		## inclusive
+	element version-name {text} *
+}

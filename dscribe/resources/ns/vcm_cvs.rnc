@@ -1,0 +1,30 @@
+namespace cvs = "http://ideanest.com/reef/ns/vcm/cvs"
+include "vcm.rnc"
+
+start = element cvs:record {
+	attribute repid {text} &
+	History * &
+	LogInfo * &
+	Modification *
+}
+
+History = element cvs:history {
+	attribute code {text} &		# actually a single character
+	attribute date {xsd:dateTime} &
+	attribute author {text} &
+	attribute rev {text} &
+	text								# munged file and directory
+}
+
+LogInfo = element cvs:loginfo {
+	attribute rcsfile {text} &
+	attribute localfile {text} ? &
+	element cvs:revision {
+		attribute name {text} &
+		attribute author {text} &
+		attribute date {xsd:dateTime} &
+		attribute commit-id {text} ? &
+		attribute action {text} ? &
+		text
+	} *
+}

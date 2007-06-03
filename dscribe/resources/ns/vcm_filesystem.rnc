@@ -1,0 +1,11 @@
+namespace fs = "http://ideanest.com/reef/ns/vcm/filesystem"
+include "vcm.rnc"
+
+File.contents &= attribute fs:srcStamp {xsd:dateTime}
+File.contents &= attribute fs:dstStamp {xsd:dateTime}
+
+start = element fs:record {
+	attribute srcDir {text} &
+	Modification * &
+	File *
+}

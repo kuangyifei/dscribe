@@ -1,0 +1,29 @@
+default namespace java = "http://ideanest.com/reef/ns/notes"
+include "vcm.rnc"
+
+start = Notes
+
+Notes = element notes {
+	attribute job-name {text} &
+	attribute serial {xsd:integer} &
+	attribute prev {xsd:integer} ? &
+	attribute started {xsd:dateTime} &
+	attribute ended {xsd:dateTime} ? &
+	(
+		attribute status {"completed"}
+	|
+		(
+			attribute status { "interrupted" | "abandoned" } &
+			attribute phase { text } ?
+		)
+	|
+		(
+			attribute status { "postponed" } &
+			attribute phase { text } ? &
+			attribute until {xsd:dateTime}
+		)
+	) ? &
+	element next-cycle-clean { empty } * &
+	element file {attribute localName {text} & attribute storedName {text}} * &
+	Checkpoint ?
+}

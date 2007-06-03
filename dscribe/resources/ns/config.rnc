@@ -1,0 +1,59 @@
+default namespace config = "http://ideanest.com/reef/ns/config"
+
+start = Group | Job
+
+Group = element group {
+	attribute name {text} ? &
+	attribute enabled {xsd:boolean} ? &
+	(Group | Job)*
+}
+
+Job = element job {
+	attribute name {text} ? &
+	attribute type {text} ? &
+	attribute enabled {xsd:boolean} ? &
+	attribute debug-dump {xsd:boolean} ? &
+	attribute min-run-interval {xsd:duration} ? &
+	attribute phases { list {xsd:string*} } ? &
+	(Trigger | Task) *
+}
+
+Trigger = element schedule {
+	attribute at {text}
+}
+
+Task = Log | Filesystem | Cvs | Wipe | anyElement
+
+Log = element log {
+	text
+}
+
+Schedule = element schedule {
+	attribute force {xsd:boolean} ? &
+	text
+}
+
+Filesystem = element filesystem {
+	attribute dir {text} &
+	attribute quietperiod { xsd:duration } ? &
+	attribute defaultexcludes {xsd:boolean} ? &
+	element include {attribute name {text}} * &
+	element exclude {attribute name {text}} *
+}
+
+Cvs = element cvs {
+	attribute root {text} &
+	attribute module {text} &
+	attribute quiet-period {xsd:duration} ? &
+	attribute block-between-updates {xsd:boolean} ? &	# default false
+	attribute scan-prehistory {xsd:boolean} ? &				# default false
+	attribute dir {text} ? &
+	element interest-point {attribute at {xsd:dateTime}} *
+}
+
+Wipe = element wipe {
+	attribute if { text } ? &
+	attribute dir { text } ?	# special value "$temp" expands to Reef tempdir
+}
+
+anyElement = element * { (attribute * {text} | text | anyElement)* }

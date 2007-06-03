@@ -1,0 +1,87 @@
+default namespace java = "http://ideanest.com/reef/ns/java"
+
+start = Unit
+
+Packages = element packages {
+	element package {text} *
+}
+
+Unit = element unit {
+	element file {text} * &
+	element packageref {text} &
+	element import {text} * &
+	Javadoc * &
+	Class * &
+	Interface *
+}
+
+Javadoc = element comment {text}
+
+Class = element class {
+	TypeDefAttribs &
+	element extends {Type} ? &
+	element implements {Type} * &
+	Javadoc * &
+	Field * &
+	Constructor * &
+	Method *
+}
+
+Interface = element interface {
+	TypeDefAttribs & 
+	element extends {Type} * &
+	Javadoc * &
+	Field * &
+	Method *
+}
+
+Field = element field {
+	attribute name {text} &
+	attribute line {xsd:integer} ? &
+	Modifiers &
+	Type
+}
+
+Method = element method {
+	attribute name {text} &
+	element returns {Type} &
+	MethodOrConstructor
+}
+
+Constructor = element constructor {
+	MethodOrConstructor
+}
+
+MethodOrConstructor = (
+	attribute line {xsd:integer} ? &
+	Modifiers &
+	element param {
+		attribute name {text},
+		Type
+	} * &
+	element throws {Type} *
+)
+
+TypeDefAttribs = 	(
+	attribute name {text},
+	attribute implName {text},
+	attribute fullName {text},
+	attribute line {xsd:integer} ? ,
+	Modifiers
+)
+
+Modifiers = attribute modifiers {
+	list { ("public" | "protected" | "private")? | "static"? | "final"? }    # TODO: add the rest of them
+}
+
+Type = (		# at least one of the following will be present
+	element localType {
+		attribute arrayDim {xsd:integer} ?,
+		text
+	} ? &
+	element type {
+		attribute arrayDim {xsd:integer} ?,
+		text		# this has the same syntax as TypeDefAttribs.implName
+	} ?
+)
+
