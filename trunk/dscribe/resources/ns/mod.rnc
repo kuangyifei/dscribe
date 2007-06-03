@@ -1,0 +1,26 @@
+default namespace mod = "http://ideanest.com/reef/ns/mod"
+
+Mod = element mod {
+	## the rule being used/affected by this mod
+	attribute rule {xsd:NMTOKEN},
+	## the mod's unique id, to match up against other mod elements
+	attribute key {xsd:NMTOKEN},
+	(
+		(
+			attribute as {"override"},
+			attribute overriden-rule {xsd:NMTOKEN},
+			attribute overriden-case {xsd:NMTOKEN}
+		) | (
+			attribute as {"source" | "target" | "result"},
+			## does this mod add ordering constraints on the parent element? 
+			attribute order {xsd:boolean} ?	# default false
+		)
+	)
+}
+
+Anchor = element anchor {
+	attribute rule {xsd:NMTOKEN}
+}
+
+start = anyElement
+anyElement = element * {attribute * {text} * & anyElement * & text}

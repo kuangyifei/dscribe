@@ -1,0 +1,68 @@
+default namespace rules = "http://ideanest.com/reef/ns/rules"
+
+start = Ruleset
+
+Ruleset = element ruleset {
+	attribute name {text} ?,
+	(Rule | Extend | Order) *
+}
+
+Header =
+	attribute xml:id {xsd:NMTOKEN} &
+	attribute name {text} &
+	Alias *
+
+Rule = element rule {
+	Header &
+	element source {text} &
+	(
+		element target {text}
+	|
+		element document {text}
+	) &
+	Bind * &
+	Insert * &
+	Override *
+}
+
+Order = element order {
+	Header &
+	element source {text} &
+	Bind * &
+	element before {attribute weight {xsd:integer}, text} * &
+	element after {attribute weight {xsd:integer}, text} * &
+	element override {attribute name {text}} *
+}
+
+Extend = element extend {
+	attribute name {text} &
+	Alias * &
+	Bind * &
+	Insert * &
+	Override *
+}
+
+Alias = element alias {
+	attribute name {text}
+}
+
+Bind = element bind {
+	attribute name {xsd:NMTOKEN},
+	attribute optional {xsd:boolean} ?,    # default false
+	text
+}
+
+Insert = element insert {
+	(
+		attribute order-as-source-with-weight {xsd:integer} ?
+	|
+		attribute create-document {text} ?
+	),
+	text
+}
+
+Override = element override {
+	attribute name {text} &
+	element source {text} &
+	element target {text} ?		# no target for document-creation rules
+}

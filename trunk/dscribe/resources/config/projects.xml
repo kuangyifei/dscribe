@@ -1,0 +1,61 @@
+<group name="Global" xmlns="http://ideanest.com/reef/ns/config">
+
+	<job type="project" name="Reef" enabled="false">
+		<schedule at="0 0/2 * * * ?"/>
+		<wipe if="empty($versions//notes:notes[@status='completed'])"/>
+		<filesystem dir="c:\code\projects\reef" quiet-period="PT3M">
+			<exclude name="bin/"/>
+			<exclude name="build/"/>
+		</filesystem>
+		<agree-checkpoint/>
+		<java-extract-source/>
+		<java-resolve-types/>
+		<java-analyze-origin/>
+	</job>
+
+	<job type="project" name="Reef-CVS" min-run-interval="PT3M" enabled="false">
+		<schedule at="0 0/1 * * * ?"/>
+		<cvs root=":pserver:pkaminsk:tea63bis@cvs.cs.uvic.ca:/home/cvs/varlet" module="reef" quiet-period="PT3M"/>
+		<agree-checkpoint/>
+	</job>
+	
+	<job type="project" name="Ideanest" enabled="false">
+		<schedule at="0/30 * * * * ?"/>
+		<wipe if="empty($versions/notes:notes[@status='completed'])"/>
+		<cvs
+			root=":pserver:cvsnt:cvsnt@transfinity:c:/code/cvs/cvsrepo/work"
+			module="Ideanest"
+			quiet-period="PT5M"
+			block-between-updates="true"
+			scan-prehistory="true">
+<!--			<interest-point at="2003-06-09T01:16:00Z"/>  -->
+<!--			<interest-point at="2003-07-12T06:00:00Z"/> -->
+			<interest-point at="2003-07-12T07:35:00Z"/> 
+			<interest-point at="2003-07-23T08:00:00Z"/>
+		</cvs>
+		<agree-checkpoint/>
+	</job>
+	
+	<job type="chore" name="wipe temp dir">
+		<schedule at="0 0 0/1 * * ?"/>
+		<wipe dir="$temp"/>
+	</job>
+	
+	<job name="update-config" phases="check agree update load expand schedule" debug-dump="true">
+		<schedule at="0 0/1 * * * ?"/>
+		<filesystem dir="../../../config" quiet-period="PT30S"/>
+		<agree-checkpoint/>
+		<load-files/>
+		<schedule-jobs/>
+	</job>
+
+<!--
+	<job type="chore" name="log test">
+		<schedule at="0/15 * * * * ?"/>
+		<log>Hi mom, still alive!</log>
+	</job>
+ -->
+ 
+</group>
+
+
