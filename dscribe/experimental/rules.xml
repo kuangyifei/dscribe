@@ -1,0 +1,8 @@
+<ruleset>
+	<rule xml:id="r1" type="accessors-to-attributes-by-prefix" scope="*">
+		<param name="getter-prefixes">get is</param>
+		<param name="setter-prefixes">set</param>
+	</rule>
+	<rule xml:id="hide-elements">
+	</rule>
+</ruleset>

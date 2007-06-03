@@ -1,0 +1,114 @@
+namespace	java	http://ideanest.com/reef/ns/java
+namespace	uml	http://ideanest.com/reef/ns/uml
+
+rule	create diagram
+for each		$mapping	//map:create-diagram
+newdoc		diagrams/{$mapping/@xml:id}.xml
+insert		<uml:diagram/>
+
+create diagram
+key $map //map:create-diagram
+newdoc "diagrams/{$map/@xml:id}.xml" <uml:diagram/>
+
+copy class to diagram
+for each key $map	//map:class-to-diagram
+for one $source		id($map/@class-id)/self::java:class
+for one target			id($map/@diagram)/self::uml:diagram
+insert
+	<uml:class depicts='{$jclass/@xml:id}'>
+		<uml:compartment kind='attribute'/>
+		<uml:compartment kind='operation'/>
+	</uml:class>
+
+copy name to depiction
+each $source	//java:*[@name]
+key target		//uml:*[id(@depicts) is $source]
+insert <uml:name>{$src/@name}</uml:name>
+
+
+
+copy-class-to-diagram
+	for each $map	//map:class-to-diagram
+	for one $source	id($map/@class-id)/self::java:class
+	for one target		id($map/@diagram)/self::uml:diagram
+	insert
+		<uml:class depicts='{$source/@xml:id}'>
+			<uml:compartment kind='attribute'/>
+			<uml:compartment kind='operation'/>
+		</uml:class>
+
+copy name to depiction
+for each	 $source	//java:*[@name]
+for each	 target		//uml:*[@depicts=$source/@xml:id]
+insert <uml:name>{$src/@name}</uml:name>
+
+order	name-before-compartments
+source	//uml:class/uml:name
+before	$source/sibling::uml:compartment
+weight	10
+
+rule	find-type-reference-id
+source	//(java:class|java:interface)
+targets	//java:type[@implName=$source/@implName]
+insert	<java:ref target='{$source/@xml:id}'/>
+
+rule	copy-extends-implements
+source	//(java:extends | java:implements)
+targets	//uml:class[@depicts=$source/../@xml:id]
+insert	<uml:inherits>
+		  {
+		    if ($source/java:type/java:ref)
+		    then attribute fromJavaId {$source/java:type/java:ref/@target}
+		    else
+		      if ($source/java:type)
+		      then attribute fromJavaName {$source/java:type/@implName}
+		      else attribute fromJavaName {$source/java:localType}
+		  }
+		  {
+		    attribute kind {
+		      if ($source/self::java:extends)
+		      then 'generalization'
+		      else 'implementation'
+		    }
+		  }
+		</uml:inherits>
+
+rule	create-inherits-by-name-parent-stub
+source	//uml:inherits[@fromJavaName]
+target	$source/ancestor::uml:diagram[not(.//uml:class-stub/uml:name/text() = $source/@fromJavaName)]
+insert	<uml:class-stub><uml:name>{$source/@fromJavaName}</uml:name></uml:class-stub>
+
+rule	create-inherits-by-ref-parent-stub
+source	//uml:inherits[@fromJavaId]
+target	$source/ancestor::uml:diagram[not(../uml:class/@depicts = @source/@fromJavaId)]
+insert	<uml:class-stub depicts='{$source/@fromJavaId}'/>
+
+extend	copy-class-to-diagram
+override create-inherits-by-ref-parent-stub
+  source //uml:inherits[@fromJavaId=$source/../@xml:id]
+  target $target
+
+rule	create-inherits-association
+source	//uml:inherits
+$parent	if ($source/@fromJavaId)
+		then //uml:*[@depicts=$source/@fromJavaId]
+		else //uml:class-stub[uml:name/text() = $source/@fromJavaName]
+target	$source/ancestor::uml:diagram
+insert	<uml:association kind='{$source/@kind}'>
+		  <uml:tip at='{$source/../@xml:id}'/>
+		  <uml:tip at='{$parent/@xml:id}'/>
+		</uml:association>
+
+rule	copy-fields-to-attributes
+source	//java:field
+targets	//uml:class[@depicts = $source/../@xml:id]/uml:compartment[@kind='attribute']
+insert	<uml:attribute depicts='{$source/@xml:id}'/>
+order-as-source
+weight	0
+
+rule	copy-methods-to-operations
+source	//java:method | //java:constructor
+targets	//uml:class[@depicts = $source/../@xml:id]/uml:compartment[@kind='operation']
+insert	<uml:operation depicts='{$source/@xml:id}'/>
+order-as-source
+weight	0

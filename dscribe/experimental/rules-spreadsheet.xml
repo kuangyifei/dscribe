@@ -1,0 +1,169 @@
+<?xml version="1.0"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+  <Author>Piotr Kaminski</Author>
+  <LastAuthor>Piotr Kaminski</LastAuthor>
+  <Created>2006-01-20T21:32:05Z</Created>
+  <LastSaved>2006-01-20T21:51:15Z</LastSaved>
+  <Version>10.6735</Version>
+ </DocumentProperties>
+ <OfficeDocumentSettings xmlns="urn:schemas-microsoft-com:office:office">
+  <RelyOnVML/>
+  <AllowPNG/>
+  <DownloadComponents/>
+  <TargetScreenSize>1024x768</TargetScreenSize>
+  <LocationOfComponents HRef="file:///\\"/>
+ </OfficeDocumentSettings>
+ <ExcelWorkbook xmlns="urn:schemas-microsoft-com:office:excel">
+  <WindowHeight>9630</WindowHeight>
+  <WindowWidth>15165</WindowWidth>
+  <WindowTopX>120</WindowTopX>
+  <WindowTopY>45</WindowTopY>
+  <ProtectStructure>False</ProtectStructure>
+  <ProtectWindows>False</ProtectWindows>
+ </ExcelWorkbook>
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Bottom"/>
+   <Borders/>
+   <Font/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="s21">
+   <NumberFormat ss:Format="@"/>
+  </Style>
+  <Style ss:ID="s24">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Bottom"/>
+   <NumberFormat ss:Format="@"/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="Sheet1">
+  <Table ss:ExpandedColumnCount="7" ss:ExpandedRowCount="20" x:FullColumns="1"
+   x:FullRows="1" ss:StyleID="s21">
+   <Column ss:StyleID="s21" ss:AutoFitWidth="0" ss:Width="31.5"/>
+   <Column ss:StyleID="s21" ss:AutoFitWidth="0" ss:Width="33"/>
+   <Column ss:StyleID="s21" ss:AutoFitWidth="0" ss:Width="55.5"/>
+   <Column ss:Index="5" ss:StyleID="s21" ss:AutoFitWidth="0" ss:Width="113.25"/>
+   <Column ss:StyleID="s21" ss:AutoFitWidth="0" ss:Width="73.5"/>
+   <Column ss:StyleID="s21" ss:AutoFitWidth="0" ss:Width="72.75"/>
+   <Row>
+    <Cell><Data ss:Type="String">ID</Data></Cell>
+    <Cell><Data ss:Type="String">name</Data></Cell>
+    <Cell><Data ss:Type="String">binding</Data></Cell>
+    <Cell><Data ss:Type="String">command</Data></Cell>
+    <Cell><Data ss:Type="String">pattern</Data></Cell>
+   </Row>
+   <Row ss:Index="3">
+    <Cell><Data ss:Type="String">r1</Data></Cell>
+    <Cell><Data ss:Type="String">create diagram</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">keys</Data></Cell>
+    <Cell ss:Index="6"><Data ss:Type="String">$id</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">source</Data></Cell>
+    <Cell><Data ss:Type="String">map:create-diagram</Data></Cell>
+    <Cell><Data ss:Type="String">@xml:id</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">newdoc</Data></Cell>
+    <Cell><Data ss:Type="String" x:Ticked="1">diagrams/{$id}'</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">insert</Data></Cell>
+    <Cell><Data ss:Type="String">&lt;uml:diagram/&gt;</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">r2</Data></Cell>
+    <Cell ss:StyleID="s24"><Data ss:Type="String">assign class to diagram</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">keys</Data></Cell>
+    <Cell ss:Index="6"><Data ss:Type="String">$classId</Data></Cell>
+    <Cell><Data ss:Type="String">$diagramId</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">source</Data></Cell>
+    <Cell><Data ss:Type="String">map:class-to-diagram</Data></Cell>
+    <Cell><Data ss:Type="String">@class-id</Data></Cell>
+    <Cell><Data ss:Type="String">@diagram-id</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">source</Data></Cell>
+    <Cell><Data ss:Type="String">*</Data></Cell>
+    <Cell><Data ss:Type="String">@xml:id</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">source</Data></Cell>
+    <Cell><Data ss:Type="String">uml:diagram</Data></Cell>
+    <Cell ss:Index="7"><Data ss:Type="String">@xml:id</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">insert</Data></Cell>
+    <Cell><Data ss:Type="String">&lt;uml:class depicts='{$classId}'/&gt;</Data></Cell>
+   </Row>
+   <Row>
+    <Cell><Data ss:Type="String">r3</Data></Cell>
+    <Cell><Data ss:Type="String">copy java name</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">keys</Data></Cell>
+    <Cell ss:Index="6"><Data ss:Type="String">$sourceId</Data></Cell>
+    <Cell><Data ss:Type="String">$name</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">source</Data></Cell>
+    <Cell><Data ss:Type="String">java:*</Data></Cell>
+    <Cell><Data ss:Type="String">@xml:id</Data></Cell>
+    <Cell><Data ss:Type="String">@name</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">source</Data></Cell>
+    <Cell><Data ss:Type="String">uml:*</Data></Cell>
+    <Cell><Data ss:Type="String">@depicts</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">before</Data></Cell>
+    <Cell><Data ss:Type="String">uml:compartment</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">after</Data></Cell>
+    <Cell><Data ss:Type="String">uml:stereotype | uml:constraint</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:Index="4"><Data ss:Type="String">insert</Data></Cell>
+    <Cell><Data ss:Type="String">&lt;uml:name&gt;{$name}&lt;/uml:name&gt;</Data></Cell>
+   </Row>
+  </Table>
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <Selected/>
+   <Panes>
+    <Pane>
+     <Number>3</Number>
+     <ActiveRow>20</ActiveRow>
+    </Pane>
+   </Panes>
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+  </WorksheetOptions>
+ </Worksheet>
+ <Worksheet ss:Name="Sheet2">
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+  </WorksheetOptions>
+ </Worksheet>
+ <Worksheet ss:Name="Sheet3">
+  <WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel">
+   <ProtectObjects>False</ProtectObjects>
+   <ProtectScenarios>False</ProtectScenarios>
+  </WorksheetOptions>
+ </Worksheet>
+</Workbook>
