@@ -1,0 +1,30 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20000802//EN" "http://www.w3.org/TR/2000/CR-SVG-20000802/DTD/svg-20000802.dtd">
+<?AdobeSVGViewer save="snapshot"?>
+<svg width="80" height="80" viewBox="0 0 80 80">
+    <script type="text/ecmascript">
+
+    function clicked(evt) {
+    	var c = evt.target.getAttribute('fill');
+    	c = c == 'crimson' ? 'green' : 'crimson';
+    	evt.target.setAttribute('fill', c);
+	   var nextyear = new Date();
+   	nextyear.setFullYear(nextyear.getFullYear()+1);
+    	self.document.cookie = "blah=" + c + "; path=/; expires=" + nextyear.toGMTString();
+    }
+    </script>
+      <circle id="blah" cx="40" cy="40" r="20" fill="crimson"
+          onclick="clicked(evt);"/>
+    <script type="text/ecmascript">
+    	var s = self.document.cookie;
+    	if (s.indexOf('blah=') != -1) {
+    		var start = s.indexOf('blah=')+5;
+    		var end = s.indexOf(';', start);
+    		if (end == -1) end = s.length;
+    		var c = s.substring(start, end);
+    		if (c) {
+    			document.getElementById('blah').setAttribute('fill', c);
+    		}
+    	}
+    </script>
+</svg>

@@ -1,0 +1,85 @@
+namespaces({
+	map: "...",
+	uml: "...",
+	java: "...",
+	mod: "..."
+});
+ 
+ rule	("create-diagram")
+.source ("map:create-diagram")
+.createDocument ("diagrams/{$source/@xml:id}")
+.insert ("<uml:diagram/>");
+
+ rule 	("assign-class-to-diagram")
+.source ("map:class-to-diagram", {"diagramId": "@diagram-id", "classId": "@class-id"})
+.source ("java:class | java:interface", {"classId": "@xml:id"})
+.target ("uml:diagram", {"diagramId": "@xml:id"})
+.depict ("$source2")
+.insert ("<uml:class/>");
+
+ rule	("create-extends-association")
+.source	("uml:class", {"classId": "mod:depict/@ref"})
+.source	("java:*[java:extends/java:type]", {"classId" : "@xml:id", "superImplName": "java:extends/java:type/text()"})
+.source	("java:*[@implName]", {"superImplName": "@implName"})
+.insert	("$source1/ancestor::uml:diagram", "<uml:association kind='generalization'><tip 
+
+ rule	("stub-dependencies")
+.source	("java:*", {"classId": "@xml:id", "depImplName": ".//java:type/text()"})
+.source	("java:*", {"depImplName": "@implName"})
+.source ("map:class-to-diagram", {"diagramId": "@diagram-id", "classId": "@class-id"})
+.target ("uml:diagram", {"diagramId": "@xml:id"})
+.no		("uml:class-stub", {"classId": "mod:depict/@ref", "diagramId": "ancestor::uml:diagram/@xml:id"})
+.no		("uml:class", {"classId": "mod:depict/@ref", "diagramId": "ancestor::uml:diagram/@xml:id"})
+.depict ("id($parentId)")
+.insert ("<uml:class-stub/>");
+
+ rule	("class-replaces-stubs")
+.target	("uml:class", "mod:depict/@ref")
+.target	("uml:class-stub", "mod:depict/@ref")
+.delete	("$target2");
+
+ rule	("assign-interface-stereotype")
+.source ("java:interface")
+.target ("uml:class", "mod:depict/@ref")
+.before ("uml:name")
+.insert ("<uml:stereotype>interface</uml:stereotype>");
+
+ rule	("copy-java-name")
+.source ("java:*[@xml:id][@name]")
+.target ("uml:*[@xml:id]", "mod:depict/@ref")
+.before ("uml:compartment")
+.after	("uml:stereotype | uml:constraint")
+.insert ("<uml:name>{$source/@name}</uml:name>");
+
+ rule	("copy-java-package")
+.source ("java:packageref", ".//java:*/@xml:id")
+.target	("uml:class", "mod:depict/@ref")
+.before ("uml:name")
+.after	("uml:stereotype | uml:constraint")
+.insert ("<uml:owner>$source/text()</uml:owner>");
+
+ rule	("nest-in-uml-package")
+.source	("uml:*[@xml:id][uml:owner][not(ancestor::uml:package)]", {"package-name": "uml:owner/text()", "diagram-id": "ancestor::uml:diagram/@xml:id"})
+.target	("uml:package", {"package-name": "uml:name/text()", "diagram-id": "ancestor::uml:diagram/@xml:id"})
+.move	("$source/..");
+
+ rule	("create-attributes-compartment")
+.source ("java:*[@xml:id][java:field]")
+.target ("uml:class", "mod:depict/@ref")
+.before ("uml:compartment[@of='operation']")
+.insert ("<uml:compartment of='attribute'/>");
+
+ rule	("copy-fields-to-attributes")
+.source ("java:field", "parent::java:class/@xml:id")
+.target ("uml:compartment[@of='attribute']", "parent::uml:class/mod:depict/@ref")
+.before ("uml:attribute[mod:derived/@from=$source/following-sibling::java:field/@xml:id]")
+.after  ("uml:attribute[mod:derived/@from=$source/preceding-sibling::java:field/@xml:id]")
+.depict ("$source")
+.insert ("<uml:attribute/>");
+
+<action name="assign-java-name">
+  <id name="java-id" idref="j324"/>
+  <id name="uml-id" idref="u234"/>
+  <id name="_1" idref="j324"/>
+  <id name="_2" idref="u234"/>
+</action>

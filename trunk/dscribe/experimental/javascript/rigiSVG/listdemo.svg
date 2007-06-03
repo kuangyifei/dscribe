@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!DOCTYPE svg  PUBLIC "-//W3C//DTD SVG 1.0//EN"
+		"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd" >
+  <svg xmlns:a3="http://ns.adobe.com/AdobeSVGViewerExtensions/3.0/" preserveAspectRatio="xMidYMid meet" a3:scriptImplementation="Adobe" width="100%" onload="DoOnLoad(evt)" zoomAndPan="disable" viewBox="0 0 1024 768" height="100%" class="doc">
+    <title >RigiAC View</title>
+    <desc >the desc</desc>
+    <!-- Revision: 1.44  -->
+    
+    <defs >
+      <style type="text/css"><![CDATA[
+	.doc { font-family:Verdana;font-size:12; }
+	.graphfont { font-family:Verdana;font-size:9.75894039735099;stroke:none }
+	.graphpaneborder { stroke:#0062AC;stroke-opacity:0.4;stroke-width:1;fill:none; }
+	.instruction { pointer-events:none;font-size:9; }
+	.menupane { fill:none; }
+	.nodeindication { pointer-events:none;stroke:blue;stroke-width:2.7;fill:none; }
+	.rubberband { pointer-events:none;fill:blue;stroke:blue;stroke-width:1;fill-opacity:0.1; }
+	]]></style>
+      <marker markerHeight="7.2" preserveAspectRatio="none" refX="0" refY="5" viewBox="0 0 10 10" markerWidth="7.2" orient="auto" id="Triangle" markerUnits="userSpaceOnUse">
+        <path d="M 0 0 L 10 5 L 0 10 z" />
+      </marker>
+      <symbol r="9" overflow="visible" id="nodetype_Data">
+        <circle cx="0" r="9" cy="0" />
+      </symbol>
+      <symbol r="9" overflow="visible" id="nodetype_Collapse">
+        <circle cx="0" r="9" cy="0" />
+      </symbol>
+      <symbol r="9" overflow="visible" id="nodetype_Function">
+        <circle cx="0" r="9" cy="0" />
+      </symbol>
+      <symbol r="9" overflow="visible" name="polygon" id="polygon">
+        <path d="M93.8144531,0.5429688l32.1401367,53.8051758l-30.5263672,54.7368164l-62.6665039,0.9316406L0.621582,56.2114258L31.1479492,1.4746094l62.6665039-0.9316406z" style="fill-rule:nonzero;clip-rule:nonzero;stroke:#000000;stroke-miterlimit:4;" />
+      </symbol>
+      <symbol overflow="visible" style="fill:white;stroke:darkcyan;stroke-width:2;" id="zoomout">
+        <line x1="0" x2="-8" y1="0" y2="20" />
+        <circle r="8" x="0" y="0" />
+        <line x1="-4" x2="4" y1="0" y2="0" />
+      </symbol>
+      <symbol overflow="visible" id="zoomin">
+        <use xlink:href="#zoomout" id="zoom" />
+        <line x1="0" x2="0" y1="-4" y2="4" />
+      </symbol>
+    </defs>
+    <script xlink:href="./Command.es" a3:scriptImplementation="Adobe" />
+    <script xlink:href="./Components.es" a3:scriptImplementation="Adobe" />
+    <script xlink:href="./core.es" a3:scriptImplementation="Adobe" />
+    <script xlink:href="./rGraph.es" a3:scriptImplementation="Adobe" />
+    <script xlink:href="./menuMaker.js" type="text/ecmascript"/>
+    <script a3:scriptImplementation="Adobe" type="text/ecmascript"><![CDATA[
+	
+	// global options
+	var ATTRNSVAL = "http://www.rigi.csc.uvic.ca/";
+	var CREATION = "dynamic";
+	var ATTRNS = "rigiattr";
+
+	function createDomain() {
+			// 
+		var domain = new Domain("rigiSVG");
+		var type = domain.addNodeType("Data");
+		type.setAttr("rgb", "rgb(102,102,255)");
+		var type = domain.addNodeType("Collapse");
+		type.setAttr("rgb", "rgb(255,179,96)");
+		var type = domain.addNodeType("Function");
+		type.setAttr("rgb", "rgb(0,195,107)");
+		
+		var type = domain.addArcType("call");
+		type.setAttr("rgb", "rgb(0,0,153)");
+		var type = domain.addArcType("Reference");
+		type.setAttr("rgb", "rgb(153,0,0)");
+		var type = domain.addArcType("composite");
+		type.setAttr("rgb", "rgb(99,248,177)");
+		return domain;	
+	}
+	
+	function createGraph(graph) {
+		 // set graph attributes
+		 // create the model
+		var model	= graph.getModel();
+		model.setDomain(createDomain());
+		var Node	= model.getNodeHandler();
+		var Arc	= model.getArcHandler();
+			// create nodes 
+		node3 = model.createNode("3", "Data");
+		Node.setAttribute(node3, "name", "ADT_list");
+		Node.setAttribute(node3, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/");
+		node10 = model.createNode("10", "Data");
+	        Node.setAttribute(node10, "name", "ADT_node");
+		Node.setAttribute(node10, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/");
+		node20 = model.createNode("20", "Data");
+		Node.setAttribute(node20, "name", "ADT_model");
+		Node.setAttribute(node20, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/");
+		
+		node1 = model.createNode("1", "Function");
+		Node.setAttribute(node1, "name", "mylistprint");
+		Node.setAttribute(node1, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/listtest.c");
+		node2 = model.createNode("2", "Function");
+		Node.setAttribute(node2, "name", "main");
+		Node.setAttribute(node2, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/listtest.c");
+		node4 = model.createNode("4", "Data");
+		Node.setAttribute(node4, "name", "ADT_element");
+		Node.setAttribute(node4, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/");
+		
+		node5 = model.createNode("5", "Function");
+	        Node.setAttribute(node1, "name", "mylistout");
+		Node.setAttribute(node1, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/listtest.c");
+	        node6 = model.createNode("6", "Function");
+		Node.setAttribute(node6, "name", "ADT_data");
+		Node.setAttribute(node6, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/listtest.c");
+		node7 = model.createNode("7", "Data");
+		Node.setAttribute(node4, "name", "ADT_function");
+		Node.setAttribute(node4, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/");
+		
+		node8 = model.createNode("8", "Function");
+		Node.setAttribute(node8, "name", "mylistin");
+		Node.setAttribute(node8, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/listtest.c");
+		node9 = model.createNode("9", "Function");
+		Node.setAttribute(node9, "name", "ADT_delete");
+		Node.setAttribute(node9, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/listtest.c");
+		node11 = model.createNode("11", "Data");
+		Node.setAttribute(node11, "name", "ADT_make");
+		Node.setAttribute(node11, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/");
+		
+		node12 = model.createNode("12", "Data");
+		Node.setAttribute(node12, "name", "ADT_do");
+		Node.setAttribute(node12, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/");
+		node13 = model.createNode("13", "Data");
+		Node.setAttribute(node13, "name", "ADT_copy");
+		Node.setAttribute(node13, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/");
+		node14 = model.createNode("14", "Data");
+		Node.setAttribute(node14, "name", "ADT_undo");
+		Node.setAttribute(node14, "sourcefile", "file:/home/kienle/prj/rigi/Rigi/rigiedit/Rigi/db/list-d/src/");
+		
+		
+			// create arcs 
+		
+		arc1048649 = model.createArc("1", "Reference", node3, node4);
+		arc1048635 = model.createArc("2", "Reference", node1, node3);
+		arc1048652 = model.createArc("3", "call", node1, node4);
+		arc1048636 = model.createArc("4", "call", node5, node3);
+		arc1048653 = model.createArc("5", "Reference", node5, node4);
+		arc1048623 = model.createArc("6", "call", node2, node1);
+		arc1048624 = model.createArc("7", "Reference", node9, node10);
+		arc1048625 = model.createArc("8", "Reference", node10, node20);
+		arc1048626 = model.createArc("9", "Reference", node4, node20);
+		
+		arc1048627 = model.createArc("10", "call", node2, node5);
+		arc1048628 = model.createArc("11", "call", node1, node8);
+		arc1048629 = model.createArc("12", "call", node5, node6);
+		arc1048630 = model.createArc("13", "call", node1, node9);
+		arc1048631 = model.createArc("14", "Reference", node8, node12);
+		arc1048632 = model.createArc("15", "Reference", node8, node13);
+		arc1048633 = model.createArc("16", "Reference", node8, node14);
+		
+		// create the view
+		graph.setBounds(1, 1, 755, 768);
+		var view = graph.view;
+		view.viewattrs.setAttr("NODE_RADIUS", 9);
+		view.viewattrs.setAttr("GRAPH_STYLE", "directed");
+		view.viewattrs.setAttr("LABEL_BEHAVIOUR", "tooltip");
+		view.realize();
+		view.setViewbox(154, -51, 408, 614, "xMinYMin meet");
+		view.importModel();
+		
+		var nodeview = view.nodeview;
+		
+			// set node locations
+		
+
+		nodeview.setInitialLocation("10", 460, 300);
+		nodeview.setInitialLocation("20", 400, 300);
+		nodeview.setInitialLocation("1", 530, 150);
+		nodeview.setInitialLocation("2", 450, 80);
+		nodeview.setInitialLocation("3", 360, 220);
+		nodeview.setInitialLocation("4", 430, 220);
+		nodeview.setInitialLocation("5", 370, 150);
+		nodeview.setInitialLocation("6", 290, 220);
+		nodeview.setInitialLocation("7", 700, 330);
+		nodeview.setInitialLocation("8", 600, 220);
+		nodeview.setInitialLocation("9", 500, 220);
+		nodeview.setInitialLocation("11",700, 300);
+		nodeview.setInitialLocation("12",550, 300);
+		nodeview.setInitialLocation("13",600, 300);
+		nodeview.setInitialLocation("14",650, 300);
+		view.redraw();
+		
+			// add node labels to view 
+		
+		/*var labels = view.labels;
+		labels.createLabels(view.nodes)
+		labels.setDefaultVisibility(["1"], true);
+		labels.setDefaultVisibility(["2"], true);
+		labels.setDefaultVisibility(["4"], true);
+		labels.setDefaultVisibility(["3"], false);
+		labels.showDefault(view.nodes);*/
+		return graph;
+	}
+
+	]]></script>
+    <rect width="768" height="755" x="1" class="graphpaneborder" id="graph_pane_border" y="1" />
+    <g transform="translate(769, 0)" id="menu_pane" />
+    <text text-anchor="start" x="1" class="instruction" id="instruction" y="765">STATUS: </text>
+
+  </svg>
+
+<!-- 
+
+	Generated in Perl 
+	using the SVG Module V.2.23
+	by Ronan Oger
+	Info: http://www.roasp.com/
+
+ -->
