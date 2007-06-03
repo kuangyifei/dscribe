@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<exist>
+    <cluster protocol="UDP:PING" dbaUser="admin" dbaPassword=""/>
+    <db-connection database="native" files="data"
+        pageSize="4096" cacheSize="64M" free_mem_min="5">
+        <pool min="1" max="20" sync-period="120000" wait-before-shutdown="120000"/>
+        <recovery enabled="yes" sync-on-commit="no"
+            size="10M" journal-dir="test/data"/>
+    </db-connection>
+	   
+    <serializer enable-xinclude="yes" enable-xsl="no"
+        indent="yes" add-exist-id="none" match-tagging-elements="yes"
+        match-tagging-attributes="no"/>
+  
+    <xupdate growth-factor="20" allowed-fragmentation="20"
+        enable-consistency-checks="no"/>
+        
+    <xquery enable-java-binding="no">
+        <builtin-modules>
+            <module class="org.exist.xquery.functions.util.UtilModule"
+                uri="http://exist-db.org/xquery/util" />
+            <module class="org.exist.xquery.functions.transform.TransformModule"
+                uri="http://exist-db.org/xquery/transform" />
+            <module class="org.exist.xquery.functions.xmldb.XMLDBModule"
+                uri="http://exist-db.org/xquery/xmldb" />
+            <module class="org.exist.xquery.functions.request.RequestModule"
+                uri="http://exist-db.org/xquery/request" />
+            <module class="org.exist.xquery.functions.response.ResponseModule"
+                uri="http://exist-db.org/xquery/response" />
+            <module class="org.exist.xquery.functions.session.SessionModule"
+                uri="http://exist-db.org/xquery/session" />
+            <module class="org.exist.xquery.functions.text.TextModule"
+                uri="http://exist-db.org/xquery/text" />
+            <module class="org.exist.xquery.modules.example.ExampleModule"
+                uri="http://exist-db.org/xquery/examples" />
+            <module class="org.exist.xquery.functions.validation.ValidationModule"
+                uri="http://exist-db.org/xquery/validation" />
+            <module class="org.exist.xquery.functions.system.SystemModule"
+                uri="http://exist-db.org/xquery/system" />
+        </builtin-modules>
+    </xquery>
+
+    <indexer stemming="no" caseSensitive="no" suppress-whitespace="both" 
+        index-depth="3" tokenizer="org.exist.storage.analysis.SimpleTokenizer" 
+        track-term-freq="no" validation="no" preserve-whitespace-mixed-content="no">
+
+		<stopwords file="stopword"/>
+        
+        <index>
+            <fulltext default="all" attributes="false">
+                <exclude path="/auth"/>
+            </fulltext>
+        </index>
+
+    </indexer>
+   
+</exist>
