@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="resources"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="/javacvs"/>
+	<classpathentry kind="lib" path="lib/asm-2.1.jar"/>
+	<classpathentry kind="lib" path="lib/jargp-custom.jar"/>
+	<classpathentry kind="lib" path="lib/test/cglib-nodep-2.1_3.jar"/>
+	<classpathentry kind="lib" path="lib/test/jmock-1.0.1.jar" sourcepath="C:/Code/Libraries/jmock-1.0.1/core/src"/>
+	<classpathentry kind="lib" path="lib/test/jmock-cglib-1.0.1.jar" sourcepath="C:/Code/Libraries/jmock-1.0.1/extensions/cglib/src"/>
+	<classpathentry kind="lib" path="lib/ant-1.6.5.jar" sourcepath="C:/Code/Libraries/apache-ant-1.6.5/src/main">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/C:/Code/Libraries/apache-ant-1.6.5/docs/manual/api/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="lib" path="lib/log4j-1.2.14.jar" sourcepath="C:/Code/Libraries/logging-log4j-1.2.13/src/java">
+		<attributes>
+			<attribute name="javadoc_location" value="file:/C:/Code/Libraries/logging-log4j-1.2.13/docs/api/"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry combineaccessrules="false" kind="src" path="/eXist"/>
+	<classpathentry kind="lib" path="lib/qdox-1.6.2.jar"/>
+	<classpathentry kind="lib" path="lib/quartz-1.6.0.jar"/>
+	<classpathentry kind="lib" path="lib/test/junit-4.3.1.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
