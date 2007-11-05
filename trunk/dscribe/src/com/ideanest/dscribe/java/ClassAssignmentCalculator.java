@@ -90,10 +90,14 @@ public class ClassAssignmentCalculator implements AnnealingDiagramAssigner.Calcu
 			QName qname = typeParent.qname();
 			if (!Namespace.JAVA.equals(qname.getNamespaceURI())) continue;
 			typeRefCost = TYPE_REF_COST_PER_CONTEXT.get(qname.getLocalPart());
-			StringTokenizer st = new StringTokenizer(typeParent.query().single("ancestor-or-self::*[@modifiers][1]/@modifiers").value());
-			while(st.hasMoreTokens()) {
-				Double multiplier = COST_MULTIPLIER_PER_MODIFIER.get(st.nextToken());
-				if (multiplier != null) typeRefCost *= multiplier;
+			String modifiers = typeParent.query().presub()
+					.optional("$1/@modifiers", MODIFIER_LOCATION_PER_CONTEXT.get(qname.getLocalPart())).value();
+			if (modifiers != null) {
+				StringTokenizer st = new StringTokenizer(modifiers);
+				while(st.hasMoreTokens()) {
+					Double multiplier = COST_MULTIPLIER_PER_MODIFIER.get(st.nextToken());
+					if (multiplier != null) typeRefCost *= multiplier;
+				}
 			}
 		}
 		double r = 1 - 1 / Math.pow(2, typeRefCost / TYPE_REF_HALFWAY_POINT);
@@ -111,26 +115,32 @@ public class ClassAssignmentCalculator implements AnnealingDiagramAssigner.Calcu
 	private static final Map<String, Double>
 		TYPE_REF_COST_PER_CONTEXT = new HashMap<String, Double>(),
 		COST_MULTIPLIER_PER_MODIFIER = new HashMap<String, Double>();
-	
-	static {
-		TYPE_REF_COST_PER_CONTEXT.put("extends",		250.0		);
-		TYPE_REF_COST_PER_CONTEXT.put("implements",	150.0		);			
-		TYPE_REF_COST_PER_CONTEXT.put("field",				50.0		);
-		TYPE_REF_COST_PER_CONTEXT.put("method",		35.0		);
-		TYPE_REF_COST_PER_CONTEXT.put("param",			25.0		);
-		TYPE_REF_COST_PER_CONTEXT.put("throws",			2.0			);
-		// TODO: add type parameter dependencies?
+	private static final Map<String, String>
+		MODIFIER_LOCATION_PER_CONTEXT = new HashMap<String, String>();
+
+	private static void initContext(String element, double typeRefCost, String location) {
+		TYPE_REF_COST_PER_CONTEXT.put(element, typeRefCost);
+		MODIFIER_LOCATION_PER_CONTEXT.put(element, location);
 	}
 	
 	static {
+		initContext("extends",			250.0, "..");
+		initContext("implements",	150.0, "..");
+		initContext("field",				50.0, ".");
+		initContext("method",			35.0, ".");
+		initContext("param",			25.0, "..");
+		initContext("throws",			2.0, "..");
+		// TODO: add type parameter dependencies?
+
 		// all relative to the default (package-scope) visibility modifier
 		COST_MULTIPLIER_PER_MODIFIER.put("public", 2.0);
 		COST_MULTIPLIER_PER_MODIFIER.put("protected", 1.2);
 		COST_MULTIPLIER_PER_MODIFIER.put("private", 0.2);
+		
 	}
 	
-	@Deprecated @SuppressWarnings("deprecation") @DatabaseTest.ConfigFile("test/conf.xml")
-	public static class Test extends DatabaseTest {
+	@Deprecated @SuppressWarnings("deprecation") @DatabaseTestCase.ConfigFile("test/conf.xml")
+	public static class Test extends DatabaseTestCase {
 		private ClassAssignmentCalculator calc;
 		@Override public void setUp() {super.setUp(); calc = new ClassAssignmentCalculator();}
 		@Override public void tearDown() throws Exception {calc = null; super.tearDown();}

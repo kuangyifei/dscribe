@@ -13,7 +13,7 @@ public class For implements BlockType {
 		return new QName(Namespace.RULES, "for", null);
 	}
 
-	public Block define(Node def, Rule rule) throws RuleBaseException {
+	public Block define(Node def) throws RuleBaseException {
 		boolean each = def.query().exists("@each"), one = def.query().exists("@one");
 		if (each && one) throw new RuleBaseException("for block specified with both @each and @one");
 		if (!(each || one)) throw new RuleBaseException("for block has neither @each nor @one");
@@ -55,18 +55,22 @@ public class For implements BlockType {
 		ForBlock(Node def, String varAttrName) throws RuleBaseException {
 			String varName = def.query().single(varAttrName).value();
 			target = varName.equals("target");
-			if (!varName.startsWith("$")) throw new RuleBaseException("unrecognized for-block variable keyword '" + varName + "'");
-			if (target) varName = null;
+			if (target) {
+				varName = null;
+			} else {
+				if (!varName.startsWith("$"))  // TODO: verify variable name syntax
+					throw new RuleBaseException("unrecognized for-block variable keyword '" + varName + "'");
+			}
 			variableName = varName;
 			query = new Query.Items(def);	
 		}
 		
-		public Helper createHelper(Mod mod) {
-			return new ForBlockHelper(mod);
+		public Seg createSeg(Mod mod) {
+			return new ForSeg(mod);
 		}
 		
-		private class ForBlockHelper extends Helper implements InsertionTarget {
-			ForBlockHelper(Mod mod) {super(mod);}
+		private class ForSeg extends Seg implements InsertionTarget {
+			ForSeg(Mod mod) {super(mod);}
 			
 			private void bindVariable(Object value) throws TransformException {
 				if (variableName != null) mod.bindVariable(variableName, value);
@@ -94,6 +98,22 @@ public class For implements BlockType {
 			}
 		}
 		
-	}
+		@Deprecated @DatabaseTestCase.ConfigFile("test/conf.xml")
+		public static class ParseTest extends DatabaseTestCase {
+			private Node rule;
+			@Override protected void setUp() {
+				Folder rules = db.createFolder("rules");
+				rules.namespaceBindings().put("", Namespace.RULES);
+				rule = rules.documents().build(Name.create("samplerule")).elem("rule").commit().root();
+			}
+			public void testEachBlock() throws RuleBaseException {
+				Node def = rule.append().elem("for").attr("each", "$x").text("//for[@each]").end("for").commit();
+				For.ForBlock block = (For.ForBlock) new For().define(def);
+				assertTrue(block instanceof For.ForEachBlock);
+				assertEquals("$x", block.variableName);
+				assertFalse(block.target);
+			}
+		}
 
+	}	
 }

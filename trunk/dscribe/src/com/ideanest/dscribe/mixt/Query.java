@@ -11,7 +11,8 @@ public abstract class Query {
 	
 	private Query(Node def, String query) {
 		this.query = query;
-		for (Iterator<String> it = def.query().all("for $prefix in in-scope-prefixes($_1) return ($prefix, namespace-uri-for-prefix($prefix, $_1))", def).values().iterator(); it.hasNext(); ) {
+		for (Iterator<String> it = def.query().all(
+				"for $prefix in in-scope-prefixes($_1) return ($prefix, namespace-uri-for-prefix($prefix, $_1))", def).values().iterator(); it.hasNext(); ) {
 			namespaceMap.put(it.next(), it.next());
 		}
 	}
@@ -73,8 +74,8 @@ public abstract class Query {
 		}
 	}
 	
-	@Deprecated @SuppressWarnings("deprecation") @DatabaseTest.ConfigFile("test/conf.xml")
-	public static class Test extends DatabaseTest {
+	@Deprecated @SuppressWarnings("deprecation") @DatabaseTestCase.ConfigFile("test/conf.xml")
+	public static class Test extends DatabaseTestCase {
 		public void testSerializeContents1() {
 			assertEquals("test", serializeContents(db.getFolder("/").query().single("<root>test</root>").node()));
 		}

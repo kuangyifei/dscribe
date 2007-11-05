@@ -13,7 +13,7 @@ public class With implements BlockType {
 		return new QName(Namespace.RULES, "with", null);
 	}
 
-	public Block define(Node def, Rule rule) throws RuleBaseException {
+	public Block define(Node def) throws RuleBaseException {
 		boolean some = def.query().exists("@some"), any = def.query().exists("@any");
 		if (some && any) throw new RuleBaseException("with block has both @some and @any");
 		if (!(some || any)) throw new RuleBaseException("with block has neither @some nor @any");
@@ -28,6 +28,8 @@ public class With implements BlockType {
 		
 		private WithBlock(Node def, boolean optional) throws RuleBaseException {
 			variableName = def.query().single(optional ? "@any" : "@some").value();
+			if (!variableName.startsWith("$"))  // TODO: verify variable name syntax
+				throw new RuleBaseException("illegal with block variable name '" + variableName + "'");
 			this.optional = optional;
 			query = new Query.Items(def);
 		}
@@ -39,10 +41,10 @@ public class With implements BlockType {
 			}
 		}
 		
-		public Helper createHelper(Mod mod) {return new WithHelper(mod);}
+		public Seg createSeg(Mod mod) {return new WithSeg(mod);}
 
-		private class WithHelper extends Helper {
-			WithHelper(Mod mod) {super(mod);}
+		private class WithSeg extends Seg {
+			WithSeg(Mod mod) {super(mod);}
 			
 			@Override public void analyze() throws TransformException {
 				requiredVariables = query.analyze(mod.globalScope()).requiredVariables();

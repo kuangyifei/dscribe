@@ -99,7 +99,7 @@ public class Rule {
 	private Block defineBlock(Node blockDef) throws RuleBaseException {
 		BlockType blockType = BLOCK_TYPE_DICTIONARY.get(blockDef.qname());
 		if (blockType == null) throw new RuleBaseException(this + " unknown block " + blockDef);
-		Block block = blockType.define(blockDef, this);
+		Block block = blockType.define(blockDef);
 		boolean isLinear = block instanceof LinearBlock, isKey = block instanceof KeyBlock;
 		if (isLinear && isKey) throw new RuleBaseException("block " + block + " is both key and linear");
 		if (!(isLinear || isKey)) throw new RuleBaseException("block " + block + " is neither key nor linear");
