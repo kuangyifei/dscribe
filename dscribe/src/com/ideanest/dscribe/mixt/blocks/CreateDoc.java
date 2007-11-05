@@ -13,7 +13,7 @@ public class CreateDoc implements BlockType {
 		return new QName(Namespace.RULES, "create-doc", null);
 	}
 
-	public Block define(Node def, Rule rule) throws RuleBaseException {
+	public Block define(Node def) throws RuleBaseException {
 		return new CreateDocBlock(def);
 	}
 	
@@ -29,14 +29,12 @@ public class CreateDoc implements BlockType {
 			modBuilder.supplement().elem("docname")
 				.text(resolveName(modBuilder.parent(), modBuilder.scope()))
 			.end("docname");
-			modBuilder.dependOn(requiredVariables).unverified();
+			modBuilder.dependOn(requiredVariables);
 			modBuilder.commit();
 		}
 
 		private String resolveName(Mod keyMod, QueryService scope) throws TransformException {
-			String name = (query == null)
-				? keyMod.key() + ".xml"
-				: query.runOn(scope);
+			String name = (query == null) ? keyMod.key() + ".xml" : query.runOn(scope);
 			if (name == null || name.length() == 0)
 				throw new TransformException("create-doc failed to resolve document name");
 			if (name.charAt(0) == '/') throw new TransformException("create-doc document name cannot begin with a slash");
@@ -44,12 +42,12 @@ public class CreateDoc implements BlockType {
 			return name;
 		}
 		
-		public Helper createHelper(Mod mod) {return new CreateDocHelper(mod);}
+		public Seg createSeg(Mod mod) {return new CreateDocSeg(mod);}
 		
-		private class CreateDocHelper extends Helper implements InsertionTarget {
+		private class CreateDocSeg extends Seg implements InsertionTarget {
 			private String name;
 			
-			CreateDocHelper(Mod mod) {super(mod);}
+			CreateDocSeg(Mod mod) {super(mod);}
 			
 			@Override public void restore() throws TransformException {
 				name = mod.data().query().single("docname").value();

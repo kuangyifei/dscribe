@@ -20,7 +20,7 @@ public class Mod {
 	private boolean restored;
 	private Set<String> boundVariables;
 	private List<Node> references;
-	private Helper helper;
+	private Seg seg;
 	private Node data;
 
 	Mod(Rule rule) {
@@ -90,7 +90,7 @@ public class Mod {
 	}
 	
 	public <T> T nearestAncestorImplementing(Class<T> clazz) throws TransformException {
-		if (clazz.isInstance(helper)) return clazz.cast(helper);
+		if (clazz.isInstance(seg)) return clazz.cast(seg);
 		return parent.nearestAncestorImplementing(clazz);
 	}
 	
@@ -111,7 +111,7 @@ public class Mod {
 	
 	Mod deriveChild(Block block, String key) {
 		Mod mod = block instanceof KeyBlock ? new KeyMod(this, key) : new Mod(this);
-		mod.helper = block.createHelper(mod);
+		mod.seg = block.createSeg(mod);
 		return mod;
 	}
 	
@@ -142,17 +142,17 @@ public class Mod {
 		}
 		
 		data.namespaceBindings().replaceWith(EMPTY_NAMESPACES);
-		helper.restore();
+		seg.restore();
 	}
 	
 	void verify() throws TransformException {
 		LOG.debug("verifying " + this);
-		helper.verify();
+		seg.verify();
 	}
 	
 	void analyze() throws TransformException {
 		LOG.debug("analyzing " + this);
-		helper.analyze();
+		seg.analyze();
 	}
 	
 	void writeAncestors(ElementBuilder<?> builder) {
@@ -215,7 +215,7 @@ public class Mod {
 				Mod mod = createChild();
 				mod.references = references;
 				
-				Node modNode = mod.rule.engine.modStore.query().optional("/id($_1)/self::mod", mod.key()).node();
+				Node modNode = mod.rule.engine.modStore.query().optional("id($_1)/self::mod", mod.key()).node();
 				if (modNode.extant()) {
 					final int oldStage = modNode.query().single("@stage").intValue();
 					if (oldStage > mod.stage) return;
@@ -231,8 +231,8 @@ public class Mod {
 				}
 				if (!mod.restored) mod.data = writeData(mod, modNode);
 				
-				mod.helper = block.createHelper(mod);
-				mod.helper.restore();
+				mod.seg = block.createSeg(mod);
+				mod.seg.restore();
 				children.add(mod);
 			} finally {
 				reset();
@@ -323,6 +323,10 @@ public class Mod {
 			if (references == null) references = new ArrayList<Node>();
 			references.add(node);
 			dependOn(node.document());
+		}
+		
+		public String generateId(int serial) {
+			return parent.key() + (parent.stage+1) + (serial >= 0 ? "-" + serial : "") + ".";
 		}
 		
 		public class DependencyModifier {

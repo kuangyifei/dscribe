@@ -3,6 +3,6 @@ package com.ideanest.dscribe.mixt;
 
 public interface Block {
 	
-	Helper createHelper(Mod mod);
+	Seg createSeg(Mod mod);
 	
 }

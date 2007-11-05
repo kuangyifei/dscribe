@@ -98,8 +98,8 @@ public class CheckpointMediator extends TaskBase {
 	/**
 	 * @deprecated Test class that should not be javadoc'ed.
 	 */
-	@Deprecated @DatabaseTest.ConfigFile("test/conf.xml")
-	public static class Test extends DatabaseTest {
+	@Deprecated @DatabaseTestCase.ConfigFile("test/conf.xml")
+	public static class Test extends DatabaseTestCase {
 		private CheckpointMediator mediator;
 		private Mock job;
 		@Override

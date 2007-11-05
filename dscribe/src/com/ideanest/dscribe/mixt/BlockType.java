@@ -7,6 +7,6 @@ public interface BlockType {
 
 	QName xmlName();
 	
-	Block define(Node def, Rule rule) throws RuleBaseException;
+	Block define(Node def) throws RuleBaseException;
 
 }
