@@ -1,13 +1,14 @@
 package com.ideanest.dscribe.mixt;
 
+import static org.junit.Assert.assertEquals;
+
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.StringTokenizer;
 
-import junit.framework.TestCase;
-
 import org.apache.log4j.Logger;
 import org.exist.fluent.*;
+import org.junit.*;
 
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.job.TaskBase;
@@ -175,44 +176,44 @@ public class TransformTask extends TaskBase {
 	}
 	
 	@Deprecated
-	public static class TestAcronymize extends TestCase {
+	public static class _TestAcronymize {
 		private TransformTask self;
-		@Override public void setUp() {self = new TransformTask();}
-		@Override public void tearDown() {self = null;}
-		public void test1() {
+		@Before public void setUp() {self = new TransformTask();}
+		@After public void tearDown() {self = null;}
+		@Test public void test1() {
 			assertEquals("ast", self.acronymize("a-silly-test"));
 		}
-		public void test2() {
+		@Test public void test2() {
 			assertEquals("ast", self.acronymize("A-silly-Test"));
 		}
-		public void test3() {
+		@Test public void test3() {
 			assertEquals("st", self.acronymize("__stupid-test.5"));
 		}
-		public void test4() {
+		@Test public void test4() {
 			assertEquals("bbb", self.acronymize("blah BoOh bee"));
 		}
-		public void test5() {
+		@Test public void test5() {
 			assertEquals("", self.acronymize("1d 3g.98X-1_"));
 		}
-		public void test6() {
+		@Test public void test6() {
 			assertEquals("ast", self.acronymize("ASillyTest"));
 		}
-		public void test7() {
+		@Test public void test7() {
 			assertEquals("ast", self.acronymize("aSillyTest"));
 		}
-		public void test8() {
+		@Test public void test8() {
 			assertEquals("avst", self.acronymize("AVerySillyTestIndeed"));
 		}
-		public void test9() {
+		@Test public void test9() {
 			assertEquals("mmm", self.acronymize("$moneyMoneyMoney"));
 		}
-		public void test10() {
+		@Test public void test10() {
 			assertEquals("sil", self.acronymize("sillytest"));
 		}
-		public void test11() {
+		@Test public void test11() {
 			assertEquals("si", self.acronymize("si"));
 		}
-		public void test12() {
+		@Test public void test12() {
 			assertEquals("st", self.acronymize("SillyTest"));
 		}
 	}

@@ -1,11 +1,12 @@
 package com.ideanest.dscribe.opti;
 
-import java.util.*;
+import static org.junit.Assert.assertEquals;
 
-import junit.framework.TestCase;
+import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.exist.fluent.*;
+import org.junit.Test;
 
 import com.ideanest.dscribe.InvalidConfigurationException;
 import com.ideanest.dscribe.Namespace;
@@ -384,44 +385,44 @@ public class AnnealingDiagramAssigner extends TaskBase {
 	 * @deprecated for testing only
 	 */
 	@Deprecated
-	public static class Test extends TestCase {
-		public void testCommonPrefixFraction1() {
+	public static class _Test {
+		@Test public void commonPrefixFraction1() {
 			assertEquals(0.0, AnnealingDiagramAssigner.commonPrefixFraction("com.ideanest.reef", "org.foo.blah.fuz"), 0);
 		}
-		public void testCommonPrefixFraction2() {
+		@Test public void commonPrefixFraction2() {
 			assertEquals(1.0, AnnealingDiagramAssigner.commonPrefixFraction("com.ideanest.reef", "com.ideanest.reef"), 0);
 		}
-		public void testCommonPrefixFraction3() {
+		@Test public void commonPrefixFraction3() {
 			assertEquals(1.0, AnnealingDiagramAssigner.commonPrefixFraction("com.ideanest.reef.db", "com.ideanest"), 0);
 		}
-		public void testCommonPrefixFraction4() {
+		@Test public void commonPrefixFraction4() {
 			assertEquals(1.0, AnnealingDiagramAssigner.commonPrefixFraction("com.ideanest", "com.ideanest.reef.db"), 0);
 		}
-		public void testCommonPrefixFraction5() {
+		@Test public void commonPrefixFraction5() {
 			assertEquals(0.5, AnnealingDiagramAssigner.commonPrefixFraction("com.ideanest.vb.blah", "com.ideanest.reef.db"), 0);
 		}
-		public void testStringCommonalityFraction1() {
+		@Test public void stringCommonalityFraction1() {
 			assertEquals(0.0, AnnealingDiagramAssigner.stringCommonalityFraction("abcd", "defg"), 0);
 		}
-		public void testStringCommonalityFraction2() {
+		@Test public void stringCommonalityFraction2() {
 			assertEquals(1.0, AnnealingDiagramAssigner.stringCommonalityFraction("", ""), 0);
 		}
-		public void testStringCommonalityFraction3() {
+		@Test public void stringCommonalityFraction3() {
 			assertEquals(0.0, AnnealingDiagramAssigner.stringCommonalityFraction("abcd", ""), 0);
 		}
-		public void testStringCommonalityFraction4() {
+		@Test public void stringCommonalityFraction4() {
 			assertEquals(0.0, AnnealingDiagramAssigner.stringCommonalityFraction("", "defg"), 0);
 		}
-		public void testStringCommonalityFraction5() {
-			assertEquals(1.0, AnnealingDiagramAssigner.stringCommonalityFraction("abc", "abc"));
+		@Test public void stringCommonalityFraction5() {
+			assertEquals(1.0, AnnealingDiagramAssigner.stringCommonalityFraction("abc", "abc"), 0);
 		}
-		public void testStringCommonalityFraction6() {
+		@Test public void stringCommonalityFraction6() {
 			assertEquals(0.75, AnnealingDiagramAssigner.stringCommonalityFraction("abcd", "abc"), 0);
 		}
-		public void testStringCommonalityFraction7() {
+		@Test public void stringCommonalityFraction7() {
 			assertEquals(0.75, AnnealingDiagramAssigner.stringCommonalityFraction("abc", "abcd"), 0);
 		}
-		public void testStringCommonalityFraction8() {
+		@Test public void stringCommonalityFraction8() {
 			assertEquals(1-(7.0/24), AnnealingDiagramAssigner.stringCommonalityFraction("IllegalArgumentException", "IllegalOptionException"), 0.01);
 		}
 	}

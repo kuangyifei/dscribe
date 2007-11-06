@@ -5,9 +5,11 @@ import java.util.*;
 import javax.xml.namespace.QName;
 
 import org.exist.fluent.*;
+import org.junit.*;
 
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.opti.AnnealingDiagramAssigner;
+import static org.junit.Assert.*;
 
 public class ClassAssignmentCalculator implements AnnealingDiagramAssigner.Calculator {
 	
@@ -140,33 +142,33 @@ public class ClassAssignmentCalculator implements AnnealingDiagramAssigner.Calcu
 	}
 	
 	@Deprecated @SuppressWarnings("deprecation") @DatabaseTestCase.ConfigFile("test/conf.xml")
-	public static class Test extends DatabaseTestCase {
+	public static class _Test extends DatabaseTestCase {
 		private ClassAssignmentCalculator calc;
-		@Override public void setUp() {super.setUp(); calc = new ClassAssignmentCalculator();}
-		@Override public void tearDown() throws Exception {calc = null; super.tearDown();}
+		@Before public void setUp() {calc = new ClassAssignmentCalculator();}
+		@After public void tearDown() {calc = null;}
 		
-		public void testCommonParentTypes1() {
+		@Test public void commonParentTypes1() {
 			Node root = makeRoot();
 			Node e1 = root.append().elem("class").end("class").commit();
 			Node e2 = root.append().elem("class").end("class").commit();
 			assertEquals(0.0, calc.commonParentTypesFraction(e1, e2), 0.0);
 		}
 		
-		public void testCommonParentTypes2() {
+		@Test public void commonParentTypes2() {
 			Node root = makeRoot();
 			Node e1 = root.append().elem("class").elem("extends").elem("type").text("Noodle").end("type").end("extends").end("class").commit();
 			Node e2 = root.append().elem("class").elem("extends").elem("type").text("Noodle").end("type").end("extends").end("class").commit();
 			assertEquals(1.0, calc.commonParentTypesFraction(e1, e2), 0.0);
 		}
 		
-		public void testCommonParentTypes3() {
+		@Test public void commonParentTypes3() {
 			Node root = makeRoot();
 			Node e1 = root.append().elem("class").elem("implements").elem("type").text("Noodle").end("type").end("implements").end("class").commit();
 			Node e2 = root.append().elem("class").elem("implements").elem("type").text("Noodle").end("type").end("implements").end("class").commit();
 			assertEquals(1.0, calc.commonParentTypesFraction(e1, e2), 0.0);
 		}
 		
-		public void testCommonParentTypes4() {
+		@Test public void commonParentTypes4() {
 			Node root = makeRoot();
 			Node e1 = root.append().elem("class")
 				.elem("extends").elem("type").text("Noodle").end("type").end("extends")
@@ -178,14 +180,14 @@ public class ClassAssignmentCalculator implements AnnealingDiagramAssigner.Calcu
 			assertEquals(0.5, calc.commonParentTypesFraction(e1, e2), 0.0);
 		}
 		
-		public void testCommonParentTypes5() {
+		@Test public void commonParentTypes5() {
 			Node root = makeRoot();
 			Node e1 = root.append().elem("class").elem("extends").elem("type").text("Noodle").end("type").end("extends").end("class").commit();
 			Node e2 = root.append().elem("class").elem("implements").elem("type").text("Noodle").end("type").end("implements").end("class").commit();
 			assertEquals(0.0, calc.commonParentTypesFraction(e1, e2), 0.0);
 		}
 
-		public void testCommonParentTypes6() {
+		@Test public void commonParentTypes6() {
 			Node root = makeRoot();
 			Node e1 = root.append().elem("class")
 				.elem("extends").elem("type").text("Noodle").end("type").end("extends")
@@ -198,7 +200,7 @@ public class ClassAssignmentCalculator implements AnnealingDiagramAssigner.Calcu
 			assertEquals(1.0, calc.commonParentTypesFraction(e1, e2), 0.0);
 		}
 
-		public void testCommonParentTypes7() {
+		@Test public void commonParentTypes7() {
 			Node root = makeRoot();
 			Node e1 = root.append().elem("class")
 				.elem("extends").elem("type").text("Noodle").end("type").end("extends")
@@ -211,7 +213,7 @@ public class ClassAssignmentCalculator implements AnnealingDiagramAssigner.Calcu
 			assertEquals(0.5, calc.commonParentTypesFraction(e1, e2), 0.0);
 		}
 
-		public void testTypeCrossRef1() {
+		@Test public void typeCrossRef1() {
 			Node root = makeRoot();
 			Node e1 = root.append()
 				.elem("class").attr("implName", "Spaghetti").attr("modifiers", "")
@@ -223,7 +225,7 @@ public class ClassAssignmentCalculator implements AnnealingDiagramAssigner.Calcu
 			assertEquals(0.5, calc.typeCrossRefFraction(e1, e2), 0.0);
 		}
 		
-		public void testTypeCrossRef2() {
+		@Test public void typeCrossRef2() {
 			Node root = makeRoot();
 			Node e1 = root.append()
 				.elem("class").attr("implName", "Spaghetti").attr("modifiers", "public")
@@ -235,7 +237,7 @@ public class ClassAssignmentCalculator implements AnnealingDiagramAssigner.Calcu
 			assertEquals(0.75, calc.typeCrossRefFraction(e1, e2), 0.0);
 		}
 		
-		public void testTypeCrossRef3() {
+		@Test public void typeCrossRef3() {
 			Node root = makeRoot();
 			Node e1 = root.append()
 				.elem("class").attr("implName", "Spaghetti").attr("modifiers", "")
@@ -247,7 +249,7 @@ public class ClassAssignmentCalculator implements AnnealingDiagramAssigner.Calcu
 			assertEquals(0.13, calc.typeCrossRefFraction(e1, e2), 0.01);
 		}
 		
-		public void testTypeCrossRef4() {
+		@Test public void typeCrossRef4() {
 			Node root = makeRoot();
 			Node e1 = root.append()
 				.elem("class").attr("implName", "Spaghetti").attr("modifiers", "public")
@@ -259,7 +261,7 @@ public class ClassAssignmentCalculator implements AnnealingDiagramAssigner.Calcu
 			assertEquals(0.13, calc.typeCrossRefFraction(e1, e2), 0.01);
 		}
 		
-		public void testTypeCrossRef5() {
+		@Test public void typeCrossRef5() {
 			Node root = makeRoot();
 			Node e1 = root.append()
 				.elem("class").attr("implName", "Spaghetti").attr("modifiers", "")

@@ -1,5 +1,9 @@
 package com.ideanest.dscribe.vcm;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
+
 import java.text.ParseException;
 import java.util.Date;
 import java.util.regex.Matcher;
@@ -7,8 +11,13 @@ import java.util.regex.Pattern;
 
 import org.apache.log4j.Logger;
 import org.exist.fluent.*;
-import org.jmock.Mock;
-import org.jmock.core.Verifiable;
+import org.jmock.Expectations;
+import org.jmock.Mockery;
+import org.jmock.integration.junit4.JMock;
+import org.jmock.integration.junit4.JUnit4Mockery;
+import org.jmock.lib.legacy.ClassImposteriser;
+import org.junit.*;
+import org.junit.runner.RunWith;
 
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.job.Cycle;
@@ -98,19 +107,20 @@ public class CheckpointMediator extends TaskBase {
 	/**
 	 * @deprecated Test class that should not be javadoc'ed.
 	 */
-	@Deprecated @DatabaseTestCase.ConfigFile("test/conf.xml")
-	public static class Test extends DatabaseTestCase {
+	@Deprecated @DatabaseTestCase.ConfigFile("test/conf.xml") @RunWith(JMock.class)
+	public static class _Test extends DatabaseTestCase {
 		private CheckpointMediator mediator;
-		private Mock job;
-		@Override
-		protected void setUp() {
-			super.setUp();
-			
-			job = mock(Cycle.class);
+		private Mockery context = new JUnit4Mockery() {{
+	        setImposteriser(ClassImposteriser.INSTANCE);
+	    }};
+		private Cycle cycle;
+		private Date expectedCheckpointDate;
+		
+		@Before public void setUp() {
+			cycle = context.mock(Cycle.class);
 			mediator = new CheckpointMediator() {
-				@Override
-				protected Cycle cycle() {
-					return (Cycle) job.proxy();
+				@Override protected Cycle cycle() {
+					return cycle;
 				}
 			};
 			mediator.workspace = db.createFolder("/workspace");
@@ -121,29 +131,27 @@ public class CheckpointMediator extends TaskBase {
 			mediator.workspace.documents().build(Name.create("notes"))
 				.elem("notes:notes").attr("started", "2004-12-10T10:00:00").end("notes:notes")
 				.commit();
-			
 		}
 		
-		private void registerVerifyCheckpoint(final Date date) {
-			registerToVerify(new Verifiable() {
-				public void verify() {
-					Date actualDate = mediator.workspace.query().optional("/notes:notes/vcm:checkpoint/@at").instantValue();
-					if (date == null) assertNull(actualDate); else assertEquals(date, actualDate);
-				}
-			});			
-			mediator.agree();
+		@After public void verifyCheckpoint() {
+			if (mediator != null) {
+				Date actualDate = mediator.workspace.query().optional("/notes:notes/vcm:checkpoint/@at").instantValue();
+				if (expectedCheckpointDate == null) assertNull(actualDate); else assertEquals(expectedCheckpointDate, actualDate);
+			}
 		}
 		
 		protected void expectAbandon() {
-			job.expects(never()).method("postpone").withAnyArguments();
-			job.expects(once()).method("abandon").withNoArguments();
-			registerVerifyCheckpoint(null);
+			context.checking(new Expectations() {{
+				never(cycle).postpone(with(any(Date.class)));
+				one(cycle).abandon();
+			}});
 		}
 		
-		protected void expectPostpone(Date date) {
-			job.expects(once()).method("postpone").with(eq(date));
-			job.expects(never()).method("abandon").withAnyArguments();
-			registerVerifyCheckpoint(null);
+		protected void expectPostpone(final Date date) {
+			context.checking(new Expectations() {{
+				one(cycle).postpone(date);
+				never(cycle).abandon();
+			}});
 		}
 		
 		protected void expectPostpone(String date) {
@@ -151,9 +159,11 @@ public class CheckpointMediator extends TaskBase {
 		}
 		
 		protected void expectCheckpoint(Date date) {
-			job.expects(never()).method("postpone").withAnyArguments();
-			job.expects(never()).method("abandon").withAnyArguments();
-			registerVerifyCheckpoint(date);
+			context.checking(new Expectations() {{
+				never(cycle).postpone(with(any(Date.class)));
+				never(cycle).abandon();
+			}});
+			expectedCheckpointDate = date;
 		}
 		
 		protected void expectCheckpoint(String date) {
@@ -176,32 +186,41 @@ public class CheckpointMediator extends TaskBase {
 			b.end("checkpoint-proposal").commit();
 		}
 		
-		public void testEmpty() {
+		@Test public void empty() {
 			expectAbandon();
+			mediator.agree();
 		}
 		
-		public void testPostpone() {
+		@Test public void postpone() {
 			addProposal("2004-12-15T05:00:00");
 			expectPostpone("2004-12-15T05:00:00");
+			mediator.agree();
 		}
 
-		public void testCheckpoint1() {
+		@Test public void checkpoint1() {
 			addProposal(null, "from 2004-12-10T09:00:00 to 2004-12-10T09:05:00 interesting");
 			expectCheckpoint("2004-12-10T09:00:00");	// lower bound of only range
+			mediator.agree();
 		}
-		public void testCheckpoint2() {
+
+		@Test public void checkpoint2() {
 			addProposal(null, "from 2004-12-10T10:00:00 to 2004-12-10T10:05:00");
 			expectAbandon();	// because only range is not interesting
+			mediator.agree();
 		}
-		public void testCheckpoint3() {
+
+		@Test public void checkpoint3() {
 			addProposal(null, "from 2004-12-10T10:00:00 to 2004-12-10T10:05:00 interesting");
 			expectAbandon();	// because the range is empty once clipped to starting time
+			mediator.agree();
 		}
-		public void testCheckpoint4() {
+
+		@Test public void checkpoint4() {
 			addProposal(null,
 					"from 2004-12-10T09:00:00 to 2004-12-10T09:05:00 interesting",
 					"from 2004-12-10T09:30:00 to 2004-12-10T09:35:00 interesting");
 			expectCheckpoint("2004-12-10T09:00:00");	// lower bound of min range
+			mediator.agree();
 		}
 	}
 	
