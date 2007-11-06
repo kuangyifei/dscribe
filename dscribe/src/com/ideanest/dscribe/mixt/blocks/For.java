@@ -3,9 +3,12 @@ package com.ideanest.dscribe.mixt.blocks;
 import java.util.Collection;
 
 import org.exist.fluent.*;
+import org.junit.Before;
+import org.junit.Test;
 
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.*;
+import static org.junit.Assert.*;
 
 public class For implements BlockType {
 	
@@ -16,7 +19,7 @@ public class For implements BlockType {
 	public Block define(Node def) throws RuleBaseException {
 		boolean each = def.query().exists("@each"), one = def.query().exists("@one");
 		if (each && one) throw new RuleBaseException("for block specified with both @each and @one");
-		if (!(each || one)) throw new RuleBaseException("for block has neither @each nor @one");
+		if (!(each || one)) throw new RuleBaseException("for block specified with neither @each nor @one");
 		return each ? new ForEachBlock(def) : new ForOneBlock(def); 
 	}
 	
@@ -59,7 +62,7 @@ public class For implements BlockType {
 				varName = null;
 			} else {
 				if (!varName.startsWith("$"))  // TODO: verify variable name syntax
-					throw new RuleBaseException("unrecognized for-block variable keyword '" + varName + "'");
+					throw new RuleBaseException("unrecognized for block variable keyword '" + varName + "'");
 			}
 			variableName = varName;
 			query = new Query.Items(def);	
@@ -97,23 +100,61 @@ public class For implements BlockType {
 				return mod.nearestAncestorImplementing(InsertionTarget.class).contentBuilder();
 			}
 		}
-		
-		@Deprecated @DatabaseTestCase.ConfigFile("test/conf.xml")
-		public static class ParseTest extends DatabaseTestCase {
-			private Node rule;
-			@Override protected void setUp() {
-				Folder rules = db.createFolder("rules");
-				rules.namespaceBindings().put("", Namespace.RULES);
-				rule = rules.documents().build(Name.create("samplerule")).elem("rule").commit().root();
-			}
-			public void testEachBlock() throws RuleBaseException {
-				Node def = rule.append().elem("for").attr("each", "$x").text("//for[@each]").end("for").commit();
-				For.ForBlock block = (For.ForBlock) new For().define(def);
-				assertTrue(block instanceof For.ForEachBlock);
-				assertEquals("$x", block.variableName);
-				assertFalse(block.target);
+
+	}
+
+	@Deprecated @DatabaseTestCase.ConfigFile("test/conf.xml")
+	public static class _Test extends DatabaseTestCase {
+		private Node rule;
+		@Before public void setUp() {
+			Folder rules = db.createFolder("/rules");
+			rules.namespaceBindings().put("", Namespace.RULES);
+			rule = rules.documents().build(Name.create("samplerule")).elem("rule").end("rule").commit().root();
+		}
+		@Test public void parseNoVariableAttribute() {
+			Node def = rule.append().elem("for").text("//for").end("for").commit();
+			try {
+				new For().define(def);
+				fail();
+			} catch (RuleBaseException e) {
 			}
 		}
-
-	}	
+		@Test public void parseMultipleVariableAttributes() {
+			Node def = rule.append().elem("for").attr("each", "$x").attr("one", "$x").text("//for").end("for").commit();
+			try {
+				new For().define(def);
+				fail();
+			} catch (RuleBaseException e) {
+			}
+		}
+		@Test public void parseForEachBlock() throws RuleBaseException {
+			Node def = rule.append().elem("for").attr("each", "$x").text("//for[@each]").end("for").commit();
+			For.ForBlock block = (For.ForBlock) new For().define(def);
+			assertTrue(block instanceof For.ForEachBlock);
+			assertEquals("$x", block.variableName);
+			assertFalse(block.target);
+		}
+		@Test public void parseForOneBlock() throws RuleBaseException {
+			Node def = rule.append().elem("for").attr("one", "$x").text("//for[@one]").end("for").commit();
+			For.ForBlock block = (For.ForBlock) new For().define(def);
+			assertTrue(block instanceof For.ForOneBlock);
+			assertEquals("$x", block.variableName);
+			assertFalse(block.target);
+		}
+		@Test public void parseTargetKeyword() throws RuleBaseException {
+			Node def = rule.append().elem("for").attr("each", "target").text("//for").end("for").commit();
+			For.ForBlock block = (For.ForBlock) new For().define(def);
+			assertTrue(block instanceof For.ForEachBlock);
+			assertNull(block.variableName);
+			assertTrue(block.target);
+		}
+		@Test public void parseBadKeyword() {
+			Node def = rule.append().elem("for").attr("each", "foo").text("//for").end("for").commit();
+			try {
+				new For().define(def);
+				fail();
+			} catch (RuleBaseException e) {
+			}
+		}
+	}
 }

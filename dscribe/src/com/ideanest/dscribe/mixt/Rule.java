@@ -13,6 +13,7 @@ public class Rule {
 	private static final Logger LOG = Logger.getLogger(Rule.class);
 	
 	// TODO: make this an extension point
+	@SuppressWarnings("unchecked")
 	private static final Class[] BLOCK_CLASSES = {
 		For.class, With.class, CreateDoc.class
 	};

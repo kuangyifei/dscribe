@@ -1,8 +1,12 @@
 package com.ideanest.dscribe.mixt;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.util.*;
 
-import junit.framework.TestCase;
+import org.junit.Before;
+import org.junit.Test;
 
 class Accumulator<E> {
 	
@@ -66,29 +70,29 @@ class Accumulator<E> {
 		return new Locator<E>(head);
 	}
 
-	@Deprecated public static class Test extends TestCase {
+	@Deprecated public static class _Test {
 		private Accumulator<String> acc;
-		@Override public void setUp() {
+		@Before public void setUp() {
 			acc = new Accumulator<String>();
 		}
-		public void test1() {
+		@Test public void test1() {
 			Locator<String> loc = acc.anchor();
 			acc.add("a");
 			assertEquals(Collections.singleton("a"), loc.catchUp());
 			assertTrue(loc.catchUp().isEmpty());
 		}
-		public void test2() {
+		@Test public void test2() {
 			acc.add("a");
 			Locator<String> loc = acc.anchor();
 			assertTrue(loc.catchUp().isEmpty());
 		}
-		public void test3() {
+		@Test public void test3() {
 			acc.add("a");
 			Locator<String> loc = acc.anchor();
 			acc.add("b");
 			assertEquals(Collections.singleton("b"), loc.catchUp());
 		}
-		public void test4() {
+		@Test public void test4() {
 			Locator<String> loc1 = acc.anchor();
 			acc.add("a");
 			Locator<String> loc2 = acc.anchor();
@@ -96,7 +100,7 @@ class Accumulator<E> {
 			assertEquals(new HashSet<String>(Arrays.asList(new String[]{"a", "b"})), loc1.catchUp());
 			assertEquals(Collections.singleton("b"), loc2.catchUp());
 		}
-		public void test5() {
+		@Test public void test5() {
 			Locator<String> loc1 = acc.anchor();
 			acc.add("a");
 			Locator<String> loc2 = acc.anchor();
@@ -105,7 +109,7 @@ class Accumulator<E> {
 			assertEquals(new HashSet<String>(Arrays.asList(new String[]{"a", "b"})), loc1.catchUp());
 			assertEquals(new HashSet<String>(Arrays.asList(new String[]{"a", "b"})), loc2.catchUp());
 		}
-		public void test6() {
+		@Test public void test6() {
 			Locator<String> loc1 = acc.anchor();
 			acc.add("a");
 			Locator<String> loc2 = acc.anchor();
