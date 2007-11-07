@@ -194,12 +194,11 @@ public class Job {
 		}
 	}
 	
-	@SuppressWarnings("unchecked") private List<Trigger> configuredTriggers() {
+	private List<Trigger> configuredTriggers() {
 		List<Trigger> triggers = new ArrayList<Trigger>();
 		for (Node child : def.query().unordered("*").nodes()) {
 			try {
-				Class<TriggerMaker> childClass = config.resolveTagClass(child.qname());
-				if (!TriggerMaker.class.isAssignableFrom(childClass)) continue;
+				Class<? extends TriggerMaker> childClass = config.resolveTagClass(child.qname(), TriggerMaker.class);
 				Trigger trigger = childClass.newInstance().create(child);
 				trigger.setDescription(child.toString());
 				triggers.add(trigger);
@@ -266,8 +265,7 @@ public class Job {
 		List<Cycle.TaskWrapper> tasks = new ArrayList<Cycle.TaskWrapper>();
 		for (Node taskDef : def.query().all("child::*").nodes()) {
 			try {
-				Cycle.TaskWrapper task = jobRun.createTaskWrapper(taskDef);
-				if (task != null) tasks.add(task);
+				tasks.add(jobRun.createTaskWrapper(taskDef));
 			} catch (Exception e) {
 				LOG.error("[task " + taskDef.name() + "] task configuration error", e);
 				failed = true;
