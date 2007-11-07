@@ -252,9 +252,9 @@ public class Rule {
 		return mod;
 	}
 	
-	private String blockToString(int stage) {
-		return this + ".block[" + stage + ":" + blocks.get(stage).getClass().getSimpleName() + "]";
-	}
+//	private String blockToString(int stage) {
+//		return this + ".block[" + stage + ":" + blocks.get(stage).getClass().getSimpleName() + "]";
+//	}
 	
 	private String buildToString(String primaryName) {
 		StringBuilder sb = new StringBuilder();

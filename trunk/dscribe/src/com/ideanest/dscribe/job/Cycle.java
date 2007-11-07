@@ -155,10 +155,8 @@ public class Cycle {
 		}
 	}
 
-	
-	@SuppressWarnings("unchecked") TaskWrapper createTaskWrapper(Node taskDef) throws ClassNotFoundException, InstantiationException, IllegalAccessException, MappingNotFoundException {
-		Class<Task> taskClass = config.resolveTagClass(taskDef.qname());
-		if (!Task.class.isAssignableFrom(taskClass)) return null;
+	TaskWrapper createTaskWrapper(Node taskDef) throws ClassNotFoundException, InstantiationException, IllegalAccessException, MappingNotFoundException {
+		Class<? extends Task> taskClass = config.resolveTagClass(taskDef.qname(), Task.class);
 		return new TaskWrapper(taskDef, taskClass.newInstance());
 	}
 	

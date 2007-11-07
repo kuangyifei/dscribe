@@ -35,10 +35,11 @@ public class Configuration {
 		return config.query().optional("//mapping[@namespace=$_1]/map[@tag=$_2]", qname.getNamespaceURI(), qname.getLocalPart());
 	}
 	
-	public Class resolveTagClass(QName qname) throws ClassNotFoundException, MappingNotFoundException {
+	public <TagType> Class<? extends TagType> resolveTagClass(QName qname, Class<TagType> clazz)
+			throws ClassNotFoundException, MappingNotFoundException, ClassCastException {
 		String className = findTagDef(qname).query().optional("@class").value();
 		if (className == null) throw new MappingNotFoundException(qname.toString());
-		return Class.forName(className);
+		return Class.forName(className).asSubclass(clazz);
 	}
 
 	public Node findJob(String name) {
