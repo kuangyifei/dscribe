@@ -157,7 +157,7 @@ public class Cycle {
 
 	TaskWrapper createTaskWrapper(Node taskDef) throws ClassNotFoundException, InstantiationException, IllegalAccessException, MappingNotFoundException {
 		Class<? extends Task> taskClass = config.resolveTagClass(taskDef.qname(), Task.class);
-		return new TaskWrapper(taskDef, taskClass.newInstance());
+		return taskClass == null ? null : new TaskWrapper(taskDef, taskClass.newInstance());
 	}
 	
 	

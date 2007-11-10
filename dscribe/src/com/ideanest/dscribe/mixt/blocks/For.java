@@ -1,14 +1,19 @@
 package com.ideanest.dscribe.mixt.blocks;
 
-import java.util.Collection;
+import static com.ideanest.dscribe.testutil.Matchers.collection;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.*;
+
+import java.util.*;
 
 import org.exist.fluent.*;
-import org.junit.Before;
-import org.junit.Test;
+import org.jmock.integration.junit4.JMock;
+import org.junit.*;
+import org.junit.runner.RunWith;
 
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.*;
-import static org.junit.Assert.*;
+import com.ideanest.dscribe.testutil.BlockTestCase;
 
 public class For implements BlockType {
 	
@@ -42,6 +47,7 @@ public class For implements BlockType {
 		}
 		public void resolve(Mod.Builder modBuilder) throws TransformException {
 			ItemList items = query.runOn(modBuilder.scope());
+			if (items.size() == 0) return;
 			if (items.size() > 1) throw new TransformException("for-one got " + items.size() + " results from query");
 			modBuilder.reference(items.get(0).node());
 			modBuilder.dependOn(requiredVariables);
@@ -91,7 +97,7 @@ public class For implements BlockType {
 			@Override public void verify() throws TransformException {
 				Node node = mod.references().get(0);
 				QueryService scope = mod.scope(node.document().query());
-				if (!query.runOn(scope).query().exists("*[@xml:id=$_1/@xml:id]", node))
+				if (!query.runOn(scope).query().single("@xml:id=$_1/@xml:id", node).booleanValue())
 					throw new TransformException("query didn't select node with id " + node.query().single("@xml:id").value());
 			}
 				
@@ -103,58 +109,166 @@ public class For implements BlockType {
 
 	}
 
-	@Deprecated @DatabaseTestCase.ConfigFile("test/conf.xml")
-	public static class _Test extends DatabaseTestCase {
-		private Node rule;
-		@Before public void setUp() {
-			Folder rules = db.createFolder("/rules");
-			rules.namespaceBindings().put("", Namespace.RULES);
-			rule = rules.documents().build(Name.create("samplerule")).elem("rule").end("rule").commit().root();
+	@Deprecated @DatabaseTestCase.ConfigFile("test/conf.xml") @RunWith(JMock.class)
+	public static class _Test extends BlockTestCase {		
+		
+		@Test(expected = RuleBaseException.class)
+		public void parseNoVariableAttribute() throws RuleBaseException {
+			define("<for> //foo </for>");
 		}
-		@Test public void parseNoVariableAttribute() {
-			Node def = rule.append().elem("for").text("//for").end("for").commit();
-			try {
-				new For().define(def);
-				fail();
-			} catch (RuleBaseException e) {
-			}
+
+		@Test(expected = RuleBaseException.class)
+		public void parseMultipleVariableAttributes() throws RuleBaseException {
+			define("<for each='$x' one='$x'> //foo </for>");
 		}
-		@Test public void parseMultipleVariableAttributes() {
-			Node def = rule.append().elem("for").attr("each", "$x").attr("one", "$x").text("//for").end("for").commit();
-			try {
-				new For().define(def);
-				fail();
-			} catch (RuleBaseException e) {
-			}
-		}
-		@Test public void parseForEachBlock() throws RuleBaseException {
-			Node def = rule.append().elem("for").attr("each", "$x").text("//for[@each]").end("for").commit();
-			For.ForBlock block = (For.ForBlock) new For().define(def);
-			assertTrue(block instanceof For.ForEachBlock);
+		
+		@Test
+		public void parseForEachBlock() throws RuleBaseException {
+			ForBlock block = define("<for each='$x'> //foo </for>");
+			assertTrue(block instanceof ForEachBlock);
 			assertEquals("$x", block.variableName);
 			assertFalse(block.target);
 		}
-		@Test public void parseForOneBlock() throws RuleBaseException {
-			Node def = rule.append().elem("for").attr("one", "$x").text("//for[@one]").end("for").commit();
-			For.ForBlock block = (For.ForBlock) new For().define(def);
+		
+		@Test
+		public void parseForOneBlock() throws RuleBaseException {
+			ForBlock block = define("<for one='$x'> //foo </for>");
 			assertTrue(block instanceof For.ForOneBlock);
 			assertEquals("$x", block.variableName);
 			assertFalse(block.target);
 		}
-		@Test public void parseTargetKeyword() throws RuleBaseException {
-			Node def = rule.append().elem("for").attr("each", "target").text("//for").end("for").commit();
-			For.ForBlock block = (For.ForBlock) new For().define(def);
+		
+		@Test
+		public void parseTargetKeyword() throws RuleBaseException {
+			ForBlock block = define("<for each='target'> //foo </for>");
 			assertTrue(block instanceof For.ForEachBlock);
 			assertNull(block.variableName);
 			assertTrue(block.target);
 		}
-		@Test public void parseBadKeyword() {
-			Node def = rule.append().elem("for").attr("each", "foo").text("//for").end("for").commit();
-			try {
-				new For().define(def);
-				fail();
-			} catch (RuleBaseException e) {
-			}
+		
+		@Test(expected = RuleBaseException.class)
+		public void parseBadKeyword() throws RuleBaseException {
+			define("<for each='foo'> //foo </for>");
 		}
+
+		@Test(expected = TransformException.class)
+		public void resolveOneFailsOnMultipleResults() throws RuleBaseException, TransformException {
+			ForOneBlock block = define("<for one='$x'> //java:method </for>");
+			setModBuilderScope(content.query());
+			dontCommit();
+			block.resolve(modBuilder);
+		}
+		
+		@Test
+		public void resolveOneDoesNothingOnNoResult() throws RuleBaseException, TransformException {
+			ForOneBlock block = define("<for one='$x'> //java:foobar </for>");
+			setModBuilderScope(content.query());
+			dontCommit();
+			block.resolve(modBuilder);
+		}
+
+		@Test
+		public void resolveOneWorks() throws RuleBaseException, TransformException {
+			ForOneBlock block = define("<for one='$x'> //java:method[@name='start'] </for>");
+			block.requiredVariables = Collections.emptyList();
+
+			setModBuilderScope(content.query());
+			reference(content.query().single("//java:method[@name='start']").node());
+			thenCommit();
+			
+			block.resolve(modBuilder);
+		}
+		
+		@Test
+		public void resolveEachWorks() throws RuleBaseException, TransformException {
+			ForEachBlock block = define("<for each='$x'> //java:method </for>");
+			block.requiredVariables = Collections.emptyList();
+
+			setModBuilderScope(content.query());
+			for (Node node : content.query().all("//java:method").nodes()) {
+				referenceKey(node);
+				thenCommit();
+			}
+			
+			block.resolve(keyModBuilder);
+		}
+		
+		@Test
+		public void analyzeWorksWithVariable() throws RuleBaseException, TransformException {
+			ForOneBlock block = define("<for one='$x'> //java:method[@name=$other] </for>");
+			setModGlobalScope(content.query());
+			bindVariable("$x", null);
+			Seg seg = block.createSeg(mod);
+			seg.analyze();
+			assertThat(block.requiredVariables, is(collection("$other")));
+		}
+		
+		@Test
+		public void analyzeWorksWithKeyword() throws RuleBaseException, TransformException {
+			ForOneBlock block = define("<for one='target'> //java:method[@name='start'] </for>");
+			setModGlobalScope(content.query());
+			Seg seg = block.createSeg(mod);
+			seg.analyze();
+			assertTrue(block.requiredVariables.isEmpty());
+		}
+		
+		@Test
+		public void restoreWorksWithVariable() throws RuleBaseException, TransformException {
+			ForOneBlock block = define("<for one='$x'> //java:method[@name=$other] </for>");
+			final Node variableValue = content.query().single("//java:method[@name='start']").node();
+			setModReferences(variableValue);
+			bindVariable("$x", variableValue);
+			block.createSeg(mod).restore();
+		}
+
+		@Test
+		public void restoreWorksWithKeyword() throws RuleBaseException, TransformException {
+			ForOneBlock block = define("<for one='target'> //java:method[@name='start'] </for>");
+			setModReferences((Node) null);
+			block.createSeg(mod).restore();
+		}
+		
+		@Test
+		public void verifyWorks() throws RuleBaseException, TransformException {
+			ForOneBlock block = define("<for one='$x'> //java:class </for>");
+			final Node selectedNode = content.query().single("//java:class").node();
+			setModReferences(selectedNode);
+			setModScope(selectedNode.document().query());
+			block.createSeg(mod).verify();
+		}
+
+		@Test(expected = TransformException.class)
+		public void verifyFails() throws RuleBaseException, TransformException {
+			ForOneBlock block = define("<for one='$x'> //java:class[@name='FooBar'] </for>");
+			final Node selectedNode = content.query().single("//java:class").node();
+			setModReferences(selectedNode);
+			setModScope(selectedNode.document().query());
+			block.createSeg(mod).verify();
+		}
+		
+		@Test
+		public void contentBuilderWithTarget() throws RuleBaseException, TransformException {
+			ForOneBlock block = define("<for one='target'> //java:class </for>");
+			final Node selectedNode = content.query().single("//java:class").node();
+			setModReferences(selectedNode);
+			((ForBlock.ForSeg) block.createSeg(mod)).contentBuilder()
+				.elem("java:method").attr("xml:id", "m3").attr("name", "between").end("java:method").commit();
+			assertTrue(selectedNode.query().exists("java:method[@xml:id='m3']"));
+		}
+
+		@Test
+		public void contentBuilderNotTarget() throws RuleBaseException, TransformException {
+			ForOneBlock block = define("<for one='$x'> //java:class </for>");
+			final ElementBuilder<?> contentBuilder = ElementBuilder.createScratch(null);
+			InsertionTarget insertionTarget = new InsertionTarget() {
+				public ElementBuilder<?> contentBuilder() throws TransformException {
+					return contentBuilder;
+				}
+			};
+			setModNearestAncestorImplementing(InsertionTarget.class, insertionTarget);
+			assertSame(contentBuilder, ((ForBlock.ForSeg) block.createSeg(mod)).contentBuilder());
+			contentBuilder.commit();
+		}
+
 	}
 }
