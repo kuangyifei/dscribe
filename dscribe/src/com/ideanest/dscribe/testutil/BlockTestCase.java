@@ -6,13 +6,16 @@ import java.util.*;
 
 import org.exist.fluent.*;
 import org.jmock.*;
-import org.jmock.integration.junit4.JUnit4Mockery;
+import org.jmock.integration.junit4.*;
 import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
+import org.junit.runner.RunWith;
 
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.*;
+import com.ideanest.dscribe.mixt.Mod.Builder.DependencyModifier;
 
+@RunWith(JMock.class) @DatabaseTestCase.ConfigFile("test/conf.xml")
 public abstract class BlockTestCase extends DatabaseTestCase {
 	
 	protected Folder content;
@@ -106,12 +109,25 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		}});
 	}
 	
-	public void dependOnVariables(final String... varNames) {
+	public void dependOnVariables(final String... varNames) throws TransformException {
+		internalDependOnVariables(false, varNames);
+	}
+	
+	public void dependOnUnverifiedVariables(final String... varNames) throws TransformException {
+		internalDependOnVariables(true, varNames);
+	}
+	
+	private void internalDependOnVariables(final boolean unverified, final String[] varNames) throws TransformException {
+		if (varNames.length == 0) return;
 		mockery.checking(new Expectations() {{
 			Sequence seq = mockery.sequence("modBuilder pre-commit dependOnVariables");
+			DependencyModifier dependecyModifier = mockery.mock(Mod.Builder.DependencyModifier.class);
 			one(modBuilder).dependOn(with(new Matchers.CollectionMatcher<String>(varNames)));
-			will(returnValue(mockery.mock(Mod.Builder.DependencyModifier.class)));
-			inSequence(seq);
+			will(returnValue(dependecyModifier)); inSequence(seq);
+			if (unverified) {
+				one(dependecyModifier).unverified();
+				inSequence(seq);
+			}
 			modBuilderPriors.add(seq);
 		}});
 	}
@@ -131,7 +147,7 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 	
 	public void bindVariable(final String name, final Object value) throws TransformException {
 		mockery.checking(new Expectations() {{
-			one(mod).bindVariable(with(equal(name)), with(same(value)));
+			one(mod).bindVariable(name,value);
 		}});
 	}
 }
