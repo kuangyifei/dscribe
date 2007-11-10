@@ -199,6 +199,7 @@ public class Job {
 		for (Node child : def.query().unordered("*").nodes()) {
 			try {
 				Class<? extends TriggerMaker> childClass = config.resolveTagClass(child.qname(), TriggerMaker.class);
+				if (childClass == null) continue;
 				Trigger trigger = childClass.newInstance().create(child);
 				trigger.setDescription(child.toString());
 				triggers.add(trigger);
@@ -265,7 +266,8 @@ public class Job {
 		List<Cycle.TaskWrapper> tasks = new ArrayList<Cycle.TaskWrapper>();
 		for (Node taskDef : def.query().all("child::*").nodes()) {
 			try {
-				tasks.add(jobRun.createTaskWrapper(taskDef));
+				Cycle.TaskWrapper wrapper = jobRun.createTaskWrapper(taskDef);
+				if (wrapper != null) tasks.add(wrapper);
 			} catch (Exception e) {
 				LOG.error("[task " + taskDef.name() + "] task configuration error", e);
 				failed = true;

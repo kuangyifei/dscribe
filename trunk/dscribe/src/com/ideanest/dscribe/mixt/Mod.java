@@ -50,6 +50,14 @@ public class Mod {
 		return scope(rule.engine.globalScope);
 	}
 	
+	/**
+	 * Take the given query service (or the workspace query service if the given one is <code>null</code>)
+	 * and bind all the variables defined by previous blocks the mod chain.  Return a query service ready
+	 * to run verification queries on.
+	 *
+	 * @param qs the query service to use as a base, or <code>null</code> to use the workspace query service
+	 * @return a clone of the given query service with variables from previous blocks bound and namespace map cleared
+	 */
 	public QueryService scope(QueryService qs) {
 		if (qs == null) qs = workspace().database().query();
 		return parent.prepScopeClone(qs);
@@ -60,18 +68,12 @@ public class Mod {
 	}
 	
 	public void bindVariable(String name, Object value) throws TransformException {
-		bindVariables(Collections.singletonMap(name, value));
+		Map<String,Object> variableBindings = variableBindings();
+		if (variableBindings.containsKey(name)) throw new TransformException("cannot rebind variable " + name);
+		variableBindings.put(name, value);
+		boundVariables.add(name);
 	}
 	
-	public void bindVariables(Map<String,Object> additionalVariableBindings) throws TransformException {
-		Set<String> duplicateVarNames = new HashSet<String>(additionalVariableBindings.keySet());
-		Map<String,Object> variableBindings = variableBindings();
-		duplicateVarNames.retainAll(variableBindings.keySet());
-		if (!duplicateVarNames.isEmpty()) throw new TransformException("cannot rebind variables " + duplicateVarNames);
-		variableBindings.putAll(additionalVariableBindings);
-		boundVariables.addAll(additionalVariableBindings.keySet());
-	}
-
 	public String key() {
 		return parent.key();
 	}
