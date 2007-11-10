@@ -7,9 +7,7 @@ import static org.junit.Assert.*;
 import java.util.*;
 
 import org.exist.fluent.*;
-import org.jmock.integration.junit4.JMock;
-import org.junit.*;
-import org.junit.runner.RunWith;
+import org.junit.Test;
 
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.*;
@@ -109,7 +107,7 @@ public class For implements BlockType {
 
 	}
 
-	@Deprecated @DatabaseTestCase.ConfigFile("test/conf.xml") @RunWith(JMock.class)
+	@Deprecated
 	public static class _Test extends BlockTestCase {		
 		
 		@Test(expected = RuleBaseException.class)

@@ -3,9 +3,12 @@ package com.ideanest.dscribe.mixt.blocks;
 import java.util.*;
 
 import org.exist.fluent.*;
+import org.junit.Test;
 
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.*;
+import com.ideanest.dscribe.testutil.BlockTestCase;
+import static org.junit.Assert.*;
 
 public class With implements BlockType {
 
@@ -28,8 +31,7 @@ public class With implements BlockType {
 		
 		private WithBlock(Node def, boolean optional) throws RuleBaseException {
 			variableName = def.query().single(optional ? "@any" : "@some").value();
-			if (!variableName.startsWith("$"))  // TODO: verify variable name syntax
-				throw new RuleBaseException("illegal with block variable name '" + variableName + "'");
+			if (!variableName.startsWith("$")) throw new RuleBaseException("illegal with block variable name '" + variableName + "'");
 			this.optional = optional;
 			query = new Query.Items(def);
 		}
@@ -57,6 +59,79 @@ public class With implements BlockType {
 				mod.bindVariable(variableName, items);
 			}
 			
+		}
+	}
+	
+	@Deprecated public static class _Test extends BlockTestCase {
+		@Test(expected = RuleBaseException.class)
+		public void parseNoVariableAttribute() throws RuleBaseException {
+			define("<with> //foo </with>");
+		}
+
+		@Test(expected = RuleBaseException.class)
+		public void parseMultipleVariableAttributes() throws RuleBaseException {
+			define("<with any='$x' some='$x'> //foo </with>");
+		}
+		
+		@Test
+		public void parseAny() throws RuleBaseException {
+			WithBlock block = define("<with any='$x'> //foo </with>");
+			assertTrue(block.optional);
+			assertEquals("$x", block.variableName);
+		}
+		
+		@Test
+		public void parseSome() throws RuleBaseException {
+			WithBlock block = define("<with some='$x'> //foo </with>");
+			assertFalse(block.optional);
+			assertEquals("$x", block.variableName);
+		}
+
+		@Test(expected = RuleBaseException.class)
+		public void parseBadVariableName() throws RuleBaseException {
+			define("<with any='target'> //foo </with>");
+		}
+		
+		@Test
+		public void resolveAny() throws RuleBaseException, TransformException {
+			WithBlock block = define("<with any='$x'> $y/foo </with>");
+			block.requiredVariables = Collections.singletonList("$y");
+			dependOnUnverifiedVariables("$y");
+			thenCommit();
+			block.resolve(modBuilder);
+		}
+
+		@Test
+		public void resolveSome() throws RuleBaseException, TransformException {
+			WithBlock block = define("<with some='$x'> //java:method </with>");
+			block.requiredVariables = Collections.emptyList();
+			setModBuilderScope(content.query());
+			dependOnUnverifiedVariables();
+			thenCommit();
+			block.resolve(modBuilder);
+		}
+		
+		@Test
+		public void analyze() throws RuleBaseException, TransformException {
+			WithBlock block = define("<with any='$x'> $y/foo </with>");
+			setModGlobalScope(content.query());
+			bindVariable("$x", null);
+			block.createSeg(mod).analyze();
+		}
+		
+		@Test
+		public void restoreAny() throws RuleBaseException, TransformException {
+			WithBlock block = define("<with any='$x'> //java:method </with>");
+			setModScope(content.query());
+			bindVariable("$x", content.query().all("//java:method"));
+			block.createSeg(mod).restore();
+		}
+
+		@Test(expected = TransformException.class)
+		public void restoreSomeMissing() throws RuleBaseException, TransformException {
+			WithBlock block = define("<with some='$x'> //java:method[@name='foobar'] </with>");
+			setModScope(content.query());
+			block.createSeg(mod).restore();
 		}
 	}
 }
