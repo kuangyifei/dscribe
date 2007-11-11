@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.*;
 import com.ideanest.dscribe.mixt.Mod.Builder.DependencyModifier;
+import static org.junit.Assert.*;
 
 @RunWith(JMock.class) @DatabaseTestCase.ConfigFile("test/conf.xml")
 public abstract class BlockTestCase extends DatabaseTestCase {
@@ -22,11 +23,12 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 	protected final Mockery mockery = new JUnit4Mockery() {{
 		setImposteriser(ClassImposteriser.INSTANCE);
 	}};
-	protected final Mod mod = mockery.mock(Mod.class);
+	protected final KeyMod mod = mockery.mock(KeyMod.class);
 	protected Mod.Builder modBuilder;
 	protected KeyMod.Builder keyModBuilder;
 	
 	private List<Sequence> modBuilderPriors = new LinkedList<Sequence>();
+	private ElementBuilder<XMLDocument> supplementBuilder;
 	
 	@Before
 	public void prepareDatabase() {
@@ -43,9 +45,8 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 	public <T extends Block> T define(String xml) throws RuleBaseException {
 		try {
 			T block = (T) getClass().getEnclosingClass().asSubclass(BlockType.class).newInstance().define(
-					db.query().namespace("", Namespace.RULES)
-					.single("<rule xmlns:java='" + Namespace.JAVA + "'>" + xml + "</rule>")
-					.query().single("*").node());
+					db.getFolder("/").documents().load(Name.create("rule"), Source.xml(
+							"<rule xmlns:java='" + Namespace.JAVA + "'>" + xml + "</rule>")).root().query().single("*").node());
 			
 			if (block instanceof LinearBlock) modBuilder = mockery.mock(Mod.Builder.class);
 			else if (block instanceof KeyBlock) modBuilder = keyModBuilder = mockery.mock(KeyMod.Builder.class);
@@ -69,6 +70,26 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		}});
 	}
 	
+	public void setModBuilderParent(final Mod mod) {
+		mockery.checking(new Expectations() {{
+			allowing(modBuilder).parent(); will(returnValue(mod));
+		}});
+	}
+	
+	public void setModKey(final String key) {
+		mockery.checking(new Expectations() {{
+			allowing(mod).key(); will(returnValue(key));
+		}});
+	}
+	
+	public void setModData(String xml) {
+		final Node data = db.createFolder("/supplement").documents().build(Name.generate()).node(
+				db.query().single(xml).node()).commit().root();
+		mockery.checking(new Expectations() {{
+			allowing(mod).data(); will(returnValue(data));
+		}});
+	}
+	
 	public void setModScope(final QueryService qs) {
 		mockery.checking(new Expectations() {{
 			allowing(mod).scope(with(any(QueryService.class))); will(returnValue(qs));
@@ -78,6 +99,12 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 	public void setModGlobalScope(final QueryService qs) {
 		mockery.checking(new Expectations() {{
 			allowing(mod).globalScope(); will(returnValue(qs));
+		}});
+	}
+	
+	public void setModWorkspace(final Folder workspace) {
+		mockery.checking(new Expectations() {{
+			allowing(mod).workspace(); will(returnValue(workspace));
 		}});
 	}
 	
@@ -130,6 +157,21 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 			}
 			modBuilderPriors.add(seq);
 		}});
+	}
+	
+	public void supplement() {
+		supplementBuilder = db.createFolder("/supplement").documents().build(Name.generate());
+		mockery.checking(new Expectations() {{
+			Sequence seq = mockery.sequence("modBuilder pre-commit supplement");
+			atLeast(1).of(modBuilder).supplement(); will(returnValue(supplementBuilder)); inSequence(seq);
+			modBuilderPriors.add(seq);
+		}});
+	}
+	
+	public void checkSupplement(String expected) {
+		Node supplementNode = supplementBuilder.commit().root();
+		assertTrue("supplement expected '" + expected + "', got '" + supplementNode + "'",
+				db.query().presub().single("$_1 eq $2", supplementNode, expected).booleanValue());
 	}
 	
 	public void dontCommit() throws TransformException {

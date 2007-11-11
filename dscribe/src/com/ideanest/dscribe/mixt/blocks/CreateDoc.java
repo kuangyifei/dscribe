@@ -1,11 +1,16 @@
 package com.ideanest.dscribe.mixt.blocks;
 
-import java.util.Collection;
+import java.util.*;
 
 import org.exist.fluent.*;
+import org.junit.Test;
 
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.*;
+import com.ideanest.dscribe.testutil.BlockTestCase;
+import static org.junit.Assert.*;
+import static com.ideanest.dscribe.testutil.Matchers.collection;
+import static org.hamcrest.Matchers.is;
 
 public class CreateDoc implements BlockType {
 
@@ -34,7 +39,7 @@ public class CreateDoc implements BlockType {
 		}
 
 		private String resolveName(Mod keyMod, QueryService scope) throws TransformException {
-			String name = (query == null) ? keyMod.key() + ".xml" : query.runOn(scope);
+			String name = ((query == null) ? keyMod.key() + "xml" : query.runOn(scope)).trim();
 			if (name == null || name.length() == 0)
 				throw new TransformException("create-doc failed to resolve document name");
 			if (name.charAt(0) == '/') throw new TransformException("create-doc document name cannot begin with a slash");
@@ -78,5 +83,123 @@ public class CreateDoc implements BlockType {
 		}
 		
 	}
+	
+	@Deprecated public static class _Test extends BlockTestCase {
+		@Test public void parseWithName() throws RuleBaseException {
+			CreateDocBlock block = define("<create-doc>hello</create-doc>");
+			assertNotNull(block.query);
+		}
 
+		@Test public void parseNoName() throws RuleBaseException {
+			CreateDocBlock block = define("<create-doc/>");
+			assertNull(block.query);
+		}
+		
+		@Test public void resolveNameConstant() throws RuleBaseException, TransformException {
+			CreateDocBlock block = define("<create-doc>  constant </create-doc>");
+			assertEquals("constant", block.resolveName(mod, content.query()));
+		}
+		
+		@Test public void resolveNameVariable() throws RuleBaseException, TransformException {
+			CreateDocBlock block = define("<create-doc>foo-{$x}</create-doc>");
+			assertEquals("foo-bar", block.resolveName(mod, content.query().let("$x", "bar")));
+		}
+		
+		@Test public void resolveNameNull() throws RuleBaseException, TransformException {
+			CreateDocBlock block = define("<create-doc/>");
+			setModKey("_r1.");
+			assertEquals("_r1.xml", block.resolveName(mod, content.query()));
+		}
+
+		@Test(expected = TransformException.class)
+		public void resolveBadName1() throws RuleBaseException, TransformException {
+			CreateDocBlock block = define("<create-doc>{()}</create-doc>");
+			block.resolveName(mod, content.query());
+		}
+
+		@Test(expected = TransformException.class)
+		public void resolveBadName2() throws RuleBaseException, TransformException {
+			CreateDocBlock block = define("<create-doc>/foo</create-doc>");
+			block.resolveName(mod, content.query());
+		}
+
+		@Test(expected = TransformException.class)
+		public void resolveBadName3() throws RuleBaseException, TransformException {
+			CreateDocBlock block = define("<create-doc>foo/</create-doc>");
+			block.resolveName(mod, content.query());
+		}
+		
+		@Test public void resolve() throws RuleBaseException, TransformException {
+			CreateDocBlock block = define("<create-doc>constant</create-doc>");
+			block.requiredVariables = Collections.emptyList();
+			setModBuilderParent(mod);
+			setModBuilderScope(content.query());
+			supplement();
+			thenCommit();
+			block.resolve(modBuilder);
+			checkSupplement("<docname>constant</docname>");
+		}
+		
+		@Test public void restore() throws RuleBaseException, TransformException {
+			CreateDocBlock block = define("<create-doc>constant</create-doc>");
+			setModData("<block><docname>hellothere</docname></block>");
+			CreateDocBlock.CreateDocSeg seg = (CreateDocBlock.CreateDocSeg) block.createSeg(mod);
+			seg.restore();
+			assertEquals("hellothere", seg.name);
+		}
+		
+		@Test public void analyze() throws RuleBaseException, TransformException {
+			CreateDocBlock block = define("<create-doc>{$x}-{$y}</create-doc>");
+			setModGlobalScope(content.query());
+			block.createSeg(mod).analyze();
+			assertThat(block.requiredVariables, is(collection("$x", "$y")));
+		}
+		
+		@Test public void verifyWorks() throws RuleBaseException, TransformException {
+			CreateDocBlock block = define("<create-doc>hello</create-doc>");
+			setModScope(content.query());
+			CreateDocBlock.CreateDocSeg seg = (CreateDocBlock.CreateDocSeg) block.createSeg(mod);
+			seg.name = "hello";
+			seg.verify();
+		}
+
+		@Test(expected = TransformException.class)
+		public void verifyFails() throws RuleBaseException, TransformException {
+			CreateDocBlock block = define("<create-doc>hello</create-doc>");
+			setModScope(content.query());
+			CreateDocBlock.CreateDocSeg seg = (CreateDocBlock.CreateDocSeg) block.createSeg(mod);
+			seg.name = "goodbye";
+			seg.verify();
+		}
+		
+		@Test public void contentBuilder1() throws RuleBaseException, TransformException {
+			CreateDocBlock block = define("<create-doc>hello</create-doc>");
+			setModWorkspace(content);
+			CreateDocBlock.CreateDocSeg seg = (CreateDocBlock.CreateDocSeg) block.createSeg(mod);
+			seg.name = "hello";
+			XMLDocument doc = (XMLDocument) seg.contentBuilder().elem("root").end("root").commit();
+			assertEquals("/content/hello", doc.path());
+		}
+
+		@Test public void contentBuilder2() throws RuleBaseException, TransformException {
+			CreateDocBlock block = define("<create-doc>hello</create-doc>");
+			setModWorkspace(content);
+			CreateDocBlock.CreateDocSeg seg = (CreateDocBlock.CreateDocSeg) block.createSeg(mod);
+			seg.name = "foo/bar/hello";
+			XMLDocument doc = (XMLDocument) seg.contentBuilder().elem("root").end("root").commit();
+			assertEquals("/content/foo/bar/hello", doc.path());
+		}
+
+		@Test public void contentBuilder3() throws RuleBaseException, TransformException {
+			CreateDocBlock block = define("<create-doc>hello</create-doc>");
+			setModWorkspace(content);
+			content.documents().load(Name.create("hello"), Source.xml("<foo/>"));
+			CreateDocBlock.CreateDocSeg seg = (CreateDocBlock.CreateDocSeg) block.createSeg(mod);
+			seg.name = "hello";
+			XMLDocument doc = (XMLDocument) seg.contentBuilder().elem("root").end("root").commit();
+			assertTrue(doc.path().startsWith("/content/hello"));
+			assertFalse(doc.path().equals("/content/hello"));
+		}
+
+	}
 }
