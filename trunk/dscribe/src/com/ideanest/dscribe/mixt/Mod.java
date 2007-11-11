@@ -275,7 +275,7 @@ public class Mod {
 		}
 		
 		public ElementBuilder<?> supplement() {
-			if (supplement == null) supplement = ElementBuilder.createScratch(new NamespaceMap());
+			if (supplement == null) supplement = ElementBuilder.createScratch(null);
 			return supplement;
 		}
 		
