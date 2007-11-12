@@ -153,7 +153,6 @@ public class For implements BlockType {
 		public void resolveOneFailsOnMultipleResults() throws RuleBaseException, TransformException {
 			ForOneBlock block = define("<for one='$x'> //java:method </for>");
 			setModBuilderScope(content.query());
-			dontCommit();
 			block.resolve(modBuilder);
 		}
 		
@@ -161,7 +160,6 @@ public class For implements BlockType {
 		public void resolveOneDoesNothingOnNoResult() throws RuleBaseException, TransformException {
 			ForOneBlock block = define("<for one='$x'> //java:foobar </for>");
 			setModBuilderScope(content.query());
-			dontCommit();
 			block.resolve(modBuilder);
 		}
 

@@ -5,6 +5,7 @@ import static com.ideanest.dscribe.testutil.Matchers.emptyCollectionOf;
 import java.util.*;
 
 import org.exist.fluent.*;
+import org.hamcrest.*;
 import org.jmock.*;
 import org.jmock.integration.junit4.*;
 import org.jmock.lib.legacy.ClassImposteriser;
@@ -174,9 +175,14 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 				db.query().presub().single("$_1 eq $2", supplementNode, expected).booleanValue());
 	}
 	
-	public void dontCommit() throws TransformException {
+	public void generateIdsAndAffect(final String base, final int count) {
 		mockery.checking(new Expectations() {{
-			never(modBuilder).commit();
+			for (int i=1; i<=count; i++) {
+				final String genid = "_" + base + (count == 1 ? "" : "-" + i) + ".";
+				one(modBuilder).generateId(count == 1 ? -1 : i);
+				will(returnValue(genid));
+				one(modBuilder).affect(with(new NodeIdMatcher(genid)));
+			}
 		}});
 	}
 	
@@ -191,5 +197,16 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		mockery.checking(new Expectations() {{
 			one(mod).bindVariable(name,value);
 		}});
+	}
+	
+	private static class NodeIdMatcher extends BaseMatcher<Node> {
+		private final String id;
+		public NodeIdMatcher(String id) {this.id = id;}
+		public boolean matches(Object item) {
+			return id.equals(((Node) item).query().single("@xml:id").value());
+		}
+		public void describeTo(Description description) {
+			description.appendText("@xml:id='" + id + "'");
+		}
 	}
 }
