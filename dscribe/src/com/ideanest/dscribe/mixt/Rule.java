@@ -15,7 +15,7 @@ public class Rule {
 	// TODO: make this an extension point
 	@SuppressWarnings("unchecked")
 	private static final Class[] BLOCK_CLASSES = {
-		For.class, With.class, CreateDoc.class
+		For.class, With.class, CreateDoc.class, Insert.class
 	};
 	
 	private static final Map<QName,BlockType> BLOCK_TYPE_DICTIONARY = new HashMap<QName,BlockType>();

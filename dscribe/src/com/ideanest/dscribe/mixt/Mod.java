@@ -326,7 +326,7 @@ public class Mod {
 			references.add(node);
 			dependOn(node.document());
 		}
-		
+				
 		public String generateId(int serial) {
 			return parent.key() + (parent.stage+1) + (serial >= 0 ? "-" + serial : "") + ".";
 		}
