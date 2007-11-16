@@ -14,9 +14,11 @@ public class Engine {
 	private final Map<String,Rule> ruleMap = new HashMap<String,Rule>();
 	private final List<Rule> rules = new ArrayList<Rule>();
 	
-	public final Folder workspace;
-	final QueryService globalScope, utilQuery;
-	final Node modStore;
+	private final Folder workspace;
+	private final QueryService globalScope;
+	private final QueryService utilQuery;
+
+	private final Node modStore;
 
 	private boolean didWork;
 	private final Accumulator<Document> modifiedDocs = new Accumulator<Document>(); 
@@ -92,6 +94,11 @@ public class Engine {
 	String relativePath(Document doc) {
 		return workspace.relativePath(doc.path());
 	}
+
+	Folder workspace() {return workspace;}
+	QueryService globalScope() {return globalScope;}
+	QueryService utilQuery() {return utilQuery;}
+	Node modStore() {return modStore;}
 
 	/**
 	 * Run one transformation cycle.

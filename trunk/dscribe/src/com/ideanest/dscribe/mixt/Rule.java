@@ -5,8 +5,15 @@ import java.util.*;
 
 import org.apache.log4j.Logger;
 import org.exist.fluent.*;
+import org.jmock.*;
+import org.jmock.integration.junit4.*;
+import org.jmock.lib.legacy.ClassImposteriser;
+import org.junit.*;
+import org.junit.runner.RunWith;
 
+import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.blocks.*;
+import static org.junit.Assert.*;
 
 public class Rule {
 	
@@ -56,12 +63,31 @@ public class Rule {
 		
 		if (firstDifferentStage < Integer.MAX_VALUE) {
 			LOG.info(this + " has changed starting at stage " + firstDifferentStage + ", withdrawing affected mods");
-			engine.withdrawMods(engine.modStore.query().unordered(
+			engine.withdrawMods(engine.modStore().query().unordered(
 					"//mod[@rule=$_1][xs:integer(@stage) >= $_2]", id, firstDifferentStage));
 		}
+	}
 	
+	// for testing only
+	private Rule(Engine engine) {
+		this.engine = engine;
+		modifiedDocsLocator = null;
+		this.id = "r1";
+		toString = "rule[r1]";
 	}
 
+	/**
+	 * Parse all the blocks in the given rule definition, comparing it to a previous definition of the rule.
+	 * Fill the <code>blocks</code> list with the blocks and analyze each one.  Return the index of the
+	 * first different block -- but note that this doesn't take implementation changes into account!
+	 *
+	 * @param def this rule's definition node, of which the block definitions are the children
+	 * @param prevDef the previous version of the rule's definition block; cannot be <code>null</code>, but
+	 * 		can be an inexistent node
+	 * @return the index of the first block whose definition differs from the previous version, or
+	 * 		<code>Integer.MAX_VALUE</code> if both versions of the rule are exactly the same
+	 * @throws RuleBaseException if unable to instantiate a block from its definition at any point
+	 */
 	private int parseBlocks(Node def, Node prevDef) throws RuleBaseException {
 		int firstDiff = Integer.MAX_VALUE;
 		try {
@@ -70,7 +96,7 @@ public class Rule {
 			for (Node blockDef : def.query().all("*").nodes()) {
 				
 				if (firstDiff == Integer.MAX_VALUE &&
-						!(prevBlocksIterator.hasNext() && compareBlocks(blockDef, prevBlocksIterator.next()))) {
+						!(prevBlocksIterator.hasNext() && equalBlocks(blockDef, prevBlocksIterator.next()))) {
 					firstDiff = blocks.size();
 				}
 				
@@ -89,14 +115,30 @@ public class Rule {
 		}
 	}
 
-	private boolean compareBlocks(Node blockDef, Node prevBlockDef) {
-		return engine.workspace.query().single(
+	/**
+	 * Compare two block definitions for equality.  To be equal, the two block definitions must be equal at the XML structural
+	 * and content level, and have the same in-scope namespaces assigned to the same prefixes.  This last
+	 * is important since the namespace bindings will be used by XQuery expressions embedded in the content.
+	 * 
+	 * @param block1 one block's definition
+	 * @param block2 the other block's definition
+	 * @return <code>true</code> if the two blocks are equal, <code>false</code> otherwise
+	 */
+	private boolean equalBlocks(Node block1, Node block2) {
+		return engine.utilQuery().single(
 				"deep-equal($_1, $_2) and " +
-				"count(in-scope-prefixes($_1)) eq count(in-scope-prefixes($_2)) and " +
-				"every $prefix in in-scope-prefixes($_1) satisfies namespace-uri-for-prefix($prefix, $_1) eq namespace-uri-for-prefix($prefix, $_2)",
-				blockDef, prevBlockDef).booleanValue();
+				"(count(in-scope-prefixes($_1)) eq count(in-scope-prefixes($_2))) and " +
+				"(every $prefix in in-scope-prefixes($_1) satisfies (namespace-uri-for-prefix($prefix, $_1) eq namespace-uri-for-prefix($prefix, $_2)))",
+				block1, block2).booleanValue();
 	}
 
+	/**
+	 * Instantiate the block defined by the given node and validate the implementation.
+	 *
+	 * @param blockDef the block's definition
+	 * @return a new block
+	 * @throws RuleBaseException if the block type is unknown, or the block's implementation is invalid
+	 */
 	private Block defineBlock(Node blockDef) throws RuleBaseException {
 		BlockType blockType = BLOCK_TYPE_DICTIONARY.get(blockDef.qname());
 		if (blockType == null) throw new RuleBaseException(this + " unknown block " + blockDef);
@@ -119,7 +161,7 @@ public class Rule {
 		verifyMods(modifiedDocs);
 		
 		touched.addAll(modifiedDocs);
-		QueryService touchedScope = engine.globalScope.database().query(touched);
+		QueryService touchedScope = engine.globalScope().database().query(touched);
 		touched = new HashSet<Document>();	// don't clear, old set still referenced by touchedScope
 		
 		Collection<Mod> mods = new ArrayList<Mod>();
@@ -133,7 +175,7 @@ public class Rule {
 			LOG.debug("restoring mods in progress");
 			Set<String> modKeys = new HashSet<String>();
 			for (Mod mod : mods) modKeys.add(mod.key());			
-			for (Node node : engine.modStore.query().unordered("//mod[@rule=$_1][xs:integer(@stage)=_$2]", id, stage-1).nodes()) {
+			for (Node node : engine.modStore().query().unordered("//mod[@rule=$_1][xs:integer(@stage)=_$2]", id, stage-1).nodes()) {
 				if (!modKeys.contains(node.query().single("@xml:id").value())) {
 					mods.add(restore(node));
 				}
@@ -157,7 +199,7 @@ public class Rule {
 	}
 	
 	private Mod restore(Node node, Mod mod, boolean inclusive) throws TransformException {
-		ItemList history = engine.modStore.query().all(
+		ItemList history = engine.modStore().query().all(
 				"for $node in (/id($_2/ancestor/@refid)[xs:integer(@stage) > $_1] union $_3)" +
 				"order by xs:integer($node/@stage) return $node", mod.stage, node, inclusive ? node : null);
 		for (Node historyNode : history.nodes()) {
@@ -171,7 +213,7 @@ public class Rule {
 	private ItemList convertDocsToNames(Set<Document> docs) {
 		Collection<String> docNamesList = new ArrayList<String>(docs.size());
 		for (Document doc : docs) docNamesList.add(engine.relativePath(doc));
-		return engine.utilQuery.unordered("$_1", docNamesList);
+		return engine.utilQuery().unordered("$_1", docNamesList);
 	}
 
 	/**
@@ -189,7 +231,7 @@ public class Rule {
 		
 		ItemList modifiedDocsNames = convertDocsToNames(modifiedDocs);
 		
-		ItemList modsToVerify = engine.modStore.query().unordered(
+		ItemList modsToVerify = engine.modStore().query().unordered(
 				"//mod[@rule=$_1][.//dependency/@doc=$_2]", id, modifiedDocsNames);
 		if (modsToVerify.size() == 0) {
 			LOG.debug("no mods to verify");
@@ -268,4 +310,111 @@ public class Rule {
 		return toString;
 	}
 	
+	@Deprecated @DatabaseTestCase.ConfigFile("test/conf.xml") @RunWith(JMock.class)
+	public static class _UtilityTest extends DatabaseTestCase {
+		private Rule rule;
+		private Engine engine;
+		protected final Mockery mockery = new JUnit4Mockery() {{
+			setImposteriser(ClassImposteriser.INSTANCE);
+		}};
+		
+		@Before public void setUp() {
+			engine = mockery.mock(Engine.class);
+			rule = new Rule(engine);
+			mockery.checking(new Expectations() {{
+				allowing(engine).workspace(); will(returnValue(db.getFolder("/")));
+				allowing(engine).globalScope(); will(returnValue(db.getFolder("/")));
+				allowing(engine).utilQuery(); will(returnValue(db.query()));
+			}});
+		}
+		
+		private Node makeBlock(String xml) {
+			return db.getFolder("/").documents().load(Name.generate(), Source.xml(
+					"<blocks xmlns='" + Namespace.RULES + "'>" + xml + "</blocks>")).root().query().single("*").node();
+		}
+		
+		@Test public void defineBlockWorks() throws RuleBaseException {
+			Block block = rule.defineBlock(makeBlock("<for one='$x'>//method</for>"));
+			assertTrue(block instanceof LinearBlock);
+		}
+		
+		@Test(expected = RuleBaseException.class)
+		public void defineBlockFailsOnUnknownBlockType() throws RuleBaseException {
+			rule.defineBlock(makeBlock("<foobar/>"));
+		}
+		
+		@Test public void compareBlocksEqual() {
+			assertTrue(rule.equalBlocks(
+					makeBlock("<for one='$x'>//method</for>"),
+					makeBlock("<for one='$x'>//method</for>")));
+		}
+
+		@Test public void compareBlocksDifferentElement() {
+			assertFalse(rule.equalBlocks(
+					makeBlock("<for one='$x'>//method</for>"),
+					makeBlock("<with one='$x'>//method</with>")));
+		}
+
+		@Test public void compareBlocksDifferentAttribute() {
+			assertFalse(rule.equalBlocks(
+					makeBlock("<for one='$x'>//method</for>"),
+					makeBlock("<for each='$x'>//method</for>")));
+		}
+
+		@Test public void compareBlocksDifferentContent() {
+			assertFalse(rule.equalBlocks(
+					makeBlock("<for one='$x'>//method</for>"),
+					makeBlock("<for one='$x'>//field</for>")));
+		}
+		
+		@Test public void compareBlocksDifferentNumNamespaces() {
+			assertFalse(rule.equalBlocks(
+					makeBlock("<for one='$x' xmlns:java='foo'>//method</for>"),
+					makeBlock("<for one='$x'>//method</for>")));
+		}
+
+		@Test public void compareBlocksDifferentPrefixes() {
+			assertFalse(rule.equalBlocks(
+					makeBlock("<for one='$x' xmlns:java='foo'>//java:method</for>"),
+					makeBlock("<for one='$x' xmlns:java2='foo'>//java2:method</for>")));
+		}
+
+		@Test public void compareBlocksDifferentNamespaces() {
+			assertFalse(rule.equalBlocks(
+					makeBlock("<for one='$x' xmlns:java='foo'>//java:method</for>"),
+					makeBlock("<for one='$x' xmlns:java='bar'>//java:method</for>")));
+		}
+	}
+
+	@Deprecated @DatabaseTestCase.ConfigFile("test/conf.xml") @RunWith(JMock.class)
+	public static class _ParseBlocksTest extends DatabaseTestCase {
+		private Rule rule;
+		private Engine engine;
+		protected final Mockery mockery = new JUnit4Mockery() {{
+			setImposteriser(ClassImposteriser.INSTANCE);
+		}};
+		
+		@Before public void setUp() {
+			engine = mockery.mock(Engine.class);
+			rule = new Rule(engine);
+			mockery.checking(new Expectations() {{
+				allowing(engine).workspace(); will(returnValue(db.getFolder("/")));
+				allowing(engine).globalScope(); will(returnValue(db.getFolder("/")));
+				allowing(engine).utilQuery(); will(returnValue(db.query()));
+			}});
+		}
+		
+		private Node makeRule(String xml) {
+			return db.getFolder("/").documents().load(Name.generate(), Source.xml(
+					"<rule xmlns='" + Namespace.RULES + "'>" + xml + "</rule>")).root();
+		}
+		
+		@Test public void noPrevDef() throws RuleBaseException {
+			int firstDiff = rule.parseBlocks(
+					makeRule("<for each='$x'> //method </for>"),
+					db.query().optional("inexistent").node());
+			assertEquals(0, firstDiff);
+			assertEquals(1, rule.blocks.size());
+		}
+	}
 }

@@ -47,7 +47,7 @@ public class Mod {
 	}
 
 	public QueryService globalScope() {
-		return scope(rule.engine.globalScope);
+		return scope(rule.engine.globalScope());
 	}
 	
 	/**
@@ -83,7 +83,7 @@ public class Mod {
 	}
 	
 	public Folder workspace() {
-		return rule.engine.workspace.cloneWithoutNamespaceBindings();
+		return rule.engine.workspace().cloneWithoutNamespaceBindings();
 	}
 	
 	public List<Node> references() {
@@ -97,7 +97,7 @@ public class Mod {
 	}
 	
 	Collection<Mod> resolveChildren(Block block, boolean lastBlock, QueryService touchedScope) throws TransformException {
-		QueryService scope = prepScopeClone((touchedScope == null || !restored) ? rule.engine.globalScope : touchedScope);
+		QueryService scope = prepScopeClone((touchedScope == null || !restored) ? rule.engine.globalScope() : touchedScope);
 		
 		Builder modBuilder;
 		if ((block instanceof KeyBlock)) {
@@ -134,7 +134,7 @@ public class Mod {
 		if (refNodes.size() > 0) {
 			references = new ArrayList<Node>(refNodes.size());
 			for (Node refNode : refNodes.nodes()) {
-				Node node = rule.engine.globalScope.single("/id($_1)", refNode.query().single("@refid").value()).node();
+				Node node = rule.engine.globalScope().single("/id($_1)", refNode.query().single("@refid").value()).node();
 				final String actualPath = rule.engine.relativePath(node.document());
 				final String storedPath = refNode.query().single("@doc").value();
 				if (!actualPath.equals(storedPath))
@@ -217,7 +217,7 @@ public class Mod {
 				Mod mod = createChild();
 				mod.references = references;
 				
-				Node modNode = mod.rule.engine.modStore.query().optional("id($_1)/self::mod", mod.key()).node();
+				Node modNode = mod.rule.engine.modStore().query().optional("id($_1)/self::mod", mod.key()).node();
 				if (modNode.extant()) {
 					final int oldStage = modNode.query().single("@stage").intValue();
 					if (oldStage > mod.stage) return;
@@ -226,7 +226,7 @@ public class Mod {
 						mod.data = modNode.query().single("block[xs:integer(@stage)=$_1]", mod.stage).node();
 					}
 				} else {
-					ElementBuilder<Node> modDataBuilder = mod.rule.engine.modStore.append()
+					ElementBuilder<Node> modDataBuilder = mod.rule.engine.modStore().append()
 						.elem("mod").attr("xml:id", mod.key()).attr("rule", mod.rule.id).end("mod");
 					parent.writeAncestors(modDataBuilder);
 					modNode = modDataBuilder.commit();
