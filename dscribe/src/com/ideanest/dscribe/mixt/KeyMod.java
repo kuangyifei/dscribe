@@ -1,7 +1,6 @@
 package com.ideanest.dscribe.mixt;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import org.exist.fluent.*;
 
@@ -31,9 +30,9 @@ public class KeyMod extends Mod {
 		return key;
 	}
 	
-	@Override void writeAncestors(ElementBuilder<?> builder) {
-		builder.elem("ancestor").attr("refid", key()).end("ancestor");
-		super.writeAncestors(builder);
+	@Override void writeAncestors(ElementBuilder<?> builder, boolean immediate) {
+		builder.elem("ancestor").attr("refid", key()).attrIf(immediate, "rel", "parent").end("ancestor");
+		super.writeAncestors(builder, false);
 	}
 	
 	@Override public String toString() {

@@ -23,14 +23,14 @@ public class Engine {
 	private boolean didWork;
 	private final Accumulator<Document> modifiedDocs = new Accumulator<Document>(); 
 
-	Counter
+	final Counter
 		numCycles = Counter.english("cycle", "cycles", null),
 		numBlocksVerified = Counter.english("block", "blocks", "verified"),
 		numBlocksResolved = Counter.english("block", "blocks", "resolved"),
 		numModsCompleted = Counter.english("mod", "mods", "completed"),
 		numModsWithdrawn = Counter.english("mod", "mods", "withdrawn");
 	
-	private Counter
+	private final Counter
 		modCountFormatter = Counter.english("mod", "mods", null),
 		affectedCountFormatter = Counter.english("affected element", "affected elements", null);
 	

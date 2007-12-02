@@ -1,13 +1,13 @@
 <mod:mods xmlns:mod="http://ideanest.com/reef/ns/mod">
 
-<mod:mod xml:id="_r1.j-230." rule="_r1" stage="0">
+<mod:mod xml:id="_r1.j-230." rule="r1" stage="0">
 	<mod:block stage="0">
 		<mod:dependency doc="model/something.java"/>
 		<mod:reference refid="j-230"/>
 	</mod:block>
 </mod:mod>
 
-<mod:mod xml:id="_r1.j-230.m-12." rule="_r1" stage="2">
+<mod:mod xml:id="_r1.j-230.m-12." rule="r1" stage="2">
 	<mod:ancestor refid="_r1.j230."/>
 	<mod:block stage="1">
 		<mod:dependency doc="mappings.xml"/>
