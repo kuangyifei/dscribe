@@ -71,6 +71,7 @@ public class Mod {
 		Map<String,Object> variableBindings = variableBindings();
 		if (variableBindings.containsKey(name)) throw new TransformException("cannot rebind variable " + name);
 		variableBindings.put(name, value);
+		if (boundVariables == null) boundVariables = new TreeSet<String>();
 		boundVariables.add(name);
 	}
 	
@@ -100,7 +101,7 @@ public class Mod {
 		QueryService scope = prepScopeClone((touchedScope == null || !restored) ? rule.engine.globalScope() : touchedScope);
 		
 		Builder modBuilder;
-		if ((block instanceof KeyBlock)) {
+		if (block instanceof KeyBlock) {
 			modBuilder = new KeyMod.Builder(this, block, lastBlock, scope);
 			((KeyBlock) block).resolve((KeyMod.Builder) modBuilder);
 		} else {
@@ -157,8 +158,8 @@ public class Mod {
 		seg.analyze();
 	}
 	
-	void writeAncestors(ElementBuilder<?> builder) {
-		parent.writeAncestors(builder);
+	void writeAncestors(ElementBuilder<?> builder, boolean immediate) {
+		parent.writeAncestors(builder, immediate);
 	}
 	
 	@Override public String toString() {
@@ -166,9 +167,9 @@ public class Mod {
 	}
 	
 	
-	static Mod bootstrap(Rule rule) {
+	static KeyMod bootstrap(Rule rule) {
 		return new KeyMod(rule) {
-			@Override void writeAncestors(ElementBuilder<?> builder) {}
+			@Override void writeAncestors(ElementBuilder<?> builder, boolean immediate) {}
 			@Override public String toString() {return "rootmod[" +rule + "]";} 
 			@Override Mod restoreChild(Block block, Node data) throws TransformException {
 				throw new UnsupportedOperationException();
@@ -228,7 +229,7 @@ public class Mod {
 				} else {
 					ElementBuilder<Node> modDataBuilder = mod.rule.engine.modStore().append()
 						.elem("mod").attr("xml:id", mod.key()).attr("rule", mod.rule.id).end("mod");
-					parent.writeAncestors(modDataBuilder);
+					parent.writeAncestors(modDataBuilder, true);
 					modNode = modDataBuilder.commit();
 				}
 				if (!mod.restored) mod.data = writeData(mod, modNode);
