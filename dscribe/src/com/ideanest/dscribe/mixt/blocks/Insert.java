@@ -134,7 +134,7 @@ public class Insert implements BlockType {
 		}
 		
 		@Test public void resolveNoNodes() throws RuleBaseException, TransformException {
-			InsertBlock block = define("<insert/>");
+			InsertBlock block = define("<insert>()</insert>");
 			block.requiredVariables = Collections.emptyList();
 			setModBuilderScope(content.query());
 			thenCommit();
