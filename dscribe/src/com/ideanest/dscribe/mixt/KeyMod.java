@@ -1,8 +1,12 @@
 package com.ideanest.dscribe.mixt;
 
+import static org.junit.Assert.*;
+
 import java.util.*;
 
 import org.exist.fluent.*;
+import org.jmock.Expectations;
+import org.junit.*;
 
 
 public class KeyMod extends Mod {
@@ -68,4 +72,59 @@ public class KeyMod extends Mod {
 		}
 		
 	}
+	
+	@Deprecated public static class _BuilderTest extends Mod._Test {
+		private Builder builder;
+		
+		@Before public void setupBuilder() throws IllegalArgumentException, IllegalAccessException {
+			builder = new Builder(parentMod, block, false, resolutionScope);
+		}
+		
+		@Test public void resetsParameterFields() {
+			builder.reset();
+			assertNull(builder.keySuffix);
+		}
+		
+		@Test public void createChildNoKeys() {
+			Mod child = builder.createChild();
+			assertSame(parentMod, child.parent);
+			assertEquals("_r1.e13.-.", child.key());
+		}
+		
+		@Test public void createChildRefKey() {
+			builder.referenceKey(doc1.query().single("//e1").node());
+			Mod child = builder.createChild();
+			assertSame(parentMod, child.parent);
+			assertEquals("_r1.e13.e1.", child.key());
+		}
+		
+		@Test public void referenceKey() {
+			builder.referenceKey(doc1.query().single("//e1").node());
+			assertEquals("e1.", builder.keySuffix);
+		}
+
+		@Test(expected = IllegalStateException.class)
+		public void referenceKeyTwice() {
+			builder.referenceKey(doc1.query().single("//e1").node());
+			builder.referenceKey(doc1.query().single("//e1").node());
+		}
+
+		@Test public void commitTwice() throws TransformException {
+			final Seg seg1 = mockery.mock(Seg.class, "seg1");
+			final Seg seg2 = mockery.mock(Seg.class, "seg2");
+			mockery.checking(new Expectations() {{
+				exactly(2).of(parentMod).writeAncestors(with(any(ElementBuilder.class)), with(equal(true)));
+				exactly(2).of(block).createSeg(with(any(Mod.class)));
+					will(onConsecutiveCalls(returnValue(seg1), returnValue(seg2)));
+				one(seg1).restore();
+				one(seg2).restore();
+			}});
+			builder.commit();
+			builder.referenceKey(doc1.query().single("//e1").node());
+			builder.commit();
+			assertNull(builder.keySuffix);
+		}
+
+	}
+
 }
