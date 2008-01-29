@@ -599,12 +599,10 @@ public class Mod {
 		}
 		
 		@Test public void dependOnVariables() throws Exception {
-			final Map<String, Object> variableBindings = new HashMap<String, Object>();
-			variableBindings.put("a", "not a node");
-			variableBindings.put("b", doc1.root());
+			parentModBindings.put("a", "not a node");
+			parentModBindings.put("b", doc1.root());
 			final Mod ancestor1 = createAncestor(1), ancestor2 = createAncestor(2);
 			mockery.checking(new Expectations() {{
-				allowing(parentMod).variableBindings();  will(returnValue(variableBindings));
 				allowing(parentMod).binder("a");  will(returnValue(ancestor1));
 				allowing(parentMod).binder("b");  will(returnValue(ancestor2));
 			}});
@@ -715,6 +713,7 @@ public class Mod {
 		}
 
 		@Test public void commitExtantNodeEarlierStage() throws TransformException {
+			modStore.append().elem("mod").attr("xml:id", "_r1.e13.").attr("stage", 5).end("mod").commit();
 			builder.commit();
 			assertEquals(0, builder.children.size());
 			assertEquals(0, builder.dependentDocNames.size());
@@ -725,6 +724,7 @@ public class Mod {
 		}
 
 		@Test public void commitExtantNodeSameStage() throws TransformException {
+			modStore.append().elem("mod").attr("xml:id", "_r1.e13.").attr("stage", 4).elem("block").attr("stage", 4).end("block").end("mod").commit();
 			Node oldBlock = modStore.query().single("//block[@stage='4']").node();
 			final Seg seg = mockery.mock(Seg.class);
 			mockery.checking(new Expectations() {{
@@ -747,6 +747,7 @@ public class Mod {
 		}
 
 		@Test public void commitExtantNodeLaterStage() throws TransformException {
+			modStore.append().elem("mod").attr("xml:id", "_r1.e13.").attr("stage", 3).end("mod").commit();
 			Node oldModNode = modStore.query().single("//mod").node();
 			final Seg seg = mockery.mock(Seg.class);
 			mockery.checking(new Expectations() {{
