@@ -10,6 +10,7 @@ import org.apache.log4j.Logger;
 import org.exist.fluent.*;
 import org.hamcrest.*;
 import org.jmock.*;
+import org.jmock.api.*;
 import org.jmock.integration.junit4.*;
 import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.*;
@@ -32,12 +33,15 @@ public class Mod {
 	private List<Node> references;
 	private Seg seg;
 	private Node data;
+	
+	private Shim self;  // for testing only
 
 	Mod(Rule rule) {
 		this.rule = rule;
 		this.stage = -1;
 		this.parent = null;
 		this.restored = true;
+		initDefaultShim();
 	}
 	
 	Mod(Mod parent) {
@@ -45,6 +49,24 @@ public class Mod {
 		this.stage = parent.stage+1;
 		this.parent = parent;
 		this.restored = false;
+		initDefaultShim();
+	}
+	
+	private interface Shim {
+		QueryService prepScopeClone(QueryService queryService);
+		Mod deriveChild(Block block, String value);
+		
+	}
+	
+	private void initDefaultShim() {
+		this.self = new Shim() {
+			public QueryService prepScopeClone(QueryService queryService) {
+				return Mod.this.prepScopeClone(queryService);
+			}
+			public Mod deriveChild(Block block, String value) {
+				return Mod.this.deriveChild(block, value);
+			}
+		};
 	}
 	
 	Mod binder(String varName) {
@@ -108,7 +130,7 @@ public class Mod {
 	}
 	
 	Collection<Mod> resolveChildren(Block block, boolean lastBlock, QueryService touchedScope) throws TransformException {
-		QueryService scope = prepScopeClone((touchedScope == null || !restored) ? rule.engine.globalScope() : touchedScope);
+		QueryService scope = self.prepScopeClone((touchedScope == null || !restored) ? rule.engine.globalScope() : touchedScope);
 		
 		Builder modBuilder;
 		if (block instanceof KeyBlock) {
@@ -123,29 +145,30 @@ public class Mod {
 	}
 	
 	Mod deriveChild(Block block, String key) {
+		if (!(block instanceof KeyBlock || key == null))
+			throw new IllegalArgumentException("key must be null for non-key block");
 		Mod mod = block instanceof KeyBlock ? new KeyMod(this, key) : new Mod(this);
 		mod.seg = block.createSeg(mod);
 		return mod;
 	}
 	
 	Mod restoreChild(Block block, Node blockData) throws TransformException {
-		Mod mod = deriveChild(block, blockData.query().single("../@xml:id").value());
+		Mod mod = self.deriveChild(block, blockData.query().single("../@xml:id").value());
 		mod.data = blockData;
 		mod.restore();
 		return mod;
 	}
 	
 	void restore() throws TransformException {
-		restored = true;
 		final int storedStage = data.query().single("@stage").intValue();
 		if (this.stage != storedStage)
 			throw new IllegalArgumentException("stage mismatch on node restore, given " + stage + ", stored " + storedStage);
 		
-		ItemList refNodes = data.query().unordered("references");
+		ItemList refNodes = data.query().all("reference");
 		if (refNodes.size() > 0) {
 			references = new ArrayList<Node>(refNodes.size());
 			for (Node refNode : refNodes.nodes()) {
-				Node node = rule.engine.globalScope().single("/id($_1)", refNode.query().single("@refid").value()).node();
+				Node node = rule.engine.globalScope().single("/id($_1/@refid)", refNode).node();
 				final String actualPath = rule.engine.relativePath(node.document());
 				final String storedPath = refNode.query().single("@doc").value();
 				if (!actualPath.equals(storedPath))
@@ -156,6 +179,7 @@ public class Mod {
 		
 		data.namespaceBindings().replaceWith(EMPTY_NAMESPACES);
 		seg.restore();
+		restored = true;
 	}
 	
 	void verify() throws TransformException {
@@ -480,9 +504,9 @@ public class Mod {
 		protected Folder workspace;
 		
 		@Before public void setupContext() throws IllegalArgumentException, IllegalAccessException {
-			doc1 = db.getFolder("/").documents().load(Name.generate(), Source.xml("<foo><e1 xml:id='e1'/></foo>"));
-			doc1Name = db.getFolder("/").relativePath(doc1.path());
 			workspace = db.createFolder("/workspace");
+			doc1 = db.getFolder("/workspace").documents().load(Name.generate(), Source.xml("<foo><e1 xml:id='e1'/></foo>"));
+			doc1Name = db.getFolder("/workspace").relativePath(doc1.path());
 			workspace.namespaceBindings().put("", "http://example.com");
 			engine = mockery.mock(Engine.class);
 			
@@ -505,6 +529,7 @@ public class Mod {
 				allowing(engine).relativePath(doc1);  will(returnValue(doc1Name));
 				allowing(engine).modStore();  will(returnValue(modStore));
 				allowing(engine).workspace();  will(returnValue(workspace));
+				allowing(engine).globalScope();  will(returnValue(workspace.query()));
 				allowing(parentMod).key();  will(returnValue("_r1.e13."));
 				allowing(parentMod).variableBindings();  will(returnValue(parentModBindings));
 			}});	
@@ -811,7 +836,7 @@ public class Mod {
 		
 		@Test(expected = TransformException.class)
 		public void bootstrapNearestAncestorImplementing() throws TransformException {
-			Mod.bootstrap(rule).nearestAncestorImplementing(null);
+			Mod.bootstrap(rule).nearestAncestorImplementing(Cloneable.class);
 		}
 		
 		@Test public void binder() {
@@ -852,21 +877,15 @@ public class Mod {
 			assertEquals(doc1.query().single("//e1"), scope.single("$a"));
 		}
 		
-		private class CleanWorkspaceQueryMatcher extends TypeSafeMatcher<QueryService> {
-			@Override public boolean matchesSafely(QueryService item) {
-				return new NamespaceMap().equals(item.namespaceBindings()) && item.all("//*").isEmpty();
-			}
-			public void describeTo(Description description) {
-				description.appendText("matches a clean workspace");
-			}
-			
-		}
-		
 		@Test public void workspace() {
 			Mod mod = new Mod(parentMod);
 			Folder cleanWorkspace = mod.workspace();
 			assertEquals(workspace, cleanWorkspace);
-			assertEquals(new NamespaceMap(), cleanWorkspace.namespaceBindings());
+		}
+		
+		@Test public void references() {
+			Mod mod = new Mod(parentMod);
+			assertEquals(Collections.emptyList(), mod.references());
 		}
 		
 		@Test public void scopeNonNull() {
@@ -881,12 +900,265 @@ public class Mod {
 		@Test public void scopeNull() {
 			final QueryService result = modStore.query().clone();
 			mockery.checking(new Expectations() {{
-				one(parentMod).prepScopeClone(with(new CleanWorkspaceQueryMatcher()));
+				one(parentMod).prepScopeClone(with(notNullValue(QueryService.class)));
 					will(returnValue(result));
 			}});
 			Mod mod = new Mod(parentMod);
 			assertSame(result, mod.scope(null));
 		}
+		
+		@Test public void hasNearestAncestorImplementing() throws TransformException {
+			Mod mod = new Mod(parentMod);
+			class Foo extends Seg implements Cloneable {
+				Foo(Mod mod) {super(mod);}
+			}
+			Foo foo = new Foo(mod);
+			mod.seg = foo;
+			assertSame(foo, mod.nearestAncestorImplementing(Cloneable.class));
+		}
 
+		@Test public void doesntHaveNearestAncestorImplementing() throws TransformException {
+			Mod mod = new Mod(parentMod);
+			class Foo extends Seg implements Cloneable {
+				Foo(Mod mod) {super(mod);}
+			}
+			class Bar extends Seg {
+				Bar(Mod mod) {super(mod);}
+			}
+			final Foo foo = new Foo(mod);
+			mod.seg = new Bar(mod);
+			mockery.checking(new Expectations() {{
+				one(parentMod).nearestAncestorImplementing(Cloneable.class);
+					will(returnValue(foo));
+			}});
+			assertSame(foo, mod.nearestAncestorImplementing(Cloneable.class));
+		}
+		
+		@Test public void verify() throws TransformException {
+			final Mod mod = new Mod(parentMod);
+			mod.seg = mockery.mock(Seg.class);
+			mockery.checking(new Expectations() {{
+				one(mod.seg).verify();
+			}});
+			mod.verify();
+		}
+
+		@Test public void analyze() throws TransformException {
+			final Mod mod = new Mod(parentMod);
+			mod.seg = mockery.mock(Seg.class);
+			mockery.checking(new Expectations() {{
+				one(mod.seg).analyze();
+			}});
+			mod.analyze();
+		}
+		
+		@Test public void writeAncestorsImmediate() {
+			final ElementBuilder<?> eb = modStore.append();
+			mockery.checking(new Expectations() {{
+				one(parentMod).writeAncestors(eb, true);
+			}});
+			Mod mod = new Mod(parentMod);
+			mod.writeAncestors(eb, true);
+		}
+
+		@Test public void writeAncestors() {
+			final ElementBuilder<?> eb = modStore.append();
+			mockery.checking(new Expectations() {{
+				one(parentMod).writeAncestors(eb, false);
+			}});
+			Mod mod = new Mod(parentMod);
+			mod.writeAncestors(eb, false);
+		}
+		
+		@Test public void deriveChild() {
+			final Seg seg = mockery.mock(Seg.class);
+			mockery.checking(new Expectations() {{
+				one(block).createSeg(with(any(Mod.class)));  will(returnValue(seg));
+			}});
+			Mod mod = new Mod(parentMod);
+			Mod child = mod.deriveChild(block, null);
+			assertSame(mod, child.parent);
+			assertSame(seg, child.seg);
+		}
+
+		@Test(expected = IllegalArgumentException.class)
+		public void deriveChildBadKey() {
+			new Mod(parentMod).deriveChild(block, "foo");
+		}
+
+		@Test public void deriveKeyChild() {
+			block = mockery.mock(KeyBlock.class);
+			final Seg seg = mockery.mock(Seg.class);
+			mockery.checking(new Expectations() {{
+				one(block).createSeg(with(any(Mod.class)));  will(returnValue(seg));
+			}});
+			Mod mod = new Mod(parentMod);
+			Mod child = mod.deriveChild(block, "foo");
+			assertTrue(child instanceof KeyMod);
+			assertSame(mod, child.parent);
+			assertSame(seg, child.seg);
+		}
+
+		@Test(expected = IllegalArgumentException.class)
+		public void deriveKeyChildBadKey() {
+			block = mockery.mock(KeyBlock.class);
+			new Mod(parentMod).deriveChild(block, null);
+		}
+		
+		private static class CheckModBuilderParams<E extends Mod.Builder> extends TypeSafeMatcher<E> {
+			private final Mod mod;
+			private final Block block;
+			private final boolean lastBlock;
+			private final QueryService scope;
+			CheckModBuilderParams(Mod mod, Block block, boolean lastBlock, QueryService scope) {
+				this.mod = mod;
+				this.block = block;
+				this.lastBlock = lastBlock;
+				this.scope = scope;
+			}
+			@Override public boolean matchesSafely(E item) {
+				return item.parent == mod && item.block == block && item.lastBlock == lastBlock && item.scope == scope;
+			}
+			public void describeTo(Description description) {
+				description.appendText("is for mod " + mod + ", with " + (lastBlock ? "last " : "") + "block " + block);
+			}
+		}
+		
+		private static class SetModBuilderChildren implements Action {
+			private final List<Mod> children;
+			SetModBuilderChildren(Mod... children) {
+				this.children = Arrays.asList(children);
+			}
+			public Object invoke(Invocation invocation) throws Throwable {
+				((Mod.Builder) invocation.getParameter(0)).children.addAll(children);
+				return null;
+			}
+			public void describeTo(Description description) {
+				description.appendText("set mod builder children to ").appendValueList("[", ",", "]", children);
+			}
+		}
+		
+		@Test public void resolveChildren() throws TransformException {
+			final Mod mod = new Mod(parentMod);
+			final LinearBlock linearBlock = mockery.mock(LinearBlock.class);
+			final Mod[] children = new Mod[] {new Mod(parentMod), new Mod(parentMod)};
+			mod.self = mockery.mock(Mod.Shim.class);
+			mockery.checking(new Expectations() {{
+				one(linearBlock).resolve(with(new CheckModBuilderParams<Mod.Builder>(mod, linearBlock, false, modStore.query())));
+				will(new SetModBuilderChildren(children));
+				one(mod.self).prepScopeClone(with(same(workspace.query())));
+				will(returnValue(modStore.query()));
+			}});
+			Collection<Mod> result = mod.resolveChildren(linearBlock, false, null);
+			assertEquals(Arrays.asList(children), result);
+		}
+
+		@Test public void resolveChildrenLastBlock() throws TransformException {
+			final Mod mod = new Mod(parentMod);
+			mod.restored = true;
+			final LinearBlock linearBlock = mockery.mock(LinearBlock.class);
+			final Mod[] children = new Mod[] {new Mod(parentMod), new Mod(parentMod)};
+			mod.self = mockery.mock(Mod.Shim.class);
+			mockery.checking(new Expectations() {{
+				one(linearBlock).resolve(with(new CheckModBuilderParams<Mod.Builder>(mod, linearBlock, true, workspace.query())));
+				will(new SetModBuilderChildren(children));
+				one(mod.self).prepScopeClone(with(same(modStore.query())));
+				will(returnValue(workspace.query()));
+			}});
+			Collection<Mod> result = mod.resolveChildren(linearBlock, true, modStore.query());
+			assertEquals(Arrays.asList(children), result);
+		}
+
+		@Test public void resolveChildrenKeyBlock() throws TransformException {
+			final Mod mod = new Mod(parentMod);
+			final KeyBlock keyBlock = mockery.mock(KeyBlock.class);
+			final Mod[] children = new Mod[] {new Mod(parentMod), new Mod(parentMod)};
+			mod.self = mockery.mock(Mod.Shim.class);
+			mockery.checking(new Expectations() {{
+				one(keyBlock).resolve(with(new CheckModBuilderParams<KeyMod.Builder>(mod, keyBlock, false, workspace.query())));
+				will(new SetModBuilderChildren(children));
+				one(mod.self).prepScopeClone(with(same(workspace.query())));
+				will(returnValue(workspace.query()));
+			}});
+			Collection<Mod> result = mod.resolveChildren(keyBlock, false, modStore.query());
+			assertEquals(Arrays.asList(children), result);
+		}
+		
+		@Test public void restoreChild() throws TransformException {
+			final Mod mod = new Mod(parentMod);
+			mod.self = mockery.mock(Mod.Shim.class);
+			final Mod child = mockery.mock(Mod.class, "child");
+			mockery.checking(new Expectations() {{
+				one(mod.self).deriveChild(block, "_r1.e13.g23.");
+				will(returnValue(child));
+				one(child).restore();
+			}});
+			Node childNode = modStore.append()
+					.elem("mod").attr("xml:id", "_r1.e13.g23.").elem("block").end("block").end("mod")
+					.commit()
+					.query().single("block").node();
+			assertSame(child, mod.restoreChild(block, childNode));
+			assertSame(childNode, child.data);
+		}
+		
+		@Test public void restoreNoReferences() throws TransformException {
+			final Mod mod = new Mod(parentMod);
+			mod.data = modStore.append()
+					.elem("mod").attr("xml:id", "_r1.e13.g23.")
+						.elem("block").attr("stage", 4).end("block")
+					.end("mod").commit()
+					.query().single("block").node();
+			mod.seg = mockery.mock(Seg.class);
+			mockery.checking(new Expectations() {{
+				one(mod.seg).restore();
+			}});
+			mod.restore();
+			assertTrue(mod.restored);
+			assertTrue(mod.references().isEmpty());
+			assertEquals(new NamespaceMap(), mod.data.namespaceBindings());
+		}
+
+		@Test(expected = IllegalArgumentException.class)
+		public void restoreWrongStage() throws TransformException {
+			final Mod mod = new Mod(parentMod);
+			mod.data = modStore.append()
+					.elem("mod").attr("xml:id", "_r1.e13.g23.")
+						.elem("block").attr("stage", 5).end("block")
+					.end("mod").commit()
+					.query().single("block").node();
+			mod.restore();
+		}
+		
+		@Test public void restoreWithReferences() throws TransformException {
+			final Mod mod = new Mod(parentMod);
+			mod.data = modStore.append()
+					.elem("mod").attr("xml:id", "_r1.e13.g23.")
+						.elem("block").attr("stage", 4)
+						  .elem("reference").attr("refid", "e1").attr("doc", doc1Name).end("reference")
+						.end("block")
+					.end("mod").commit()
+					.query().single("block").node();
+			mod.seg = mockery.mock(Seg.class);
+			mockery.checking(new Expectations() {{
+				one(mod.seg).restore();
+			}});
+			mod.restore();
+			assertTrue(mod.restored);
+			assertEquals(Collections.singletonList(doc1.root().query().single("e1").node()), mod.references());
+			assertEquals(new NamespaceMap(), mod.data.namespaceBindings());
+		}
+
+		@Test(expected = TransformException.class)
+		public void restoreWithBadReferencePath() throws TransformException {
+			final Mod mod = new Mod(parentMod);
+			mod.data = modStore.append()
+					.elem("mod").attr("xml:id", "_r1.e13.g23.")
+						.elem("block").attr("stage", 4)
+						  .elem("reference").attr("refid", "e1").attr("doc", "foo/doc").end("reference")
+						.end("block")
+					.end("mod").commit()
+					.query().single("block").node();
+			mod.restore();
+		}
 	}
 }
