@@ -8,6 +8,8 @@ import org.exist.fluent.*;
 import org.jmock.Expectations;
 import org.junit.*;
 
+import com.ideanest.dscribe.Namespace;
+
 
 public class KeyMod extends Mod {
 	
@@ -22,6 +24,7 @@ public class KeyMod extends Mod {
 	
 	KeyMod(Mod parent, String key) {
 		super(parent);
+		if (key == null) throw new IllegalArgumentException("null key");
 		this.key = key;
 		variableBindings = new HashMap<String,Object>(parent.variableBindings());
 	}
@@ -126,5 +129,62 @@ public class KeyMod extends Mod {
 		}
 
 	}
+	
+	@Deprecated public static class _ModTest extends Mod._Test {
+		@Test public void constructorFromRule() {
+			KeyMod mod = new KeyMod(rule);
+			assertSame(rule, mod.rule);
+			assertEquals(-1, mod.stage);
+			assertNull(mod.parent);
+			assertEquals("_r1.", mod.key);
+			assertTrue(mod.variableBindings.isEmpty());
+		}
+		
+		@Test public void constructorFromParentMod() {
+			parentModBindings.put("a", "foo");
+			KeyMod mod = new KeyMod(parentMod, "_r1.e13.g23.");
+			assertSame(rule, mod.rule);
+			assertEquals(4, mod.stage);
+			assertSame(parentMod, mod.parent);
+			assertEquals("_r1.e13.g23.", mod.key);
+			assertEquals(parentMod.variableBindings(), mod.variableBindings);
+			assertNotSame(parentMod.variableBindings(), mod.variableBindings);
+		}
+		
+		@Test(expected = IllegalArgumentException.class)
+		public void constructorFromParentNullKey() {
+			new KeyMod(parentMod, null);
+		}
+		
+		@Test public void writeAncestors() {
+			Node targetNode = db.getFolder("/").documents().load(Name.generate(), Source.xml(
+					"<ancestor xmlns='" + Namespace.MOD + "' refid='_r1.e13.g23.'/>")).root();
+			KeyMod mod = new KeyMod(parentMod, "_r1.e13.g23.");
+			final ElementBuilder<Node> builder = modStore.append();
+			mockery.checking(new Expectations() {{
+				one(parentMod).writeAncestors(with(same(builder)), with(equal(false)));
+			}});
+			mod.writeAncestors(builder, false);
+			Node ancestorNode = builder.commit();
+			if (!db.query().single("deep-equal($_1, $_2)", targetNode, ancestorNode).booleanValue()) {
+				fail("mismatch\n\nExpected:\n" + targetNode + "\n\nActual:\n" + ancestorNode + "\n");
+			}
+		}
+	
+		@Test public void writeAncestorsImmediate() {
+			Node targetNode = db.getFolder("/").documents().load(Name.generate(), Source.xml(
+					"<ancestor xmlns='" + Namespace.MOD + "' refid='_r1.e13.g23.' rel='parent'/>")).root();
+			KeyMod mod = new KeyMod(parentMod, "_r1.e13.g23.");
+			final ElementBuilder<Node> builder = modStore.append();
+			mockery.checking(new Expectations() {{
+				one(parentMod).writeAncestors(with(same(builder)), with(equal(false)));
+			}});
+			mod.writeAncestors(builder, true);
+			Node ancestorNode = builder.commit();
+			if (!db.query().single("deep-equal($_1, $_2)", targetNode, ancestorNode).booleanValue()) {
+				fail("mismatch\n\nExpected:\n" + targetNode + "\n\nActual:\n" + ancestorNode + "\n");
+			}
+		}
+}
 
 }
