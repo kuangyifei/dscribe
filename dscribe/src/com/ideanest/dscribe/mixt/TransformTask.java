@@ -3,7 +3,6 @@ package com.ideanest.dscribe.mixt;
 import static org.junit.Assert.assertEquals;
 
 import java.text.MessageFormat;
-import java.util.Collection;
 import java.util.StringTokenizer;
 
 import org.apache.log4j.Logger;
@@ -39,27 +38,28 @@ public class TransformTask extends TaskBase {
 		
 		// TODO: adjust mod:*/@doc reference to inherited docs that changed names
 		
-		// initialize engine with starting modified docs (uninherited ones)
-		Collection<Document> uninheritedWorkspaceDocuments = cycle().uninheritedWorkspaceDocuments();
-		Engine engine = initEngine(uninheritedWorkspaceDocuments);
-		
-		// run transform!
-		while (engine.executeCycle()) cycle().checkInterrupt();
+		try {
+			// run transform!
+			initEngine().executeTransform(cycle().uninheritedWorkspaceDocuments());
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
+			cycle().checkInterrupt();
+		}
 
 		// TODO: merge precedence data back into global configuration
 	}
 
-	private Engine initEngine(Collection<Document> uninheritedWorkspaceDocuments) throws RuleBaseException {
+	private Engine initEngine() throws RuleBaseException {
 		try {
 			expandRules();
 			// TODO: make sure rule IDs are globally unique to allow merging precedence data
 			assignRuleIDs();
-			return new Engine(workspace, prevspace, workspace, uninheritedWorkspaceDocuments);
+			return new Engine(workspace, prevspace, workspace);
 		} catch (RuleBaseException e) {
 			LOG.error("error in the ruleset, reverting to last known good set from previous cycle", e);
 			revertRules();
 			try {
-				return new Engine(workspace, prevspace, workspace, uninheritedWorkspaceDocuments);
+				return new Engine(workspace, prevspace, workspace);
 			} catch (RuleBaseException e1) {
 				// running a clean cycle wouldn't help, since an error in the current ruleset is what got us here in the first place
 				throw new RuleBaseException("error in ruleset from previous cycle, no usable ruleset available, aborting", e1);
