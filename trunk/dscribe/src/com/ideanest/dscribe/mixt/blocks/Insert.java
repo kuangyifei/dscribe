@@ -184,7 +184,7 @@ public class Insert implements BlockType {
 		@Test public void resolveComplexNodes() throws TransformException, RuleBaseException {
 			testResolve(
 					"<insert>(<n1 xmlns:k='foo' name='bar'><k:n11 foo='bar'>la la <b>bla</b></k:n11><n12/></n1>, <n2 xmlns='bar'/>)</insert>",
-					2, "(<n1 xml:id='_r1-1.' xmlns:k=\'foo\' name=\'bar\'><k:n11 foo=\'bar\'>la la <b>bla</b></k:n11><n12/></n1>, <n2 xml:id='_r1-2.' xmlns=\'bar\'/>)",
+					2, "(<n1 xml:id='_r1-1.' xmlns:k='foo' name='bar'><k:n11 foo='bar'>la la <b>bla</b></k:n11><n12/></n1>, <n2 xml:id='_r1-2.' xmlns='bar'/>)",
 					"Sl+F6eU9sYgaSTCX6eKvFg==");
 		}
 
