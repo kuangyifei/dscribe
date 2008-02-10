@@ -5,8 +5,7 @@
     <db-connection database="native" files="data"
         pageSize="4096" cacheSize="64M" free_mem_min="5">
         <pool min="1" max="20" sync-period="120000" wait-before-shutdown="120000"/>
-        <recovery enabled="yes" sync-on-commit="no"
-            size="10M" journal-dir="test/data"/>
+        <recovery enabled="yes" sync-on-commit="no" size="10M" journal-dir="journal"/>
     </db-connection>
 	   
     <serializer enable-xinclude="yes" enable-xsl="no"
@@ -32,8 +31,6 @@
                 uri="http://exist-db.org/xquery/session" />
             <module class="org.exist.xquery.functions.text.TextModule"
                 uri="http://exist-db.org/xquery/text" />
-            <module class="org.exist.xquery.modules.example.ExampleModule"
-                uri="http://exist-db.org/xquery/examples" />
             <module class="org.exist.xquery.functions.validation.ValidationModule"
                 uri="http://exist-db.org/xquery/validation" />
             <module class="org.exist.xquery.functions.system.SystemModule"
