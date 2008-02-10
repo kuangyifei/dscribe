@@ -141,7 +141,7 @@ public class Rule {
 				}
 				
 				Block block = defineBlock(blockDef);
-				mod = mod.deriveChild(block, "x");		// a bogus key, just to make the mod believable
+				mod = mod.deriveChild(block, block instanceof KeyBlock ? "x" : null);		// a bogus key, just to make the mod believable
 				mod.analyze();
 				blocks.add(block);
 				
@@ -1090,7 +1090,7 @@ public class Rule {
 				try {
 					queryServicePrepareContext.invoke(item, (Object) null);
 					Set<String> actualNames = new TreeSet<String>();
-					for (Iterator<DocumentImpl> it = ((DocumentSet) queryServiceDocs.get(item)).iterator(); it.hasNext(); ) {
+					for (Iterator<DocumentImpl> it = ((DocumentSet) queryServiceDocs.get(item)).getDocumentIterator(); it.hasNext(); ) {
 						String path = it.next().getURI().toString();
 						if (path.startsWith("/db")) path = path.substring(3);
 						actualNames.add(path);
