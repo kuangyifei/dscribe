@@ -11,15 +11,19 @@ import java.util.*;
 import org.exist.fluent.*;
 import org.junit.Test;
 
-import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.*;
 import com.ideanest.dscribe.testutil.BlockTestCase;
 
 public class Insert implements BlockType {
 
 	public QName xmlName() {
-		return new QName(Namespace.RULES, "insert", null);
+		return new QName(Transformer.RULES_NS, "insert", null);
 	}
+	
+	public String version() {
+		return "1";
+	}
+
 	public Block define(Node def) throws RuleBaseException {
 		return new InsertBlock(def);
 	}

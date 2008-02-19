@@ -1,11 +1,12 @@
 package com.ideanest.dscribe.mixt;
 
-import org.exist.fluent.Node;
-import org.exist.fluent.QName;
+import org.exist.fluent.*;
 
 public interface BlockType {
 
 	QName xmlName();
+	
+	String version();
 	
 	Block define(Node def) throws RuleBaseException;
 

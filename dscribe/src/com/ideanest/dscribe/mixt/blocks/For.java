@@ -9,14 +9,17 @@ import java.util.*;
 import org.exist.fluent.*;
 import org.junit.Test;
 
-import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.*;
 import com.ideanest.dscribe.testutil.BlockTestCase;
 
 public class For implements BlockType {
 	
 	public QName xmlName() {
-		return new QName(Namespace.RULES, "for", null);
+		return new QName(Transformer.RULES_NS, "for", null);
+	}
+
+	public String version() {
+		return "1";
 	}
 
 	public Block define(Node def) throws RuleBaseException {

@@ -1,21 +1,25 @@
 package com.ideanest.dscribe.mixt.blocks;
 
+import static com.ideanest.dscribe.testutil.Matchers.collection;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.*;
+
 import java.util.*;
 
 import org.exist.fluent.*;
 import org.junit.Test;
 
-import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.*;
 import com.ideanest.dscribe.testutil.BlockTestCase;
-import static org.junit.Assert.*;
-import static com.ideanest.dscribe.testutil.Matchers.collection;
-import static org.hamcrest.Matchers.is;
 
 public class CreateDoc implements BlockType {
 
 	public QName xmlName() {
-		return new QName(Namespace.RULES, "create-doc", null);
+		return new QName(Transformer.RULES_NS, "create-doc", null);
+	}
+	
+	public String version() {
+		return "1";
 	}
 
 	public Block define(Node def) throws RuleBaseException {

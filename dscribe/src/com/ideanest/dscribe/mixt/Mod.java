@@ -16,12 +16,11 @@ import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.*;
 import org.junit.runner.RunWith;
 
-import com.ideanest.dscribe.Namespace;
 
 public class Mod {
 	
 	static final Logger LOG = Logger.getLogger(Mod.class);
-	static final NamespaceMap MOD_NAMESPACE = new NamespaceMap("", Namespace.MOD);
+	static final NamespaceMap MOD_NAMESPACE = new NamespaceMap("", Transformer.MOD_NS);
 	static final NamespaceMap EMPTY_NAMESPACES = new NamespaceMap();
 	
 	final Rule rule;
@@ -511,8 +510,8 @@ public class Mod {
 			engine = mockery.mock(Engine.class);
 			
 			modStore = db.getFolder("/").documents().load(
-					Name.generate(), Source.xml("<mods xmlns='" + Namespace.MOD + "'/>")).root();
-			modStore.namespaceBindings().put("", Namespace.MOD);
+					Name.generate(), Source.xml("<mods xmlns='" + Transformer.MOD_NS + "'/>")).root();
+			modStore.namespaceBindings().put("", Transformer.MOD_NS);
 			
 			rule = mockery.mock(Rule.class);
 			rule_engine.set(rule, engine);
@@ -594,13 +593,13 @@ public class Mod {
 			mod_rule.set(ancestor, rule);
 			mod_stage.set(ancestor, 2);
 			final Node ancestorData = db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Namespace.MOD + "'>" +
+					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
 					"  <mod>" + 
 					"    <dependency kind='verified' doc='d" + n + "v.xml'/>" + 
 					"    <dependency kind='unverified' doc='d" + n + "u.xml'/>" + 
 					"  </mod>" +
 					"</mods>"
-			)).query().namespace("", Namespace.MOD).single("//mod").node();
+			)).query().namespace("", Transformer.MOD_NS).single("//mod").node();
 			mockery.checking(new Expectations() {{
 				allowing(ancestor).data();  will(returnValue(ancestorData));
 			}});
@@ -680,7 +679,7 @@ public class Mod {
 			builder.supplement().elem("checksum").end("checksum").elem("foobar").end("foobar");
 			
 			Node targetNode = db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<mod xmlns='" + Namespace.MOD + "' stage='3'>" +
+					"<mod xmlns='" + Transformer.MOD_NS + "' stage='3'>" +
 					"<block stage='3'>" +
 					"<dependency kind='unverified' doc='d1u.xml'/>" +
 					"<dependency kind='verified' doc='d1v.xml'/>" +
@@ -691,8 +690,8 @@ public class Mod {
 					)).root();
 			
 			Node modNode = db.getFolder("/").documents().load(
-					Name.generate(), Source.xml("<mod xmlns='" + Namespace.MOD + "'/>")).root();
-			modNode.namespaceBindings().put("", Namespace.MOD);
+					Name.generate(), Source.xml("<mod xmlns='" + Transformer.MOD_NS + "'/>")).root();
+			modNode.namespaceBindings().put("", Transformer.MOD_NS);
 			Node blockNode = builder.writeData(mod, modNode);
 			
 			assertEquals(modNode.query().single("block").node(), blockNode);

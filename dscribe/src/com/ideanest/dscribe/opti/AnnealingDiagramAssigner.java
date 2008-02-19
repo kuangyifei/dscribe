@@ -9,9 +9,9 @@ import org.exist.fluent.*;
 import org.junit.Test;
 
 import com.ideanest.dscribe.InvalidConfigurationException;
-import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.job.Cycle;
 import com.ideanest.dscribe.job.TaskBase;
+import com.ideanest.dscribe.mixt.Transformer;
 
 /**
  * Encapsulates the assignment of orphan Java elements to diagrams.
@@ -146,7 +146,7 @@ public class AnnealingDiagramAssigner extends TaskBase {
 			this.plugin = plugin;
 			this.job = job;
 			this.workspace = job.workspace(plugin.getNamespaceBindings());
-			this.workspace.namespaceBindings().put("rules", Namespace.RULES);
+			this.workspace.namespaceBindings().put("rules", Transformer.RULES_NS);
 		}
 		
 		public void run() {
