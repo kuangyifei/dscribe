@@ -17,8 +17,10 @@ public class CompactFormTranslator {
 	private static final Pattern INDENT_PATTERN = Pattern.compile("^(\\s*)(.*)$");
 	private static final Pattern TO_PATTERN = Pattern.compile("^to (.*) \\[(.+)\\]$");
 
-	public void compactToXml(Reader compactFormTextReader, ElementBuilder<?> out) throws IOException, ParseException {
-		out.namespace("", Namespace.RULES).elem("rules");
+	private CompactFormTranslator() {}
+	
+	public static void compactToXml(Reader compactFormTextReader, ElementBuilder<?> out) throws IOException, ParseException {
+		out.namespace("", Transformer.RULES_NS).elem("rules");
 		BufferedReader in = new BufferedReader(compactFormTextReader);
 		Deque<String> indents = new LinkedList<String>();
 		Deque<String> tags = new LinkedList<String>();
@@ -107,7 +109,6 @@ public class CompactFormTranslator {
 	
 	@Deprecated @DatabaseTestCase.ConfigFile("test/conf.xml")
 	public static class _Test extends DatabaseTestCase {
-		private final CompactFormTranslator translator = new CompactFormTranslator();
 		private final StringBuilder compactText = new StringBuilder(), xml = new StringBuilder();
 		private StringBuilder captureTarget;
 		
@@ -126,7 +127,7 @@ public class CompactFormTranslator {
 		private void translateAndCheck() throws IOException, ParseException {
 			Node target = db.getFolder("/").documents().load(Name.create("target"), Source.xml(xml.toString())).root();
 			ElementBuilder<XMLDocument> builder = db.getFolder("/").documents().build(Name.create("translationResult"));
-			translator.compactToXml(new StringReader(compactText.toString()), builder);
+			compactToXml(new StringReader(compactText.toString()), builder);
 			Node result = builder.commit().root();
 			if (!db.query().single("deep-equal($_1, $_2)", target, result).booleanValue()) {
 				fail("translation doesn't match\n\nExpected:\n" + target + "\n\nActual:\n" + result + "\n");
@@ -135,13 +136,13 @@ public class CompactFormTranslator {
 		
 		private void translateBadInput() throws ParseException, IOException {
 			ElementBuilder<XMLDocument> builder = db.getFolder("/").documents().build(Name.create("translationResult"));
-			translator.compactToXml(new StringReader(compactText.toString()), builder);
+			compactToXml(new StringReader(compactText.toString()), builder);
 			builder.commit();
 		}
 		
 		@Test public void empty() throws IOException, ParseException {
 			captureOutput();
-			_("<rules xmlns='"+ Namespace.RULES + "'/>");
+			_("<rules xmlns='"+ Transformer.RULES_NS + "'/>");
 			translateAndCheck();
 		}
 		
@@ -150,7 +151,7 @@ public class CompactFormTranslator {
 			_("namespace java " + Namespace.JAVA);
 			_("namespace uml " + Namespace.UML);
 			captureOutput();
-			_("<rules xmlns='"+ Namespace.RULES + "' xmlns:java='" + Namespace.JAVA + "' xmlns:uml='" + Namespace.UML + "'/>");
+			_("<rules xmlns='"+ Transformer.RULES_NS + "' xmlns:java='" + Namespace.JAVA + "' xmlns:uml='" + Namespace.UML + "'/>");
 			translateAndCheck();
 		}
 		
@@ -158,7 +159,7 @@ public class CompactFormTranslator {
 			captureInput();
 			_("to do something or other [r1]");
 			captureOutput();
-			_("<rules xmlns='"+ Namespace.RULES + "'>");
+			_("<rules xmlns='"+ Transformer.RULES_NS + "'>");
 			_("	<rule xml:id='r1' name='do something or other'/>");
 			_("</rules>");
 			translateAndCheck();
@@ -169,7 +170,7 @@ public class CompactFormTranslator {
 			_("to do something [r1]");
 			_("to do other [r2]");
 			captureOutput();
-			_("<rules xmlns='"+ Namespace.RULES + "'>");
+			_("<rules xmlns='"+ Transformer.RULES_NS + "'>");
 			_("	<rule xml:id='r1' name='do something'/>");
 			_("	<rule xml:id='r2' name='do other'/>");
 			_("</rules>");
@@ -183,7 +184,7 @@ public class CompactFormTranslator {
 			_("to do other [r2]");
 			_("");
 			captureOutput();
-			_("<rules xmlns='"+ Namespace.RULES + "'>");
+			_("<rules xmlns='"+ Transformer.RULES_NS + "'>");
 			_("	<rule xml:id='r1' name='do something'/>");
 			_("	<rule xml:id='r2' name='do other'/>");
 			_("</rules>");
@@ -196,7 +197,7 @@ public class CompactFormTranslator {
 			_("	for");
 			_("	insert");
 			captureOutput();
-			_("<rules xmlns='"+ Namespace.RULES + "'>");
+			_("<rules xmlns='"+ Transformer.RULES_NS + "'>");
 			_("	<rule xml:id='r1' name='do something or other'>");
 			_("		<for/><insert/>");
 			_("	</rule>");
@@ -209,7 +210,7 @@ public class CompactFormTranslator {
 			_("to do something or other [r1]");
 			_("	for some $x and $y");
 			captureOutput();
-			_("<rules xmlns='"+ Namespace.RULES + "'>");
+			_("<rules xmlns='"+ Transformer.RULES_NS + "'>");
 			_("	<rule xml:id='r1' name='do something or other'>");
 			_("		<for some='$x' and='$y'/>");
 			_("	</rule>");
@@ -222,7 +223,7 @@ public class CompactFormTranslator {
 			_("to do something or other [r1]");
 			_("	for: foo bar bar : is blah");
 			captureOutput();
-			_("<rules xmlns='"+ Namespace.RULES + "'>");
+			_("<rules xmlns='"+ Transformer.RULES_NS + "'>");
 			_("	<rule xml:id='r1' name='do something or other'>");
 			_("		<for>foo bar bar : is blah</for>");
 			_("	</rule>");
@@ -235,7 +236,7 @@ public class CompactFormTranslator {
 			_("to do something or other [r1]");
 			_("	for any $x: foo bar bar : is blah");
 			captureOutput();
-			_("<rules xmlns='"+ Namespace.RULES + "'>");
+			_("<rules xmlns='"+ Transformer.RULES_NS + "'>");
 			_("	<rule xml:id='r1' name='do something or other'>");
 			_("		<for any='$x'>foo bar bar : is blah</for>");
 			_("	</rule>");
@@ -250,7 +251,7 @@ public class CompactFormTranslator {
 			_("	for: foo bar bar : is blah");
 			_("	with that $y");
 			captureOutput();
-			_("<rules xmlns='"+ Namespace.RULES + "'>");
+			_("<rules xmlns='"+ Transformer.RULES_NS + "'>");
 			_("	<rule xml:id='r1' name='do something or other'>");
 			_("		<with this='$x'/>");
 			_("		<for>foo bar bar : is blah</for>");
@@ -269,7 +270,7 @@ public class CompactFormTranslator {
 			_("		then back to normal");
 			_("	with that $y");
 			captureOutput();
-			_("<rules xmlns='"+ Namespace.RULES + "'>");
+			_("<rules xmlns='"+ Transformer.RULES_NS + "'>");
 			_("	<rule xml:id='r1' name='do something or other'>");
 			_("		<for>something like: this and");
 			_("	this more indented stuff too");
@@ -289,7 +290,7 @@ public class CompactFormTranslator {
 			_("		with this $x");
 			_("	insert");
 			captureOutput();
-			_("<rules xmlns='"+ Namespace.RULES + "'>");
+			_("<rules xmlns='"+ Transformer.RULES_NS + "'>");
 			_("	<rule xml:id='r1' name='do something or other'>");
 			_("		<for>");
 			_("			<with that='$y'/>");

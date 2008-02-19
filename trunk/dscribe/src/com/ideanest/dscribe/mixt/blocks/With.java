@@ -1,19 +1,23 @@
 package com.ideanest.dscribe.mixt.blocks;
 
+import static org.junit.Assert.*;
+
 import java.util.*;
 
 import org.exist.fluent.*;
 import org.junit.Test;
 
-import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.*;
 import com.ideanest.dscribe.testutil.BlockTestCase;
-import static org.junit.Assert.*;
 
 public class With implements BlockType {
 
 	public QName xmlName() {
-		return new QName(Namespace.RULES, "with", null);
+		return new QName(Transformer.RULES_NS, "with", null);
+	}
+
+	public String version() {
+		return "1";
 	}
 
 	public Block define(Node def) throws RuleBaseException {

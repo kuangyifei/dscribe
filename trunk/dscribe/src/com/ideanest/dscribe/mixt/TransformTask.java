@@ -16,8 +16,8 @@ public class TransformTask extends TaskBase {
 	
 	private static final Logger LOG = Logger.getLogger(TransformTask.class);
 	private static final NamespaceMap NAMESPACE_MAPPINGS = new NamespaceMap(
-			"", Namespace.RULES,
-			"mod", Namespace.MOD,
+			"", Transformer.RULES_NS,
+			"mod", Transformer.MOD_NS,
 			"notes", Namespace.NOTES
 	);
 	
@@ -54,12 +54,12 @@ public class TransformTask extends TaskBase {
 			expandRules();
 			// TODO: make sure rule IDs are globally unique to allow merging precedence data
 			assignRuleIDs();
-			return new Engine(workspace, prevspace, workspace);
+			return new Engine(workspace, prevspace, workspace, null);
 		} catch (RuleBaseException e) {
 			LOG.error("error in the ruleset, reverting to last known good set from previous cycle", e);
 			revertRules();
 			try {
-				return new Engine(workspace, prevspace, workspace);
+				return new Engine(workspace, prevspace, workspace, null);
 			} catch (RuleBaseException e1) {
 				// running a clean cycle wouldn't help, since an error in the current ruleset is what got us here in the first place
 				throw new RuleBaseException("error in ruleset from previous cycle, no usable ruleset available, aborting", e1);

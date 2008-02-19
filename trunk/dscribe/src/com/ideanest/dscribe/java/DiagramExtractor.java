@@ -6,13 +6,14 @@ import org.exist.fluent.*;
 
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.job.TaskBase;
+import com.ideanest.dscribe.mixt.Transformer;
 
 public class DiagramExtractor extends TaskBase {
 
 	private static final NamespaceMap NAMESPACE_MAPPINGS = new NamespaceMap(
 			"java", Namespace.JAVA,
 			"uml", Namespace.UML,
-			"rules", Namespace.RULES,
+			"rules", Transformer.RULES_NS,
 			"vcm", Namespace.VCM,
 			"reef", Namespace.NOTES
 	);

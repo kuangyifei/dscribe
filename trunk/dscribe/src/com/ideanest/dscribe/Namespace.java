@@ -14,7 +14,5 @@ public interface Namespace {
 	public static final String VCM_CVS = "http://ideanest.com/reef/ns/vcm/CVS";	
 	public static final String JAVA = "http://ideanest.com/reef/ns/java";
 	public static final String UML = "http://ideanest.com/reef/ns/uml";
-	public static final String RULES = "http://ideanest.com/reef/ns/rules";
-	public static final String MOD = "http://ideanest.com/reef/ns/mod";
 
 }

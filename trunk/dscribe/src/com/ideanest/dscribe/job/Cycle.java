@@ -657,19 +657,23 @@ public class Cycle {
 	 *
 	 * @return a collection of documents that were not inherited from prevspace
 	 */
-	public Collection<Document> uninheritedWorkspaceDocuments() {
-		Collection<Document> modifiedDocs = new ArrayList<Document>();
+	public Collection<XMLDocument> uninheritedWorkspaceDocuments() {
+		Collection<XMLDocument> modifiedDocs = new ArrayList<XMLDocument>();
 		findUninheritedWorkspaceDocs(workspace, modifiedDocs);
 		return modifiedDocs;
 	}
 	
-	private void findUninheritedWorkspaceDocs(Folder folder, Collection<Document> modifiedDocs) {
+	private void findUninheritedWorkspaceDocs(Folder folder, Collection<XMLDocument> modifiedDocs) {
 		for (Document doc : folder.documents()) {
 			// warning:
 			// this relies on documents being marked as stored only at commit time (see #store),
 			// and having the marker deleted when modified (see #inheritedDocumentListener)
 			if (!notes.query().exists("//reef:file[@localName = $_1]", workspace.relativePath(doc.path()))) {
-				modifiedDocs.add(doc);
+				try {
+					modifiedDocs.add(doc.xml());
+				} catch (DatabaseException e) {
+					// must have been a blob document, ignore
+				}
 			}
 		}
 		for (Folder child : folder.children()) findUninheritedWorkspaceDocs(child, modifiedDocs);

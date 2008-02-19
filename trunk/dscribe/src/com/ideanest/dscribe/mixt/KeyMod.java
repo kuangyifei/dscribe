@@ -8,7 +8,6 @@ import org.exist.fluent.*;
 import org.jmock.Expectations;
 import org.junit.*;
 
-import com.ideanest.dscribe.Namespace;
 
 
 public class KeyMod extends Mod {
@@ -158,7 +157,7 @@ public class KeyMod extends Mod {
 		
 		@Test public void writeAncestors() {
 			Node targetNode = db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<ancestor xmlns='" + Namespace.MOD + "' refid='_r1.e13.g23.'/>")).root();
+					"<ancestor xmlns='" + Transformer.MOD_NS + "' refid='_r1.e13.g23.'/>")).root();
 			KeyMod mod = new KeyMod(parentMod, "_r1.e13.g23.");
 			final ElementBuilder<Node> builder = modStore.append();
 			mockery.checking(new Expectations() {{
@@ -173,7 +172,7 @@ public class KeyMod extends Mod {
 	
 		@Test public void writeAncestorsImmediate() {
 			Node targetNode = db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<ancestor xmlns='" + Namespace.MOD + "' refid='_r1.e13.g23.' rel='parent'/>")).root();
+					"<ancestor xmlns='" + Transformer.MOD_NS + "' refid='_r1.e13.g23.' rel='parent'/>")).root();
 			KeyMod mod = new KeyMod(parentMod, "_r1.e13.g23.");
 			final ElementBuilder<Node> builder = modStore.append();
 			mockery.checking(new Expectations() {{

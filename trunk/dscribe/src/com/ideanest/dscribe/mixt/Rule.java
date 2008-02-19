@@ -19,7 +19,6 @@ import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.*;
 import org.junit.runner.RunWith;
 
-import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.blocks.*;
 
 public class Rule {
@@ -46,17 +45,47 @@ public class Rule {
 		}
 	}
 	
+	/**
+	 * Write out the versions of all defined block types, in a format that can be used in a later run to
+	 * detect changed versions.  The builder should be writing to (some descendant of) the resource that
+	 * will later be provided as the <code>prevrulespace</code>.
+	 * 
+	 * @param builder an element builder on the desired target resource
+	 */
+	static void writeBlockTypeVersions(ElementBuilder<?> builder) {
+		builder.namespace("record", Transformer.RECORD_NS);
+		for (BlockType blockType : BLOCK_TYPE_DICTIONARY.values()) {
+			builder.elem("record:block-type")
+				.attr("class", blockType.getClass().getName())
+				.attr("version", blockType.version())
+			.end("record:block-type");
+		}
+	}
+	
+	static Collection<QName> verifyBlockTypeVersions(Resource record) {
+		Collection<QName> badBlockNames = new ArrayList<QName>();
+		for (BlockType blockType : BLOCK_TYPE_DICTIONARY.values()) {
+			final String lastVersion = record.query().namespace("record", Transformer.RECORD_NS).optional(
+					"//record:block-type[@class=$_1]/@version", blockType.getClass().getName()).value();
+			if (!blockType.version().equals(lastVersion)) {
+				LOG.info("block " + blockType.xmlName() + " changed from version " + lastVersion + " to " + blockType.version());
+				badBlockNames.add(blockType.xmlName());
+			}
+		}
+		return badBlockNames;
+	}
+	
 	public final Engine engine;
 	final String id;
 	private final String toString;
 	private final List<Block> blocks = new ArrayList<Block>();
 	private Set<Document> touched = new HashSet<Document>();
-	private final Accumulator.Locator<Document> modifiedDocsLocator;
+	private final Accumulator.Locator<XMLDocument> modifiedDocsLocator;
 	private int firstDifferentStage;
 
 	private Shim self;  // for testing only
 
-	Rule(Node def, Node prevDef, Engine engine, Accumulator.Locator<Document> modifiedDocsLocator) throws RuleBaseException {
+	Rule(Node def, Node prevDef, Engine engine, Accumulator.Locator<XMLDocument> modifiedDocsLocator) throws RuleBaseException {
 		this.engine = engine;
 		this.modifiedDocsLocator = modifiedDocsLocator;
 		initDefaultShim();
@@ -80,7 +109,7 @@ public class Rule {
 	}
 
 	// for testing only
-	private Rule(Engine engine, Accumulator.Locator<Document> modifiedDocsLocator) {
+	private Rule(Engine engine, Accumulator.Locator<XMLDocument> modifiedDocsLocator) {
 		this.engine = engine;
 		this.modifiedDocsLocator = modifiedDocsLocator;
 		this.id = "r1";
@@ -91,7 +120,7 @@ public class Rule {
 	private interface Shim {
 		KeyMod bootstrapMod();
 		KeyMod restore(Node modNode, KeyMod baseMod) throws TransformException;
-		void verifyMods(Set<Document> modifiedDocs) throws TransformException;
+		void verifyMods(Set<XMLDocument> modifiedDocs) throws TransformException;
 		void verifySubtree(KeyMod mod, ItemList modsToVerify, Collection<String> modifiedDocsNames) throws TransformException;
 		KeyMod restoreAndVerify(Node modNode, KeyMod baseMod, boolean terminal, Collection<String> modifiedDocNames);
 	}
@@ -104,7 +133,7 @@ public class Rule {
 			public KeyMod restore(Node modNode, KeyMod baseMod) throws TransformException {
 				return Rule.this.restore(modNode, baseMod);
 			}
-			public void verifyMods(Set<Document> modifiedDocs) throws TransformException {
+			public void verifyMods(Set<XMLDocument> modifiedDocs) throws TransformException {
 				Rule.this.verifyMods(modifiedDocs);
 			}
 			public void verifySubtree(KeyMod mod, ItemList modsToVerify, Collection<String> modifiedDocsNames) throws TransformException {
@@ -193,19 +222,20 @@ public class Rule {
 		touched.addAll(docs);
 	}
 	
-	void process() throws TransformException {
+	void process(boolean doGlobalProcessing) throws TransformException {
 		LOG.debug("processing " + this);
 		
-		Set<Document> modifiedDocs = modifiedDocsLocator.catchUp();
+		Set<XMLDocument> modifiedDocs = modifiedDocsLocator.catchUp();
 		
-		QueryService touchedScope;
-		try {
-			self.verifyMods(modifiedDocs);
-			touched.addAll(modifiedDocs);
-			touchedScope = engine.globalScope().database().query(touched);
-		} catch (TransformException e) {
-			// inconsistent state, rule withdrawn, do global processing
-			touchedScope = null;
+		QueryService touchedScope = null;
+		if (!doGlobalProcessing) {
+			try {
+				self.verifyMods(modifiedDocs);
+				touched.addAll(modifiedDocs);
+				touchedScope = engine.globalScope().database().query(touched);
+			} catch (TransformException e) {
+				// inconsistent state, rule withdrawn, do global processing after all
+			}
 		}
 		touched = new HashSet<Document>();	// don't clear, old set still referenced by touchedScope
 		
@@ -328,7 +358,7 @@ public class Rule {
 	 * @param modifiedDocs the set of modified documents
 	 * @throws TransformException if an internally inconsistent state was detected during the verification 
 	 */
-	private void verifyMods(Set<Document> modifiedDocs) throws TransformException {
+	private void verifyMods(Set<XMLDocument> modifiedDocs) throws TransformException {
 		LOG.debug("checking for mods to verify");
 		
 		Collection<String> modifiedDocsNames = convertDocsToNames(modifiedDocs);
@@ -352,7 +382,7 @@ public class Rule {
 	 * @param docs the set of documents to convert
 	 * @return the paths of the given documents, relative to the engine's workspace
 	 */
-	private Collection<String> convertDocsToNames(Collection<Document> docs) {
+	private Collection<String> convertDocsToNames(Collection<XMLDocument> docs) {
 		Collection<String> docNamesList = new ArrayList<String>(docs.size());
 		for (Document doc : docs) docNamesList.add(engine.relativePath(doc));
 		return docNamesList;
@@ -430,7 +460,7 @@ public class Rule {
 					"	</mod:block>" + 
 					"</mod:mod>" + 
 					"</mod:mods>")).root();
-			modStore.namespaceBindings().put("", Namespace.MOD);
+			modStore.namespaceBindings().put("", Transformer.MOD_NS);
 			engine = mockery.mock(Engine.class);
 			mockery.checking(new Expectations() {{
 				allowing(engine).workspace(); will(returnValue(db.getFolder("/")));
@@ -442,7 +472,7 @@ public class Rule {
 		
 		private Node makeRule(String attributes, String xml) {
 			return db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<rule " + attributes + " xmlns='" + Namespace.RULES + "'>" + xml + "</rule>")).root();
+					"<rule " + attributes + " xmlns='" + Transformer.RULES_NS + "'>" + xml + "</rule>")).root();
 		}
 		
 		@Test public void sameDefsWithName() throws RuleBaseException {
@@ -503,7 +533,7 @@ public class Rule {
 				allowing(engine).globalScope(); will(returnValue(db.getFolder("/").query()));
 				allowing(engine).utilQuery(); will(returnValue(db.query()));
 			}});
-			final Accumulator.Locator<Document> locator = mockery.mock(Accumulator.Locator.class);
+			final Accumulator.Locator<XMLDocument> locator = mockery.mock(Accumulator.Locator.class);
 			rule = new Rule(engine, locator);
 		}
 		
@@ -514,7 +544,7 @@ public class Rule {
 		protected void initLiteralModStore(String xml) {
 			modStore = db.getFolder("/").documents().load(Name.create("mods"), Source.xml(
 					"<mods xmlns='http://ideanest.com/reef/ns/mod'>" + xml + "</mods>")).root();
-			modStore.namespaceBindings().put("", Namespace.MOD);
+			modStore.namespaceBindings().put("", Transformer.MOD_NS);
 			mockery.checking(new Expectations() {{
 				allowing(rule.engine).modStore(); will(returnValue(modStore));
 			}});
@@ -580,7 +610,7 @@ public class Rule {
 	public static class _UtilityTest extends _RuleTest {
 		private Node makeBlock(String xml) {
 			return db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<blocks xmlns='" + Namespace.RULES + "'>" + xml + "</blocks>")).root().query().single("*").node();
+					"<blocks xmlns='" + Transformer.RULES_NS + "'>" + xml + "</blocks>")).root().query().single("*").node();
 		}
 		
 		@Test public void defineBlockWorks() throws RuleBaseException {
@@ -637,7 +667,7 @@ public class Rule {
 		
 		@Test public void convertDocsToNames() {
 			String[] docNames = {"a", "b", "c", "d"};
-			Set<Document> docs = new HashSet<Document>();
+			Set<XMLDocument> docs = new HashSet<XMLDocument>();
 			for (final String docName : docNames) {
 				final XMLDocument doc = db.getFolder("/").documents().load(Name.create(docName), Source.xml("<foo/>"));
 				docs.add(doc);
@@ -648,13 +678,37 @@ public class Rule {
 			assertEquals(new HashSet<String>(Arrays.asList(docNames)),
 					new HashSet<String>(rule.convertDocsToNames(docs)));
 		}
+		
+		@Test public void writeBlockTypeVersions() {
+			ElementBuilder<XMLDocument> builder = db.getFolder("/").documents().build(Name.generate()).elem("root");
+			Rule.writeBlockTypeVersions(builder);
+			XMLDocument doc = builder.end("root").commit();
+			doc.namespaceBindings().put("", Transformer.RECORD_NS);
+			assertEquals(BLOCK_CLASSES.length, doc.query().all("//block-type").size());
+			for (BlockType blockType : BLOCK_TYPE_DICTIONARY.values()) {
+				assertTrue(doc.query().exists("//block-type[@class=$_1][@version=$_2]", blockType.getClass().getName(), blockType.version()));
+			}
+		}
+		
+		@Test public void verifyBlockTypeVersions() {
+			XMLDocument doc = db.getFolder("/").documents().load(Name.generate(), Source.xml(
+					"<root xmlns='" + Transformer.RECORD_NS + "'>" +
+					"  <block-type class='com.ideanest.dscribe.mixt.blocks.For' version='" + new For().version() + "'/>" +
+					"  <block-type class='com.ideanest.dscribe.mixt.blocks.With' version='" + new With().version() + "foo'/>" +
+					"</root>"));
+			Collection<QName> badBlockNames = Rule.verifyBlockTypeVersions(doc);
+			NamespaceMap ns = new NamespaceMap("", Transformer.RULES_NS);
+			assertFalse("good version", badBlockNames.contains(QName.parse("for", ns)));
+			assertTrue("bad version", badBlockNames.contains(QName.parse("with", ns)));
+			assertTrue("missing record", badBlockNames.contains(QName.parse("insert", ns)));
+		}
 	}
 
 	@Deprecated
 	public static class _ParseBlocksTest extends _RuleTest {
 		private Node makeRule(String xml) {
 			return db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<rule xmlns='" + Namespace.RULES + "'>" + xml + "</rule>")).root();
+					"<rule xmlns='" + Transformer.RULES_NS + "'>" + xml + "</rule>")).root();
 		}
 		
 		@Test(expected = RuleBaseException.class)
@@ -1129,7 +1183,7 @@ public class Rule {
 		}
 		
 		private void prepScenario(final boolean verifySuccessful, int numBlocks) throws TransformException {
-			final Set<Document> modifiedDocs = new HashSet<Document>();
+			final Set<XMLDocument> modifiedDocs = new HashSet<XMLDocument>();
 			// add some documents to list in modifiedDocs
 			modifiedDocs.add(db.getFolder("/").documents().load(Name.create("somedoc"), Source.xml("<data/>")));
 			modifiedDocs.add(db.createFolder("/foo").documents().load(Name.create("otherdoc"), Source.xml("<data/>")));
@@ -1154,7 +1208,7 @@ public class Rule {
 		}
 		
 		private void processRuleExpectingCounts(int expectedNumBlocksResolved, int expectedNumModsCompleted) throws TransformException {
-			rule.process();
+			rule.process(false);
 			assertEquals("num blocks resolved", expectedNumBlocksResolved, numBlocksResolved.value());
 			assertEquals("num blocks completed", expectedNumModsCompleted, numModsCompleted.value());
 		}
