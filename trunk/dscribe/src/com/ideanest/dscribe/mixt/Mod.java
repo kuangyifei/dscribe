@@ -191,8 +191,8 @@ public class Mod {
 		seg.analyze();
 	}
 	
-	void writeAncestors(ElementBuilder<?> builder, boolean immediate) {
-		parent.writeAncestors(builder, immediate);
+	Node node() {
+		return data.query().single("..").node();
 	}
 	
 	@Override public String toString() {
@@ -202,8 +202,8 @@ public class Mod {
 	
 	static KeyMod bootstrap(Rule rule) {
 		return new KeyMod(rule) {
-			@Override void writeAncestors(ElementBuilder<?> builder, boolean immediate) {}
 			@Override public String toString() {return "rootmod[" +rule + "]";} 
+			@Override Node node() {return rule.engine.modStore();}
 			@Override Mod restoreChild(Block block, Node data) throws TransformException {
 				throw new UnsupportedOperationException();
 			}
@@ -279,10 +279,8 @@ public class Mod {
 						mod.data = modNode.query().single("block[xs:integer(@stage)=$_1]", mod.stage).node();
 					}
 				} else {
-					ElementBuilder<Node> modDataBuilder = mod.rule.engine.modStore().append()
-						.elem("mod").attr("xml:id", mod.key()).attr("rule", mod.rule.id).end("mod");
-					parent.writeAncestors(modDataBuilder, true);
-					modNode = modDataBuilder.commit();
+					modNode = parent.node().append()
+							.elem("mod").attr("xml:id", mod.key()).attr("rule", mod.rule.id).end("mod").commit();
 				}
 				if (!mod.restored) mod.data = writeData(mod, modNode);
 				
@@ -369,6 +367,7 @@ public class Mod {
 		
 		private DependencyModifier dependOn(Mod ancestor, DependencyModifier depMod) {
 			if (!(ancestor.rule == parent.rule && ancestor.stage <= parent.stage)) throw new IllegalArgumentException("given mod is not an ancestor: " + ancestor);
+			// TODO: catch more non-ancestor mods?
 			Map<String,Object> varMap = Collections.emptyMap();
 			depMod.addAll(ancestor.data().query().clone(MOD_NAMESPACE, varMap)
 					.unordered("dependency[@kind='unverified']/@doc").values().asList());
@@ -704,7 +703,7 @@ public class Mod {
 		public void twoCommitsFail() throws TransformException {
 			final Seg seg = mockery.mock(Seg.class);
 			mockery.checking(new Expectations() {{
-				one(parentMod).writeAncestors(with(any(ElementBuilder.class)), with(equal(true)));
+				one(parentMod).node();  will(returnValue(modStore));
 				one(block).createSeg(with(any(Mod.class)));  will(returnValue(seg));
 				one(seg).restore();
 			}});
@@ -715,7 +714,7 @@ public class Mod {
 		@Test public void commitNewNode() throws TransformException {
 			final Seg seg = mockery.mock(Seg.class);
 			mockery.checking(new Expectations() {{
-				one(parentMod).writeAncestors(with(any(ElementBuilder.class)), with(equal(true)));
+				one(parentMod).node();  will(returnValue(modStore));
 				one(block).createSeg(with(any(Mod.class)));  will(returnValue(seg));
 				one(seg).restore();
 			}});
@@ -824,8 +823,8 @@ public class Mod {
 			assertTrue(mod.restored);
 		}
 		
-		@Test public void bootstrapWriteAncestors() {
-			Mod.bootstrap(rule).writeAncestors(null, true);
+		@Test public void bootstrapAppendChild() {
+			assertEquals(modStore, Mod.bootstrap(rule).node());
 		}
 		
 		@Test(expected = UnsupportedOperationException.class)
@@ -951,22 +950,12 @@ public class Mod {
 			mod.analyze();
 		}
 		
-		@Test public void writeAncestorsImmediate() {
-			final ElementBuilder<?> eb = modStore.append();
-			mockery.checking(new Expectations() {{
-				one(parentMod).writeAncestors(eb, true);
-			}});
+		@Test public void node() {
+			Node modNode = modStore.append().elem("mod").attr("xml:id", "_r1.e13.").elem("block").end("block").end("mod").commit();
+			Node blockNode = modNode.query().single("block").node();
 			Mod mod = new Mod(parentMod);
-			mod.writeAncestors(eb, true);
-		}
-
-		@Test public void writeAncestors() {
-			final ElementBuilder<?> eb = modStore.append();
-			mockery.checking(new Expectations() {{
-				one(parentMod).writeAncestors(eb, false);
-			}});
-			Mod mod = new Mod(parentMod);
-			mod.writeAncestors(eb, false);
+			mod.data = blockNode;
+			assertEquals(modNode, mod.node());
 		}
 		
 		@Test public void deriveChild() {

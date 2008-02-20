@@ -287,8 +287,8 @@ public class Rule {
 		assert baseMod.rule.id.equals(modNode.query().single("@rule").value());
 		Mod mod = baseMod;
 		ItemList history = engine.modStore().query().all(
-				"for $mod in (/id($_2/ancestor/@refid)[xs:integer(@stage) > $_1] union $_3)" +
-				"order by xs:integer($mod/@stage) return $mod", mod.stage, modNode, modNode);
+				"for $mod in ($_1/ancestor-or-self::mod except $_2/ancestor-or-self::mod) " +
+				"order by xs:integer($mod/@stage) return $mod", modNode, baseMod.node());
 		for (Node historyNode : history.nodes()) {
 			for (Node blockNode : historyNode.query().all("block").nodes()) {
 				mod = mod.restoreChild(blocks.get(mod.stage+1), blockNode);
@@ -390,12 +390,10 @@ public class Rule {
 
 	private void verifySubtree(KeyMod mod, ItemList modsToVerify, Collection<String> modifiedDocsNames) throws TransformException {
 		if (mod == null) return;
-		for(Node childNode : engine.modStore().query().unordered(
-				(mod.stage == -1 ? "//mod[not(ancestor)]" : "//mod[ancestor[@rel='parent']/@refid=$_1]")
-				+ "[@xml:id=$_2/ancestor/@refid or @xml:id=$_2/@xml:id]", mod.stage == -1 ? null : mod.key(), modsToVerify).nodes()) {
+		for(Node childNode : mod.node().query().unordered("mod[descendant-or-self::mod/@xml:id=$_1/@xml:id]", modsToVerify).nodes()) {
 			KeyMod childMod;
 			if (modsToVerify.query().exists("self::mod[@xml:id=$_1/@xml:id]", childNode)) {
-				boolean terminal = !modsToVerify.query().exists("self::mod[ancestor/@refid=$_1/@xml:id]", childNode);
+				boolean terminal = !modsToVerify.query().exists("self::mod[@xml:id=$_1/descendant::mod/@xml:id]", childNode);
 				childMod = self.restoreAndVerify(childNode, mod, terminal, modifiedDocsNames);
 			} else {
 				try {
@@ -436,30 +434,29 @@ public class Rule {
 		
 		@Before public void setUp() {
 			modStore = db.getFolder("/").documents().load(Name.create("mods"), Source.xml(
-					"<mod:mods xmlns:mod='http://ideanest.com/reef/ns/mod'>" + 
-					"<mod:mod xml:id='_r1.j-230.' rule='r1' stage='0'>" + 
-					"	<mod:block stage='0'>" + 
-					"		<mod:dependency doc='model/something.java'/>" + 
-					"		<mod:reference refid='j-230'/>" + 
-					"	</mod:block>" + 
-					"</mod:mod>" + 
-					"<mod:mod xml:id='_r1.j-230.m-12.' rule='r1' stage='2'>" + 
-					"	<mod:ancestor refid='_r1.j230.'/>" + 
-					"	<mod:block stage='1'>" + 
-					"		<mod:dependency doc='mappings.xml'/>" + 
-					"		<mod:reference refid='m-12'/>" + 
-					"	</mod:block>" + 
-					"	<mod:block stage='2'>" + 
-					"		<mod:affected refid='_r1.j-230.m-12..1' checksum='2341234'/>" + 
-					"	</mod:block>" + 
-					"</mod:mod>" + 
-					"<mod:mod xml:id='_r2.j-230.' rule='r2' stage='0'>" + 
-					"	<mod:block stage='0'>" + 
-					"		<mod:dependency doc='model/something.java'/>" + 
-					"		<mod:reference refid='j-230'/>" + 
-					"	</mod:block>" + 
-					"</mod:mod>" + 
-					"</mod:mods>")).root();
+					"<mods xmlns='http://ideanest.com/reef/ns/mod'>" + 
+					"<mod xml:id='_r1.j-230.' rule='r1' stage='0'>" + 
+					"	<block stage='0'>" + 
+					"		<dependency doc='model/something.java'/>" + 
+					"		<reference refid='j-230'/>" + 
+					"	</block>" + 
+					"	<mod xml:id='_r1.j-230.m-12.' rule='r1' stage='2'>" + 
+					"		<block stage='1'>" + 
+					"			<dependency doc='mappings.xml'/>" + 
+					" 			<reference refid='m-12'/>" + 
+					"		</block>" + 
+					"		<block stage='2'>" + 
+					"			<affected refid='_r1.j-230.m-12..1' checksum='2341234'/>" + 
+					"		</block>" + 
+					"	</mod>" + 
+					"</mod>" + 
+					"<mod xml:id='_r2.j-230.' rule='r2' stage='0'>" + 
+					"	<block stage='0'>" + 
+					"		<dependency doc='model/something.java'/>" + 
+					"		<reference refid='j-230'/>" + 
+					"	</block>" + 
+					"</mod>" + 
+					"</mods>")).root();
 			modStore.namespaceBindings().put("", Transformer.MOD_NS);
 			engine = mockery.mock(Engine.class);
 			mockery.checking(new Expectations() {{
@@ -562,10 +559,11 @@ public class Rule {
 			return modStore.query().single("/id($_1)", "_"+id).node();
 		}
 		
-		protected <T extends Mod> T mockMod(Class<T> clazz, final String id, int stage) {
+		protected <T extends Mod> T mockMod(Class<T> clazz, final String id, final int stage) {
 			final T mod = mockery.mock(clazz, "mod_" + id + "@" + stage);
 			mockery.checking(new Expectations() {{
 				allowing(mod).key();  will(returnValue(id));
+				allowing(mod).node();  will(returnValue(stage == -1 ? modStore : modStore.query().optional("/id($_1)", id).node()));
 			}});
 			try {
 				Field field = Mod.class.getDeclaredField("stage");
@@ -805,29 +803,26 @@ public class Rule {
 		@Before public void setUp() {
 			initLiteralModStore(
 					"<mods xmlns='http://ideanest.com/reef/ns/mod'>" + 
-					"<mod xml:id='_r1.j-230.' rule='r1' stage='0'>" + 
+					"<mod xml:id='_r1.0.' rule='r1' stage='0'>" + 
 					"	<block stage='0'>" + 
 					"		<dependency doc='model/something.java'/>" + 
 					"		<reference refid='j-230'/>" + 
 					"	</block>" + 
-					"</mod>" + 
-					"<mod xml:id='_r1.j-230.m-12.' rule='r1' stage='2'>" + 
-					"	<ancestor refid='_r1.j-230.'/>" + 
-					"	<block stage='1'>" + 
-					"		<dependency doc='mappings.xml'/>" + 
-					"		<reference refid='m-12'/>" + 
-					"	</block>" + 
-					"	<block stage='2'>" + 
-					"		<affected refid='_r1.j-230.m-12..1' checksum='2341234'/>" + 
-					"	</block>" + 
-					"</mod>" + 
-					"<mod xml:id='_r1.j-230.m-12.m-14.' rule='r1' stage='3'>" + 
-					"	<ancestor refid='_r1.j-230.m-12.'/>" + 
-					"	<ancestor refid='_r1.j-230.'/>" + 
-					"	<block stage='3'>" + 
-					"		<dependency doc='foo.xml'/>" +
-					"		<reference refid='m-14'/>" + 
-					"	</block>" + 
+					"	<mod xml:id='_r1.2.' rule='r1' stage='2'>" + 
+					"		<block stage='1'>" + 
+					"			<dependency doc='mappings.xml'/>" + 
+					"			<reference refid='m-12'/>" + 
+					"		</block>" + 
+					"		<block stage='2'>" + 
+					"			<affected refid='_r1.j-230.m-12..1' checksum='2341234'/>" + 
+					"		</block>" + 
+					"		<mod xml:id='_r1.3.' rule='r1' stage='3'>" + 
+					"			<block stage='3'>" + 
+					"				<dependency doc='foo.xml'/>" +
+					"				<reference refid='m-14'/>" + 
+					"			</block>" + 
+					"		</mod>" + 
+					"	</mod>" + 
 					"</mod>" + 
 					"</mods>");
 			
@@ -913,7 +908,7 @@ public class Rule {
 			final List<Mod> mods = mockModRestoreSequence(2, 3);
 			mockery.checking(new Expectations() {{
 				one(mods.get(3)).verify();  will(throwException(new TransformException()));
-				one(rule.engine).withdrawMod("_r1.j-230.m-12.m-14.");
+				one(rule.engine).withdrawMod("_r1.3.");
 			}});
 			Counter counter = injectEngineCounter("numBlocksVerified");
 			assertNull(rule.restoreAndVerify(modNodeAt(3), (KeyMod) mods.get(2), false, Collections.singleton("foo.xml")));
@@ -945,7 +940,7 @@ public class Rule {
 			final List<Mod> mods = mockModRestoreSequence(0, 1);
 			mockery.checking(new Expectations() {{
 				one(mods.get(1)).verify();  will(throwException(new TransformException()));
-				one(rule.engine).withdrawMod("_r1.j-230.m-12.");
+				one(rule.engine).withdrawMod("_r1.2.");
 			}});
 			Counter counter = injectEngineCounter("numBlocksVerified");
 			assertNull(rule.restoreAndVerify(modNodeAt(2), (KeyMod) mods.get(0), false, Collections.singleton("mappings.xml")));
@@ -957,7 +952,7 @@ public class Rule {
 			mockery.checking(new Expectations() {{
 				one(mods.get(1)).verify();
 				one(mods.get(1)).restoreChild(blocks.get(2), blockNodeAt(2));  will(throwException(new TransformException()));
-				one(rule.engine).withdrawMod("_r1.j-230.m-12.");
+				one(rule.engine).withdrawMod("_r1.2.");
 			}});
 			Counter counter = injectEngineCounter("numBlocksVerified");
 			assertNull(rule.restoreAndVerify(modNodeAt(2), (KeyMod) mods.get(0), false, Collections.singleton("mappings.xml")));
@@ -985,20 +980,13 @@ public class Rule {
 		private void createMod(final String id) {
 			final KeyMod mockMod = mockery.mock(KeyMod.class, "mod_" + id);
 			mods.put(id, mockMod);
+			int k = id.lastIndexOf('.');
+			Node parent = k == -1 ? modStore : modStore.query().presub().single("/id('_$1')", id.substring(0, k)).node();
+			final Node modNode = parent.append().elem("mod").attr("xml:id", "_"+id).attr("rule", "r1").attr("stage", id.split("\\.").length-1).end("mod").commit();
 			mockery.checking(new Expectations() {{
 				allowing(mockMod).key();  will(returnValue("_"+id));
+				allowing(mockMod).node();  will(returnValue(modNode));
 			}});
-			ElementBuilder<Node> builder = modStore.append().elem("mod")
-					.attr("xml:id", "_"+id).attr("rule", "r1").attr("stage", id.split("\\.").length-1);
-			boolean parent = true;
-			int k;
-			String subid = id;
-			while ((k = subid.lastIndexOf('.')) != -1) {
-				subid = subid.substring(0, k);
-				builder.elem("ancestor").attr("refid", "_"+subid).attrIf(parent, "rel", "parent").end("ancestor");
-				parent = false;
-			}
-			builder.end("mod").commit();
 		}
 		
 		private void expectRestoreAndVerify(final String nodeId, final String baseModId, final boolean terminal) {
