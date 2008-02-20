@@ -208,12 +208,11 @@ public class Engine {
 		ItemList affected = workspace.query().all("()");
 		
 		while (newMods.size() > 0) {
-			newMods = modStore.query().unordered("$_1 union //mod[ancestor/@refid=$_1/@xml:id]", newMods);
 			ItemList newAffected = workspace.query().unordered("/id($_1//mod:affected/@refid)", newMods);
 			affected = utilQuery.unordered("$_1 union $_2", affected, newAffected);
 			mods = utilQuery.unordered("$_1 union $_2", mods, newMods);
 			newMods = modStore.query().unordered(
-					"//mod[.//reference/@refid=$_1/descendant-or-self::*/@xml:id] except $_2",
+					"//mod[block/reference/@refid=$_1/descendant-or-self::*/@xml:id] except $_2",
 					newAffected, mods);
 		}
 		
@@ -223,16 +222,14 @@ public class Engine {
 			ItemList docPaths = utilQuery.unordered("distinct-values($_1[@rule=$_2]//mod:dependency/@doc)", mods, ruleId);
 			List<Document> docs = new ArrayList<Document>(docPaths.size());
 			for (String docPath : docPaths.values()) {
-				if (workspace.documents().contains(docPath)) {
-					docs.add(workspace.documents().get(docPath));
-				}
+				if (workspace.documents().contains(docPath)) docs.add(workspace.documents().get(docPath));
 			}
 			rule.addTouched(docs);
 		}
 		
 		LOG.debug("deleting " + modCountFormatter.format(mods.size()) + " and " + affectedCountFormatter.format(affected.size()));
 		
-		numModsWithdrawn.increment(mods.size());
+		numModsWithdrawn.increment(mods.query().single("count(descendant-or-self::mod:mod)").intValue());
 		affected.deleteAllNodes();
 		mods.deleteAllNodes();
 	}
@@ -323,9 +320,9 @@ public class Engine {
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
 					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
 					"<mod xml:id='_r1.1' rule='r1'/>" +
-					"<mod xml:id='_r1.2' rule='r1'><dependency doc='foo'/></mod>" +
-					"<mod xml:id='_r1.3' rule='r1'><dependency doc='bar/foo'/></mod>" +
-					"<mod xml:id='_r1.4' rule='r1'><dependency doc='bar/baz'/></mod>" +
+					"<mod xml:id='_r1.2' rule='r1'><block><dependency doc='foo'/></block></mod>" +
+					"<mod xml:id='_r1.3' rule='r1'><block><dependency doc='bar/foo'/></block></mod>" +
+					"<mod xml:id='_r1.4' rule='r1'><block><dependency doc='bar/baz'/></block></mod>" +
 					"<mod xml:id='_r2.1' rule='r2'/>" +
 					"</mods>")).root();
 			modStore.namespaceBindings().put("", Transformer.MOD_NS);
@@ -412,8 +409,9 @@ public class Engine {
 		@Test public void withdrawModsWithDescendants() {
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
 					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
-					"  <mod xml:id='m1' rule='r1'/>" +
-					"  <mod xml:id='m1.1' rule='r1'><ancestor refid='m1'/></mod>" +
+					"  <mod xml:id='m1' rule='r1'>" +
+					"  	<mod xml:id='m1.1' rule='r1'/>" +
+					"	</mod>" +
 					"  <mod xml:id='m2' rule='r1'/>" +
 					"</mods>")).root();
 			Engine engine = new Engine(workspace, modStore);
@@ -434,7 +432,7 @@ public class Engine {
 					"<foo><bar xml:id='b1'/><bar xml:id='b2'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
 					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
-					"  <mod xml:id='m1' rule='r1'><affected refid='b1'/></mod>" +
+					"  <mod xml:id='m1' rule='r1'><block><affected refid='b1'/></block></mod>" +
 					"  <mod xml:id='m2' rule='r1'/>" +
 					"</mods>")).root();
 			Engine engine = new Engine(workspace, modStore);
@@ -459,9 +457,10 @@ public class Engine {
 					"<foo><baz xml:id='c1'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
 					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
-					"  <mod xml:id='m1' rule='r1'><affected refid='b1'/></mod>" +
-					"  <mod xml:id='m1.1' rule='r1'><ancestor refid='m1'/><dependency doc='b'/></mod>" +
-					"  <mod xml:id='m2' rule='r1'><dependency doc='c'/></mod>" +
+					"  <mod xml:id='m1' rule='r1'><block><affected refid='b1'/></block>" +
+					"  	<mod xml:id='m1.1' rule='r1'><block><dependency doc='b'/></block></mod>" +
+					"	</mod>" +
+					"  <mod xml:id='m2' rule='r1'><block><dependency doc='c'/></block></mod>" +
 					"</mods>")).root();
 			Engine engine = new Engine(workspace, modStore);
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
@@ -484,9 +483,9 @@ public class Engine {
 					"<foo><bar xml:id='b1'><baz xml:id='b1a'/></bar><bar xml:id='b2'/><xyz xml:id='b3'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
 					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
-					"  <mod xml:id='m1' rule='r1'><affected refid='b1'/></mod>" +
-					"  <mod xml:id='m3' rule='r2'><reference refid='b1'/></mod>" +
-					"  <mod xml:id='m4' rule='r2'><reference refid='b1a'/><affected refid='b3'/></mod>" +
+					"  <mod xml:id='m1' rule='r1'><block><affected refid='b1'/></block></mod>" +
+					"  <mod xml:id='m3' rule='r2'><block><reference refid='b1'/></block></mod>" +
+					"  <mod xml:id='m4' rule='r2'><block><reference refid='b1a'/><affected refid='b3'/></block></mod>" +
 					"  <mod xml:id='m2' rule='r1'/>" +
 					"</mods>")).root();
 			Engine engine = new Engine(workspace, modStore);

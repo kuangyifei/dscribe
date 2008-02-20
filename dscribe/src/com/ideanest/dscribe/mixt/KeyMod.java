@@ -36,11 +36,6 @@ public class KeyMod extends Mod {
 		return key;
 	}
 	
-	@Override void writeAncestors(ElementBuilder<?> builder, boolean immediate) {
-		builder.elem("ancestor").attr("refid", key()).attrIf(immediate, "rel", "parent").end("ancestor");
-		super.writeAncestors(builder, false);
-	}
-	
 	@Override public String toString() {
 		return super.toString().replace(".mod[", ".keymod[");
 	}
@@ -115,7 +110,7 @@ public class KeyMod extends Mod {
 			final Seg seg1 = mockery.mock(Seg.class, "seg1");
 			final Seg seg2 = mockery.mock(Seg.class, "seg2");
 			mockery.checking(new Expectations() {{
-				exactly(2).of(parentMod).writeAncestors(with(any(ElementBuilder.class)), with(equal(true)));
+				exactly(2).of(parentMod).node();  will(returnValue(modStore));
 				exactly(2).of(block).createSeg(with(any(Mod.class)));
 					will(onConsecutiveCalls(returnValue(seg1), returnValue(seg2)));
 				one(seg1).restore();
@@ -153,36 +148,6 @@ public class KeyMod extends Mod {
 		@Test(expected = IllegalArgumentException.class)
 		public void constructorFromParentNullKey() {
 			new KeyMod(parentMod, null);
-		}
-		
-		@Test public void writeAncestors() {
-			Node targetNode = db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<ancestor xmlns='" + Transformer.MOD_NS + "' refid='_r1.e13.g23.'/>")).root();
-			KeyMod mod = new KeyMod(parentMod, "_r1.e13.g23.");
-			final ElementBuilder<Node> builder = modStore.append();
-			mockery.checking(new Expectations() {{
-				one(parentMod).writeAncestors(with(same(builder)), with(equal(false)));
-			}});
-			mod.writeAncestors(builder, false);
-			Node ancestorNode = builder.commit();
-			if (!db.query().single("deep-equal($_1, $_2)", targetNode, ancestorNode).booleanValue()) {
-				fail("mismatch\n\nExpected:\n" + targetNode + "\n\nActual:\n" + ancestorNode + "\n");
-			}
-		}
-	
-		@Test public void writeAncestorsImmediate() {
-			Node targetNode = db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<ancestor xmlns='" + Transformer.MOD_NS + "' refid='_r1.e13.g23.' rel='parent'/>")).root();
-			KeyMod mod = new KeyMod(parentMod, "_r1.e13.g23.");
-			final ElementBuilder<Node> builder = modStore.append();
-			mockery.checking(new Expectations() {{
-				one(parentMod).writeAncestors(with(same(builder)), with(equal(false)));
-			}});
-			mod.writeAncestors(builder, true);
-			Node ancestorNode = builder.commit();
-			if (!db.query().single("deep-equal($_1, $_2)", targetNode, ancestorNode).booleanValue()) {
-				fail("mismatch\n\nExpected:\n" + targetNode + "\n\nActual:\n" + ancestorNode + "\n");
-			}
 		}
 }
 

@@ -10,15 +10,12 @@ Mod = element mod {
 	attribute stage {xsd:integer},
 	attribute rule {xsd:NMTOKEN},
 	
-	Block *
+	Block *,
+	Mod *
 }
 
 Block = element block {
 	attribute stage {xsd:integer} &
-	element ancestor {
-		attribute refid {xsd:NMTOKEN},
-		attribute rel {"parent"} ?
-	} * &
 	element dependency {
 		attribute kind {"verified" | "unverified"},
 		attribute doc {xsd:string}
