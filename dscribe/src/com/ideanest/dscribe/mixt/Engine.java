@@ -83,7 +83,8 @@ public class Engine {
 		withdrawMods(modStore.query().unordered("for $mod in //mod:mod where not(exists($_1/id($mod/@rule))) return $mod", rulespace));
 		LOG.debug("withdrawing mods on obsolete documents");
 		// must run in workspace context to provide correct base URI for doc-available()
-		withdrawMods(workspace.query().unordered("$_1//mod:mod[some $dep in .//mod:dependency/@doc satisfies not(doc-available($dep))]", modStore));
+		withdrawMods(workspace.query().namespace("mod", Transformer.MOD_NS)
+				.unordered("$_1//mod:mod[some $dep in .//mod:dependency/@doc satisfies not(doc-available($dep))]", modStore));
 
 		// TODO: sort rules into best-effort dependency order
 	}
@@ -229,7 +230,8 @@ public class Engine {
 		
 		LOG.debug("deleting " + modCountFormatter.format(mods.size()) + " and " + affectedCountFormatter.format(affected.size()));
 		
-		numModsWithdrawn.increment(mods.query().single("count(descendant-or-self::mod:mod)").intValue());
+		numModsWithdrawn.increment(
+				mods.query().namespace("", Transformer.MOD_NS).single("count(descendant-or-self::mod)").intValue());
 		affected.deleteAllNodes();
 		mods.deleteAllNodes();
 	}
