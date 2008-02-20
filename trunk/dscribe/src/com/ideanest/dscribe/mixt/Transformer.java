@@ -50,7 +50,7 @@ public class Transformer {
 	
 	public void executeOnce() throws RuleBaseException, TransformException, InterruptedException {
 		Collection<XMLDocument> modifiedDocs;
-		Date lastRunDate = recordspace.query().single("last-run/@date").instantValue();
+		Date lastRunDate = recordspace.query().optional("/last-run/@date").instantValue();
 		if (lastRunDate == null || !Engine.isSameVersionAs(recordspace)) {
 			// incremental processing corrupted, wipe and run global transform
 			wipeRecords();
@@ -84,9 +84,7 @@ public class Transformer {
 	public void loadCompactRules(File ruleDefinitionsFile) throws IOException, ParseException {
 		Reader fileReader = new FileReader(ruleDefinitionsFile);
 		try {
-			ElementBuilder<?> builder = rulespace.documents().build(Name.overwrite(ruleDefinitionsFile.getName()));
-			CompactFormTranslator.compactToXml(fileReader, builder);
-			builder.commit();
+			rulespace.documents().load(Name.overwrite(ruleDefinitionsFile.getName()), CompactFormTranslator.compactToXml(fileReader));
 		} finally {
 			fileReader.close();
 		}

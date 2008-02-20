@@ -19,8 +19,9 @@ public class CompactFormTranslator {
 
 	private CompactFormTranslator() {}
 	
-	public static void compactToXml(Reader compactFormTextReader, ElementBuilder<?> out) throws IOException, ParseException {
-		out.namespace("", Transformer.RULES_NS).elem("rules");
+	public static Source.XML compactToXml(Reader compactFormTextReader) throws IOException, ParseException {
+		StringBuilder buf = new StringBuilder();
+		buf.append("<rules xmlns:rules='" + Transformer.RULES_NS + "'");
 		BufferedReader in = new BufferedReader(compactFormTextReader);
 		Deque<String> indents = new LinkedList<String>();
 		Deque<String> tags = new LinkedList<String>();
@@ -34,7 +35,7 @@ public class CompactFormTranslator {
 			String content = lineMatcher.group(2).trim();
 			if (content.length() == 0) continue;
 			if (indent.equals(indents.peekFirst())) {
-				if (!inPreamble) out.end(tags.removeFirst());
+				if (!inPreamble) buf.append("</rules:" + tags.removeFirst() + ">");
 				if (needIndentedText) throw new ParseException("expected indented text block after line " + (lineNumber-1) + " but got:\n" + line, 0);
 				inTextRun = false;
 			} else {
@@ -55,16 +56,16 @@ public class CompactFormTranslator {
 					try {
 						do {
 							indents.removeFirst();
-							out.end(tags.removeFirst());
+							buf.append("</rules:" + tags.removeFirst() + ">");
 						} while (!indent.equals(indents.peekFirst()));
 					} catch (NoSuchElementException e) {
 						throw new ParseException("indent at line " + lineNumber + " is shorter than on the previous line, and doesn't match any previous indent", 0);
 					}
-					out.end(tags.removeFirst());
+					buf.append("</rules:" + tags.removeFirst() + ">");
 				}
 			}
 			if (inTextRun) {
-				out.text(indent.substring(textIndent.length())).text(content).text("\n");
+				buf.append(indent.substring(textIndent.length())).append(content).append("\n");
 				needIndentedText = false;
 			} else {
 				int k = content.indexOf(':');
@@ -74,37 +75,43 @@ public class CompactFormTranslator {
 					if (!inPreamble) throw new ParseException("namespace directive only allowed in preamble, but seen on line " + lineNumber + ":\n" + line, indent.length());
 					specParts = content.split("\\s+");
 					if (specParts.length != 3) throw new ParseException("namespace directive takes prefix and namespace URI as arguments, which weren't found on line " + lineNumber + ":\n" + line, indent.length());
-					out.attr("xmlns:" + specParts[1], specParts[2]);
+					if (specParts[1].equals("rules")) throw new ParseException("the 'rules' namespace prefix is reserved by the compact form translator on line " + lineNumber + ":\n" + line, indent.length());
+					buf.append(" xmlns:" + specParts[1] + "='" + specParts[2] + "'");
 				} else {
+					if (inPreamble) buf.append(">");
 					inPreamble = false;
 					if (keyword.equals("to")) {
 						if (indents.size() != 1) throw new ParseException("rule definitions must be at outermost level, but found a nested one on line " + lineNumber + ":\n" + line, indent.length());
 						Matcher toMatcher = TO_PATTERN.matcher(content);
 						if (!toMatcher.matches()) throw new ParseException("rule definition syntax doesn't match 'to <rule name> [<id>]' on line " + lineNumber + ":\n" + line, indent.length());
-						out.elem("rule").attr("xml:id", toMatcher.group(2)).attr("name", toMatcher.group(1));
+						buf.append("<rules:rule xml:id='" + toMatcher.group(2) + "' name='" + toMatcher.group(1) + "'>");
 						tags.addFirst("rule");
 					} else {
-						out.elem(keyword);
+						if (indents.size() == 1) throw new ParseException("rule blocks must be nested in a rule, but found one at outermost level on line " + lineNumber + ":\n" + line, indent.length());
+						buf.append("<rules:" + keyword);
 						tags.addFirst(keyword);
 						if (specParts.length % 2 != 1) throw new ParseException("unpaired attribute on line " + lineNumber + ":\n" + line, indent.length());
 						for (int i=1; i<specParts.length; i+=2) {
-							out.attr(specParts[i], specParts[i+1]);
+							buf.append(" " + specParts[i] + "='" + specParts[i+1] + "'");
 						}
+						buf.append(">");
 						if (k != -1) {
 							String text = k+1 >= content.length() ? "" : content.substring(k+1).trim();
 							if (text.length() == 0) {
 								inTextRun = true;
 								needIndentedText = true;
 							} else {
-								out.text(text);
+								buf.append(text);
 							}
 						}
 					}
 				}
 			}
 		}
-		while (tags.size() > 0) out.end(tags.removeFirst());
-		out.end("rules");
+		if (inPreamble) buf.append(">");
+		while (tags.size() > 0) buf.append("</rules:" + tags.removeFirst() + ">");
+		buf.append("</rules>");
+		return Source.xml(buf.toString());
 	}
 	
 	@Deprecated @DatabaseTestCase.ConfigFile("test/conf.xml")
@@ -126,9 +133,7 @@ public class CompactFormTranslator {
 		
 		private void translateAndCheck() throws IOException, ParseException {
 			Node target = db.getFolder("/").documents().load(Name.create("target"), Source.xml(xml.toString())).root();
-			ElementBuilder<XMLDocument> builder = db.getFolder("/").documents().build(Name.create("translationResult"));
-			compactToXml(new StringReader(compactText.toString()), builder);
-			Node result = builder.commit().root();
+			Node result = db.getFolder("/").documents().load(Name.create("translationResult"), compactToXml(new StringReader(compactText.toString()))).root();
 			if (!db.query().single("deep-equal($_1, $_2)", target, result).booleanValue()) {
 				fail("translation doesn't match\n\nExpected:\n" + target + "\n\nActual:\n" + result + "\n");
 			}
@@ -136,7 +141,7 @@ public class CompactFormTranslator {
 		
 		private void translateBadInput() throws ParseException, IOException {
 			ElementBuilder<XMLDocument> builder = db.getFolder("/").documents().build(Name.create("translationResult"));
-			compactToXml(new StringReader(compactText.toString()), builder);
+			compactToXml(new StringReader(compactText.toString()));
 			builder.commit();
 		}
 		
@@ -226,6 +231,19 @@ public class CompactFormTranslator {
 			_("<rules xmlns='"+ Transformer.RULES_NS + "'>");
 			_("	<rule xml:id='r1' name='do something or other'>");
 			_("		<for>foo bar bar : is blah</for>");
+			_("	</rule>");
+			_("</rules>");
+			translateAndCheck();
+		}
+
+		@Test public void blockWithInlineElements() throws IOException, ParseException {
+			captureInput();
+			_("to do something or other [r1]");
+			_("	insert: <bar/>");
+			captureOutput();
+			_("<rules xmlns='"+ Transformer.RULES_NS + "'>");
+			_("	<rule xml:id='r1' name='do something or other'>");
+			_("		<insert><bar/></insert>");
 			_("	</rule>");
 			_("</rules>");
 			translateAndCheck();
@@ -348,6 +366,14 @@ public class CompactFormTranslator {
 			_("	for:");
 			_("		line 1");
 			_("	  line 2");
+			translateBadInput();
+		}
+
+		@Test(expected = ParseException.class)
+		public void badIndent4() throws ParseException, IOException {
+			captureInput();
+			_("to do stuff [r1]");
+			_("for");
 			translateBadInput();
 		}
 

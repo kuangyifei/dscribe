@@ -123,9 +123,22 @@ public class Mod {
 		return Collections.unmodifiableList(references);
 	}
 	
+	/**
+	 * Return the nearest segment implementing the given type by traversing through this mod's ancestor mods.
+	 * This mod is not itself included in the search.
+	 *
+	 * @param <T> the type of the segment to look for
+	 * @param clazz the type of the segment to look for
+	 * @return the nearest segment implementing the desired type
+	 * @throws TransformException if a segment implementing the desired type cannot be found
+	 */
 	public <T> T nearestAncestorImplementing(Class<T> clazz) throws TransformException {
+		return parent.nearestAncestorOrSelfImplementing(clazz);
+	}
+	
+	<T> T nearestAncestorOrSelfImplementing(Class<T> clazz) throws TransformException {
 		if (clazz.isInstance(seg)) return clazz.cast(seg);
-		return parent.nearestAncestorImplementing(clazz);
+		return parent.nearestAncestorOrSelfImplementing(clazz);
 	}
 	
 	Collection<Mod> resolveChildren(Block block, boolean lastBlock, QueryService touchedScope) throws TransformException {
@@ -204,10 +217,7 @@ public class Mod {
 		return new KeyMod(rule) {
 			@Override public String toString() {return "rootmod[" +rule + "]";} 
 			@Override Node node() {return rule.engine.modStore();}
-			@Override Mod restoreChild(Block block, Node data) throws TransformException {
-				throw new UnsupportedOperationException();
-			}
-			@Override public <T> T nearestAncestorImplementing(Class<T> clazz) throws TransformException {
+			@Override <T> T nearestAncestorOrSelfImplementing(Class<T> clazz) throws TransformException {
 				throw new TransformException("no ancestor found that implements " + clazz);
 			}
 		};
@@ -256,6 +266,19 @@ public class Mod {
 		 * @return the parent mod for built children
 		 */
 		public Mod parent() {return parent;}
+		
+		/**
+		 * Return the nearest segment implementing the given type by traversing through the ancestor mod chain,
+		 * starting at the parent of the mod being built.
+		 *
+		 * @param <T> the type of the segment to look for
+		 * @param clazz the type of the segment to look for
+		 * @return the nearest segment implementing the desired type
+		 * @throws TransformException if a segment implementing the desired type cannot be found
+		 */
+		public <T> T nearestAncestorImplementing(Class<T> clazz) throws TransformException {
+			return parent().nearestAncestorOrSelfImplementing(clazz);
+		}
 		
 		/**
 		 * Create and store the mod being built using the parameters previously specified on this builder, then
@@ -833,8 +856,8 @@ public class Mod {
 		}
 		
 		@Test(expected = TransformException.class)
-		public void bootstrapNearestAncestorImplementing() throws TransformException {
-			Mod.bootstrap(rule).nearestAncestorImplementing(Cloneable.class);
+		public void bootstrapNearestAncestorOrSelfImplementing() throws TransformException {
+			Mod.bootstrap(rule).nearestAncestorOrSelfImplementing(Cloneable.class);
 		}
 		
 		@Test public void binder() {
@@ -905,17 +928,22 @@ public class Mod {
 			assertSame(result, mod.scope(null));
 		}
 		
-		@Test public void hasNearestAncestorImplementing() throws TransformException {
+		@Test(expected = TransformException.class)
+		public void isItselfNearestAncestorImplementing() throws TransformException {
 			Mod mod = new Mod(parentMod);
 			class Foo extends Seg implements Cloneable {
 				Foo(Mod mod) {super(mod);}
 			}
 			Foo foo = new Foo(mod);
 			mod.seg = foo;
+			mockery.checking(new Expectations() {{
+				one(parentMod).nearestAncestorOrSelfImplementing(Cloneable.class);
+					will(throwException(new TransformException()));
+			}});
 			assertSame(foo, mod.nearestAncestorImplementing(Cloneable.class));
 		}
 
-		@Test public void doesntHaveNearestAncestorImplementing() throws TransformException {
+		@Test public void hasNearestAncestorImplementing() throws TransformException {
 			Mod mod = new Mod(parentMod);
 			class Foo extends Seg implements Cloneable {
 				Foo(Mod mod) {super(mod);}
@@ -926,7 +954,7 @@ public class Mod {
 			final Foo foo = new Foo(mod);
 			mod.seg = new Bar(mod);
 			mockery.checking(new Expectations() {{
-				one(parentMod).nearestAncestorImplementing(Cloneable.class);
+				one(parentMod).nearestAncestorOrSelfImplementing(Cloneable.class);
 					will(returnValue(foo));
 			}});
 			assertSame(foo, mod.nearestAncestorImplementing(Cloneable.class));

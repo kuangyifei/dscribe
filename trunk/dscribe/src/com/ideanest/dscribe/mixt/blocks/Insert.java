@@ -61,7 +61,7 @@ public class Insert implements BlockType {
 					genIdList.add(id);
 					node.update().attr("xml:id", id).commit();
 				}
-				modBuilder.parent().nearestAncestorImplementing(InsertionTarget.class)
+				modBuilder.nearestAncestorImplementing(InsertionTarget.class)
 						.contentBuilder().nodes(nodesToInsert.nodes()).commit();
 				for (String id : genIdList) {
 					modBuilder.affect(modBuilder.parent().globalScope().single("/id($_1)", id).node());

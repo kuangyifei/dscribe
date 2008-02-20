@@ -1,0 +1,15 @@
+#### stage 0
+
+## set file source.xml
+<foo xml:id='f'/>
+
+## set rules
+to insert bar into foo [r1]
+	for each target: //foo
+	insert: <bar/>
+
+#### stage 1
+
+## check file source.xml
+<foo xml:id='f'><bar xml:id='_r1.f.1.'/></foo>
+
