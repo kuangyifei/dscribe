@@ -13,3 +13,14 @@ to insert bar into foo [r1]
 ## check file source.xml
 <foo xml:id='f'><bar xml:id='_r1.f.1.'/></foo>
 
+## check mods
+<mod xml:id='_r1.f.' rule='r1' stage='1'>
+	<block stage='0'>
+		<dependency doc='source.xml' kind='verified'/>
+		<reference doc='source.xml' refid='f'/>
+	</block>
+	<block stage='1'>
+		<affected refid='_r1.f.1.'/>
+		<checksum xmlns='' digest-type='*'>*</checksum>
+	</block>
+</mod>
