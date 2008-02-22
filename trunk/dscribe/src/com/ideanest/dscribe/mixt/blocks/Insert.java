@@ -154,7 +154,7 @@ public class Insert implements BlockType {
 			
 			setModBuilderScope(content.query());
 			setModBuilderParent(mod);
-			setModNearestAncestorImplementing(InsertionTarget.class, new InsertionTarget() {
+			setModBuilderNearestAncestorImplementing(InsertionTarget.class, new InsertionTarget() {
 				public ElementBuilder<?> contentBuilder() throws TransformException {
 					return outputNode.append(); 
 				}

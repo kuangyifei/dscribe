@@ -1,6 +1,7 @@
 package com.ideanest.dscribe.testutil;
 
 import static com.ideanest.dscribe.testutil.Matchers.emptyCollectionOf;
+import static org.junit.Assert.assertTrue;
 
 import java.util.*;
 
@@ -15,7 +16,6 @@ import org.junit.runner.RunWith;
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.*;
 import com.ideanest.dscribe.mixt.Mod.Builder.DependencyModifier;
-import static org.junit.Assert.*;
 
 @RunWith(JMock.class) @DatabaseTestCase.ConfigFile("test/conf.xml")
 public abstract class BlockTestCase extends DatabaseTestCase {
@@ -118,6 +118,12 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 	public <T> void setModNearestAncestorImplementing(final Class<? super T> clazz, final T implementor) throws TransformException {
 		mockery.checking(new Expectations() {{
 			allowing(mod).nearestAncestorImplementing(clazz); will(returnValue(implementor));
+		}});
+	}
+	
+	public <T> void setModBuilderNearestAncestorImplementing(final Class<? super T> clazz, final T implementor) throws TransformException {
+		mockery.checking(new Expectations() {{
+			allowing(modBuilder).nearestAncestorImplementing(clazz); will(returnValue(implementor));
 		}});
 	}
 	

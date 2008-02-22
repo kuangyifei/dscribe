@@ -19,6 +19,7 @@ import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.*;
 import org.junit.runner.RunWith;
 
+import com.ideanest.dscribe.mixt.BlockType.AllowAttributes;
 import com.ideanest.dscribe.mixt.blocks.*;
 
 public class Rule {
@@ -211,11 +212,29 @@ public class Rule {
 	private Block defineBlock(Node blockDef) throws RuleBaseException {
 		BlockType blockType = BLOCK_TYPE_DICTIONARY.get(blockDef.qname());
 		if (blockType == null) throw new RuleBaseException(this + " unknown block " + blockDef);
+		validateAttributes(blockDef, blockType);
 		Block block = blockType.define(blockDef);
 		boolean isLinear = block instanceof LinearBlock, isKey = block instanceof KeyBlock;
 		if (isLinear && isKey) throw new RuleBaseException("block " + block + " is both key and linear");
 		if (!(isLinear || isKey)) throw new RuleBaseException("block " + block + " is neither key nor linear");
 		return block;
+	}
+
+	private void validateAttributes(Node blockDef, BlockType blockType) throws RuleBaseException {
+		try {
+			AllowAttributes annotation = blockType.getClass().getMethod("define", Node.class).getAnnotation(AllowAttributes.class);
+			Collection<String> allowedAttributes = annotation == null ? Collections.<String>emptySet() : Arrays.asList(annotation.value());
+			Collection<String> attributes = new ArrayList<String>(Arrays.asList(blockDef.query().all(
+					"let $a := @*[namespace-uri() = ''] return if ($a) then $a/local-name() else ()").values().toArray()));
+			attributes.removeAll(allowedAttributes);
+			if (!attributes.isEmpty()) {
+				throw new RuleBaseException(this + " illegal attributes " + attributes + " on " + blockDef);
+			}
+		} catch (SecurityException e) {
+			throw new RuntimeException("could not get define method on " + blockType.getClass(), e);
+		} catch (NoSuchMethodException e) {
+			throw new RuntimeException("could not get define method on " + blockType.getClass(), e);
+		}
 	}
 	
 	<D extends Document> void addTouched(Collection<D> docs) {
@@ -619,6 +638,15 @@ public class Rule {
 		@Test(expected = RuleBaseException.class)
 		public void defineBlockFailsOnUnknownBlockType() throws RuleBaseException {
 			rule.defineBlock(makeBlock("<foobar/>"));
+		}
+		
+		@Test(expected = RuleBaseException.class)
+		public void defineBlockFailsOnIllegalAttribute() throws RuleBaseException {
+			rule.defineBlock(makeBlock("<for into='$x'/>"));
+		}
+		
+		@Test public void defineBlockAcceptsNamespacedAttribute() throws RuleBaseException {
+			rule.defineBlock(makeBlock("<for xmlns:x='foo' x:into='$x' each='$y'/>"));
 		}
 		
 		@Test public void compareBlocksEqual() {

@@ -22,6 +22,7 @@ public class For implements BlockType {
 		return "1";
 	}
 
+	@AllowAttributes({"each", "one"})
 	public Block define(Node def) throws RuleBaseException {
 		boolean each = def.query().exists("@each"), one = def.query().exists("@one");
 		if (each && one) throw new RuleBaseException("for block specified with both @each and @one");

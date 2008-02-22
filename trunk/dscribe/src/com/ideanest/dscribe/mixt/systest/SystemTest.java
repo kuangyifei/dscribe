@@ -36,12 +36,12 @@ public class SystemTest extends DatabaseTestCase {
 		return k > 0 ? filename.substring(0, k) : filename;
 	}
 	
-	private static final Pattern STAGE_RE = Pattern.compile("#### stage (\\d+)");
+	private static final Pattern STAGE_RE = Pattern.compile("#### cycle (\\d+)");
 	private static final Pattern INSTRUCTION_RE = Pattern.compile("## (set|check) (file|rules|mods)(.*)");
 	
 	private Folder workspace, rulespace;
 	private Transformer transformer;
-	private int stage = -1;
+	private int cycle = -1;
 	private File specFile;
 	
 	public SystemTest(String name, File specFile) {
@@ -64,28 +64,25 @@ public class SystemTest extends DatabaseTestCase {
 				Matcher matcher = STAGE_RE.matcher(line);
 				if (!matcher.matches()) throw new IOException("bad #### line: " + line);
 				int nextStage = Integer.parseInt(matcher.group(1));
-				if (nextStage != ++stage) throw new IOException("non-consecutive stage: " + line);
-				if (stage != 0) transformer.executeOnce();
+				if (nextStage != ++cycle) throw new IOException("non-consecutive cycle: " + line);
+				if (cycle != 0) transformer.executeOnce();
 				line = reader.readLine();
 			} else if (line.startsWith("##")) {
 				Matcher matcher = INSTRUCTION_RE.matcher(line);
 				if (!matcher.matches()) throw new IOException("bad ## line: " + line);
-				if ("set".equals(matcher.group(1))) {
-					if ("file".equals(matcher.group(2))) {
-						line = doSetFile(reader, line, matcher.group(3).trim());
-					} else if ("rules".equals(matcher.group(2))) {
+				String instruction = matcher.group(1) + " " + matcher.group(2);
+				if (instruction.equals("set file")) {
+					line = doSetFile(reader, line, matcher.group(3).trim());
+				} else if (instruction.equals("set rules")) {
 						line = doSetRules(reader);
-					} else {
-						throw new IOException("bad set argument: " + line);
-					}
-				} else if ("check".equals(matcher.group(1))) {
-					if ("file".equals(matcher.group(2))) {
-						line = doCheckFile(reader, line, matcher.group(3).trim());
-					} else if ("mods".equals(matcher.group(2))) {
-						line = doCheckMods(reader);
-					} else {
-						throw new IOException("bad check argument: " + line);
-					}
+				} else if (instruction.equals("set mods")) {
+					line = doSetMods(reader);
+				} else if (instruction.equals("check file")) {
+					line = doCheckFile(reader, line, matcher.group(3).trim());
+				} else if (instruction.equals("check mods")) {
+					line = doCheckMods(reader);
+				} else {
+					throw new IOException("bad ## instruction: " + line);
 				}
 			}
 		}
@@ -108,6 +105,16 @@ public class SystemTest extends DatabaseTestCase {
 		StringBuilder buf = new StringBuilder();
 		line = readUntilNextInstruction(reader, buf);
 		workspace.documents().load(Name.overwrite(path), Source.xml(buf.toString()));
+		return line;
+	}
+	
+	private String doSetMods(BufferedReader reader) throws IOException {
+		StringBuilder buf = new StringBuilder();
+		buf.append("<mods xmlns='" + Transformer.MOD_NS + "'>\n");
+		String line = readUntilNextInstruction(reader, buf);
+		buf.append("</mods>");
+		db.createFolder(Transformer.recordsRootPath() + workspace.path())
+				.documents().load(Name.overwrite("mods"), Source.xml(buf.toString()));
 		return line;
 	}
 
@@ -162,7 +169,7 @@ public class SystemTest extends DatabaseTestCase {
 			}
 		});
 		if (!diff.similar()) {
-			fail("Mods differ after stage " + stage + "\n--- Expected:\n" + expected + "\n\n--- Actual: \n" + actual + "\n");
+			fail("Mods differ after cycle " + cycle + "\n--- Expected:\n" + expected + "\n\n--- Actual: \n" + actual + "\n");
 		}
 		return line;
 	}
