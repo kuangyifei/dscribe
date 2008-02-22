@@ -850,11 +850,6 @@ public class Mod {
 			assertEquals(modStore, Mod.bootstrap(rule).node());
 		}
 		
-		@Test(expected = UnsupportedOperationException.class)
-		public void bootstrapRestoreChild() throws TransformException {
-			Mod.bootstrap(rule).restoreChild(null, null);
-		}
-		
 		@Test(expected = TransformException.class)
 		public void bootstrapNearestAncestorOrSelfImplementing() throws TransformException {
 			Mod.bootstrap(rule).nearestAncestorOrSelfImplementing(Cloneable.class);

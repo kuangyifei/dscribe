@@ -1,4 +1,4 @@
-#### stage 0
+#### cycle 0
 
 ## set file source.xml
 <foo xml:id='f'/>
@@ -8,7 +8,7 @@ to insert bar into foo [r1]
 	for each target: //foo
 	insert: <bar/>
 
-#### stage 1
+#### cycle 1
 
 ## check file source.xml
 <foo xml:id='f'><bar xml:id='_r1.f.1.'/></foo>

@@ -20,6 +20,7 @@ public class With implements BlockType {
 		return "1";
 	}
 
+	@AllowAttributes({"some", "any"})
 	public Block define(Node def) throws RuleBaseException {
 		boolean some = def.query().exists("@some"), any = def.query().exists("@any");
 		if (some && any) throw new RuleBaseException("with block has both @some and @any");
