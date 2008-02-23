@@ -30,7 +30,7 @@ public class ParameterizedShowingArgs extends CompositeRunner {
 		}
 		
 		@Override protected String testName(final Method method) {
-			return method.getName();
+			return method.getName() + paramString;
 		}
 
 		private Constructor<?> getOnlyConstructor() {
@@ -88,16 +88,10 @@ public class ParameterizedShowingArgs extends CompositeRunner {
 	private Method getParametersMethod() throws Exception {
 		List<Method> methods= testClass.getAnnotatedMethods(Parameters.class);
 		for (Method each : methods) {
-			int modifiers= each.getModifiers();
+			int modifiers = each.getModifiers();
 			if (Modifier.isStatic(modifiers) && Modifier.isPublic(modifiers)) return each;
 		}
 		throw new Exception("No public static parameters method on class " + getName());
-	}
-
-	public static Collection<Object[]> eachOne(Object... params) {
-		List<Object[]> results= new ArrayList<Object[]>();
-		for (Object param : params) results.add(new Object[] { param });
-		return results;
 	}
 }
 

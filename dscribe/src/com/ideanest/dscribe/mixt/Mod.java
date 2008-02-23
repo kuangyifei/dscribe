@@ -306,6 +306,7 @@ public class Mod {
 							.elem("mod").attr("xml:id", mod.key()).attr("rule", mod.rule.id).end("mod").commit();
 				}
 				if (!mod.restored) mod.data = writeData(mod, modNode);
+				mod.data.namespaceBindings().replaceWith(EMPTY_NAMESPACES);
 				
 				mod.seg = block.createSeg(mod);
 				mod.seg.restore();

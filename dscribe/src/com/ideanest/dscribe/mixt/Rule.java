@@ -91,6 +91,8 @@ public class Rule {
 		this.modifiedDocsLocator = modifiedDocsLocator;
 		initDefaultShim();
 		
+		validateAttributes(def, Collections.singleton("name"));
+		
 		try {
 			this.id = def.query().single("@xml:id").value();
 		} catch (DatabaseException e) {
@@ -212,7 +214,7 @@ public class Rule {
 	private Block defineBlock(Node blockDef) throws RuleBaseException {
 		BlockType blockType = BLOCK_TYPE_DICTIONARY.get(blockDef.qname());
 		if (blockType == null) throw new RuleBaseException(this + " unknown block " + blockDef);
-		validateAttributes(blockDef, blockType);
+		validateBlockAttributes(blockDef, blockType);
 		Block block = blockType.define(blockDef);
 		boolean isLinear = block instanceof LinearBlock, isKey = block instanceof KeyBlock;
 		if (isLinear && isKey) throw new RuleBaseException("block " + block + " is both key and linear");
@@ -220,20 +222,24 @@ public class Rule {
 		return block;
 	}
 
-	private void validateAttributes(Node blockDef, BlockType blockType) throws RuleBaseException {
+	private void validateBlockAttributes(Node blockDef, BlockType blockType) throws RuleBaseException {
 		try {
 			AllowAttributes annotation = blockType.getClass().getMethod("define", Node.class).getAnnotation(AllowAttributes.class);
 			Collection<String> allowedAttributes = annotation == null ? Collections.<String>emptySet() : Arrays.asList(annotation.value());
-			Collection<String> attributes = new ArrayList<String>(Arrays.asList(blockDef.query().all(
-					"let $a := @*[namespace-uri() = ''] return if ($a) then $a/local-name() else ()").values().toArray()));
-			attributes.removeAll(allowedAttributes);
-			if (!attributes.isEmpty()) {
-				throw new RuleBaseException(this + " illegal attributes " + attributes + " on " + blockDef);
-			}
+			validateAttributes(blockDef, allowedAttributes);
 		} catch (SecurityException e) {
 			throw new RuntimeException("could not get define method on " + blockType.getClass(), e);
 		} catch (NoSuchMethodException e) {
 			throw new RuntimeException("could not get define method on " + blockType.getClass(), e);
+		}
+	}
+
+	private void validateAttributes(Node node, Collection<String> allowedAttributes) throws RuleBaseException {
+		Collection<String> attributes = new ArrayList<String>(Arrays.asList(node.query().all(
+				"let $a := @*[namespace-uri() = ''] return if ($a) then $a/local-name() else ()").values().toArray()));
+		attributes.removeAll(allowedAttributes);
+		if (!attributes.isEmpty()) {
+			throw new RuleBaseException(this + " illegal attributes " + attributes + " on " + node);
 		}
 	}
 	
@@ -433,9 +439,9 @@ public class Rule {
 	
 	private String buildToString(String primaryName) {
 		StringBuilder sb = new StringBuilder();
-		sb.append("rule[").append(id);
-		if (primaryName != null && primaryName.length() > 0) sb.append(":").append(primaryName);
-		sb.append("]");
+		sb.append("rule<").append(id);
+		if (primaryName != null && primaryName.length() > 0) sb.append(": ").append(primaryName);
+		sb.append(">");
 		return sb.toString();
 	}
 
