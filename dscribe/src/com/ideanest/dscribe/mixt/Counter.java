@@ -2,8 +2,7 @@ package com.ideanest.dscribe.mixt;
 
 import java.text.MessageFormat;
 
-// TODO: make available to other modules, this is useful
-class Counter {
+public class Counter {
 	private long value;
 	private final MessageFormat messageFormat;
 	
@@ -26,7 +25,7 @@ class Counter {
 	
 	public static Counter english(String singular, String plural, String verb) {
 		return new Counter(
-				"{1,choice,0#no "+plural+"|1#1 "+singular+"|1<{1,number,integer} "+plural+"}"
+				"{0,choice,0#no "+plural+"|1#1 "+singular+"|1<{0,number,integer} "+plural+"}"
 				+ (verb == null ? "" : " " + verb));
 	}
 

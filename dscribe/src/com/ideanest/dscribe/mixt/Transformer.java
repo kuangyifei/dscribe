@@ -48,7 +48,7 @@ public class Transformer {
 		recordspace.namespaceBindings().put("mod", MOD_NS);
 	}
 	
-	public void executeOnce() throws RuleBaseException, TransformException, InterruptedException {
+	public Engine.Stats executeOnce() throws RuleBaseException, TransformException, InterruptedException {
 		Collection<XMLDocument> modifiedDocs;
 		Date lastRunDate = recordspace.query().optional("/last-run/@date").instantValue();
 		if (lastRunDate == null || !Engine.isSameVersionAs(recordspace)) {
@@ -59,11 +59,11 @@ public class Transformer {
 			modifiedDocs = findXmlDocsModifiedSince(lastRunDate);
 		}
 		
-		lastRunDate = new Engine(
-				rulespace, recordspace.cloneWithoutNamespaceBindings(), workspace, initModStore()
-		).executeTransform(modifiedDocs);
+		final Engine engine = new Engine(rulespace, recordspace.cloneWithoutNamespaceBindings(), workspace, initModStore());
+		lastRunDate = engine.executeTransform(modifiedDocs);
 		
 		recordRun(lastRunDate);
+		return engine.stats();
 	}
 	
 	private Collection<XMLDocument> findXmlDocsModifiedSince(Date lastRunDate) {
@@ -105,10 +105,15 @@ public class Transformer {
 		ElementBuilder<XMLDocument> builder = recordspace.documents().build(Name.overwrite("last-run"));
 		builder.elem("last-run").attr("date", lastRunDate);
 		Engine.recordVersions(builder);
-		XMLDocument lastRun = builder.end("last-run").commit();
-		// Append the rule nodes separately to avoid having to adopt into memory tree.
-		lastRun.root().append().namespace("", RULES_NS).nodes(
-				rulespace.query().unordered("//rule").nodes()).commit();
+		builder.end("last-run").commit();
+
+		for (Document doc : recordspace.query().unordered("//rule").nodes().documents()) {
+			doc.delete();
+		}
+		for (Document doc : rulespace.query().unordered("//rule").nodes().documents()) {
+			doc.copy(recordspace, Name.keepOverwrite())
+					.query().namespace("record", RECORD_NS).unordered("//record:* union //@record:*").deleteAllNodes();
+		}
 	}
 	
 
@@ -183,10 +188,11 @@ public class Transformer {
 			rulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns='" + RULES_NS + "'>" +
 					"  <rule xml:id='r1'/>" +
+					"  <foo xmlns='" + RECORD_NS + "'/>" +
 					"</rules>"));
 			rulespace.children().create("subrules").documents().load(Name.generate(), Source.xml(
-					"<rules xmlns='" + RULES_NS + "'>" +
-					"  <rule xml:id='r2'/>" +
+					"<rules xmlns='" + RULES_NS + "' xmlns:rec='" + RECORD_NS + "'>" +
+					"  <rule xml:id='r2' rec:bar='x'/>" +
 					"</rules>"));
 			transformer.recordRun(date);
 			
@@ -198,7 +204,11 @@ public class Transformer {
 			
 			assertEquals(2, recordspace.query().namespace("", RULES_NS).unordered("//rule").size());
 			assertTrue(recordspace.query().namespace("", RULES_NS).exists("//rule[@xml:id='r1']"));
+			assertTrue(recordspace.query().single("in-scope-prefixes($_1/id('r1')) = in-scope-prefixes($_2/id('r1'))", rulespace, recordspace).booleanValue());
+			assertFalse(recordspace.query().namespace("", RECORD_NS).exists("//foo"));
 			assertTrue(recordspace.query().namespace("", RULES_NS).exists("//rule[@xml:id='r2']"));
+			assertTrue(recordspace.query().single("in-scope-prefixes($_1/id('r2')) = in-scope-prefixes($_2/id('r2'))", rulespace, recordspace).booleanValue());
+			assertFalse(recordspace.query().namespace("r", RECORD_NS).exists("/id('r2')/@r:bar"));
 		}
 		
 		@Test public void findDocsModifiedSince() throws InterruptedException {

@@ -1,0 +1,47 @@
+#### run 0
+
+## load file source.xml
+<foo xml:id='f'/>
+
+## load rules
+to insert baz into bar [r2]
+	for each target: //bar
+	insert: <baz/>
+
+to insert bar into foo [r1]
+	for each target: //foo
+	insert: <bar/>
+
+#### run 1
+
+## check stats
+numCycles = 3
+
+## check file source.xml
+<foo xml:id='f'>
+	<bar xml:id='_r1.f.1.'>
+		<baz xml:id='_r2._r1.f.1..1.'/>
+	</bar>
+</foo>
+
+## check mods
+<mod xml:id='_r1.f.' rule='r1' stage='1'>
+	<block stage='0'>
+		<dependency doc='source.xml' kind='verified'/>
+		<reference doc='source.xml' refid='f'/>
+	</block>
+	<block stage='1'>
+		<affected refid='_r1.f.1.'/>
+		<checksum xmlns='' digest-type='*'>*</checksum>
+	</block>
+</mod>
+<mod xml:id='_r2._r1.f.1..' rule='r2' stage='1'>
+	<block stage='0'>
+		<dependency doc='source.xml' kind='verified'/>
+		<reference doc='source.xml' refid='_r1.f.1.'/>
+	</block>
+	<block stage='1'>
+		<affected refid='_r2._r1.f.1..1.'/>
+		<checksum xmlns='' digest-type='*'>*</checksum>
+	</block>
+</mod>

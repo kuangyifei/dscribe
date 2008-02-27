@@ -23,48 +23,38 @@ public class Engine {
 	static final Logger LOG = Logger.getLogger(Engine.class);
 	private static final String VERSION = "1";
 	
+	public static class Stats {
+		public final Counter
+				numCycles = Counter.english("cycle", "cycles", null),
+				numBlocksVerified = Counter.english("block", "blocks", "verified"),
+				numBlocksResolved = Counter.english("block", "blocks", "resolved"),
+				numModsCompleted = Counter.english("mod", "mods", "completed"),
+				numModsWithdrawn = Counter.english("mod", "mods", "withdrawn");
+	}
+	
 	private final Map<String,Rule> ruleMap = new HashMap<String,Rule>();
 	private final List<Rule> rules = new ArrayList<Rule>();
 	
 	private final Folder workspace;
 	private final QueryService globalScope;
 	private final QueryService utilQuery;
-
 	private final Node modStore;
 
+	private String autoGenIdPrefix;
 	private boolean didWork, docsModified;
+	final Stats stats = new Stats();
 	private final Accumulator<XMLDocument> modifiedDocs = new Accumulator<XMLDocument>(); 
-
-	final Counter
-		numCycles = Counter.english("cycle", "cycles", null),
-		numBlocksVerified = Counter.english("block", "blocks", "verified"),
-		numBlocksResolved = Counter.english("block", "blocks", "resolved"),
-		numModsCompleted = Counter.english("mod", "mods", "completed"),
-		numModsWithdrawn = Counter.english("mod", "mods", "withdrawn");
 	
+	private final Random random = new Random();
 	private final Counter
 		modCountFormatter = Counter.english("mod", "mods", null),
 		affectedCountFormatter = Counter.english("affected element", "affected elements", null);
 	
-	private final Document.Listener modifiedDocListener = new Document.Listener() {
-		public void handle(org.exist.fluent.Document.Event ev) {
-			if (ev.document.equals(modStore.document())) {
-				didWork = true;
-			} else {
-				try {
-					modifiedDocs.add(ev.document.xml());
-					docsModified = true;
-				} catch (DatabaseException e) {
-					// must have been a blob document, ignore
-				}
-			}
-		}
-	};
-
 	public Engine(Resource rulespace, Resource prevrulespace, Folder workspace, Node modStore) throws RuleBaseException {
 		LOG.debug("initializing engine");
 		
 		this.workspace = workspace;
+		this.workspace.namespaceBindings().put("mod", Transformer.MOD_NS);
 		utilQuery = workspace.database().query();
 		// Need to clone the workspace to avoid wiping out namespace bindings of the folder's shared query service.
 		globalScope = workspace.cloneWithoutNamespaceBindings().query();
@@ -83,7 +73,7 @@ public class Engine {
 		withdrawMods(modStore.query().unordered("for $mod in //mod:mod where not(exists($_1/id($mod/@rule))) return $mod", rulespace));
 		LOG.debug("withdrawing mods on obsolete documents");
 		// must run in workspace context to provide correct base URI for doc-available()
-		withdrawMods(workspace.query().namespace("mod", Transformer.MOD_NS)
+		withdrawMods(workspace.query()
 				.unordered("$_1//mod:mod[some $dep in .//mod:dependency/@doc satisfies not(doc-available($dep))]", modStore));
 
 		// TODO: sort rules into best-effort dependency order
@@ -93,7 +83,7 @@ public class Engine {
 	private Engine(Folder workspace, Node modStore) {
 		this.workspace = workspace;
 		utilQuery = workspace.database().query();
-		globalScope = null;
+		globalScope = workspace.cloneWithoutNamespaceBindings().query();
 		if (modStore != null) {
 			modStore.namespaceBindings().clear();
 			modStore.namespaceBindings().put("", Transformer.MOD_NS);
@@ -158,6 +148,38 @@ public class Engine {
 	QueryService globalScope() {return globalScope;}
 	QueryService utilQuery() {return utilQuery;}
 	Node modStore() {return modStore;}
+	
+	public void autoGenerateIdsWithPrefix(String prefix) {
+		if (!(Character.isLetter(prefix.charAt(0)) || prefix.charAt(0) == '_'))
+			throw new IllegalArgumentException("xml id prefix must start with letter or underscore, got '" + prefix + "'");
+		autoGenIdPrefix = prefix;
+	}
+	
+	boolean ensureNodeHasXmlId(Node node) {
+		if (node.query().exists("@xml:id")) return true;
+		if (autoGenIdPrefix == null) return false;
+		String id;
+		do {
+			id = autoGenIdPrefix + Integer.toString(random.nextInt(Integer.MAX_VALUE), Character.MAX_RADIX);
+		} while (globalScope.exists("/id($_1)", id));
+		node.update().attr("xml:id", id).commit();
+		return true;
+	}
+
+	private final Document.Listener modifiedDocListener = new Document.Listener() {
+		public void handle(org.exist.fluent.Document.Event ev) {
+			if (ev.document.equals(modStore.document())) {
+				didWork = true;
+			} else {
+				try {
+					modifiedDocs.add(ev.document.xml());
+					docsModified = true;
+				} catch (DatabaseException e) {
+					// must have been a blob document, ignore
+				}
+			}
+		}
+	};
 
 	/**
 	 * Run the transformation.
@@ -166,33 +188,35 @@ public class Engine {
 	 * @throws TransformException 
 	 * @throws InterruptedException 
 	 */
-	Date executeTransform(Collection<XMLDocument> initialModifiedDocs) throws TransformException, InterruptedException {
+	public Date executeTransform(Collection<XMLDocument> initialModifiedDocs) throws TransformException, InterruptedException {
 		if (initialModifiedDocs != null) modifiedDocs.addAll(initialModifiedDocs);	// MUST happen after parsing rules, otherwise locators in wrong position
-		workspace.listeners().add(
-				EnumSet.of(Trigger.AFTER_CREATE, Trigger.AFTER_UPDATE),
-				modifiedDocListener);
+		workspace.listeners().add(	EnumSet.of(Trigger.AFTER_CREATE, Trigger.AFTER_UPDATE), modifiedDocListener);
+		if (!workspace.contains(modStore.document())) modStore.document().listeners().add(Trigger.AFTER_UPDATE, modifiedDocListener);
 		Date lastRun;
 		try {
 			do {
 				lastRun = new Date();
-				numCycles.increment();
-				LOG.debug("running MIXT transformation cycle " + numCycles.value());
+				stats.numCycles.increment();
+				LOG.debug("running MIXT transformation cycle " + stats.numCycles.value());
 				didWork = false;
 				docsModified = false;
 				for (Rule rule : rules) {
 					if (Thread.interrupted()) throw new InterruptedException();
-					rule.process(numCycles.value() == 1 && initialModifiedDocs == null);
+					rule.process(stats.numCycles.value() == 1 && initialModifiedDocs == null);
 				}
 				// TODO: detect livelock loops 				
 			} while (didWork || docsModified);
 			LOG.info("MIXT transformation complete; "
-					+ numCycles + ", " + numBlocksResolved + ", "
-					+ numBlocksVerified + ", " + numModsCompleted + ", " + numModsWithdrawn);
+					+ stats.numCycles + ", " + stats.numBlocksResolved + ", "
+					+ stats.numBlocksVerified + ", " + stats.numModsCompleted + ", " + stats.numModsWithdrawn);
 			return lastRun;
 		} finally {
 			workspace.listeners().remove(modifiedDocListener);
+			if (!workspace.contains(modStore.document())) modStore.document().listeners().remove(modifiedDocListener);
 		}
 	}
+	
+	public Stats stats() {return stats;}
 
 	void withdrawMod(String key) {
 		LOG.debug("withdrawing mod[" + key + "]");
@@ -230,7 +254,7 @@ public class Engine {
 		
 		LOG.debug("deleting " + modCountFormatter.format(mods.size()) + " and " + affectedCountFormatter.format(affected.size()));
 		
-		numModsWithdrawn.increment(
+		stats.numModsWithdrawn.increment(
 				mods.query().namespace("", Transformer.MOD_NS).single("count(descendant-or-self::mod)").intValue());
 		affected.deleteAllNodes();
 		mods.deleteAllNodes();
@@ -340,6 +364,24 @@ public class Engine {
 			assertFalse("did not withdraw mod of dead rule", workspace.query().exists("/id('_r2.1')"));
 		}
 		
+		@Test public void ensureNodeHasXmlId() {
+			Engine engine = new Engine(workspace, null);
+			assertTrue(engine.ensureNodeHasXmlId(workspace.documents().load(Name.generate(), Source.xml("<foo xml:id='f'/>")).root()));
+		}
+		
+		@Test public void ensureNodeHasXmlIdNoIdNoAutogen() {
+			Engine engine = new Engine(workspace, null);
+			assertFalse(engine.ensureNodeHasXmlId(workspace.documents().load(Name.generate(), Source.xml("<foo/>")).root()));
+		}
+		
+		@Test public void ensureNodeHasXmlIdNoIdWithAutogen() {
+			Engine engine = new Engine(workspace, null);
+			engine.autoGenerateIdsWithPrefix("x-");
+			Node node = workspace.documents().load(Name.generate(), Source.xml("<foo/>")).root();
+			assertTrue(engine.ensureNodeHasXmlId(node));
+			assertTrue(node.query().single("@xml:id").value().startsWith("x-"));
+		}
+		
 		@Test public void executeTransform() throws TransformException, InterruptedException {
 			final XMLDocument olddoc1 = workspace.documents().load(Name.create("olddoc1"), Source.xml("<bar/>"));
 			final XMLDocument olddoc2 = workspace.documents().load(Name.create("olddoc2"), Source.xml("<bar/>"));
@@ -365,7 +407,7 @@ public class Engine {
 			engine.rules.add(rule);
 			engine.executeTransform(Collections.singleton(olddoc1));
 			assertEquals(new HashSet<Document>(Arrays.asList(new Document[] {olddoc2, workspace.documents().get("newdoc")})), locator.catchUp());
-			assertEquals(2, engine.numCycles.value());
+			assertEquals(2, engine.stats.numCycles.value());
 		}
 		
 		@Test(expected = InterruptedException.class)
@@ -405,7 +447,7 @@ public class Engine {
 			assertFalse(modStore.query().exists("/id('m1')"));
 			assertTrue(modStore.query().exists("/id('m2')"));
 			assertEquals(1, modStore.query().all("*").size());
-			assertEquals(1, engine.numModsWithdrawn.value());
+			assertEquals(1, engine.stats.numModsWithdrawn.value());
 		}
 
 		@Test public void withdrawModsWithDescendants() {
@@ -426,7 +468,7 @@ public class Engine {
 			assertFalse(modStore.query().exists("/id('m1.1')"));
 			assertTrue(modStore.query().exists("/id('m2')"));
 			assertEquals(1, modStore.query().all("*").size());
-			assertEquals(2, engine.numModsWithdrawn.value());
+			assertEquals(2, engine.stats.numModsWithdrawn.value());
 		}
 		
 		@Test public void withdrawModsWithAffectedDocs() {
@@ -449,7 +491,7 @@ public class Engine {
 			assertFalse(workspace.query().exists("/id('b1')"));
 			assertTrue(workspace.query().exists("/id('b2')"));
 			assertEquals(1, doc.query().all("*").size());
-			assertEquals(1, engine.numModsWithdrawn.value());
+			assertEquals(1, engine.stats.numModsWithdrawn.value());
 		}
 
 		@Test public void withdrawModsWithAffectedDocsAndDescendantDependencies() {
@@ -477,7 +519,7 @@ public class Engine {
 			assertFalse(workspace.query().exists("/id('b1')"));
 			assertTrue(workspace.query().exists("/id('b2')"));
 			assertEquals(1, doc.query().all("*").size());
-			assertEquals(2, engine.numModsWithdrawn.value());
+			assertEquals(2, engine.stats.numModsWithdrawn.value());
 		}
 		
 		@Test public void withdrawModsWithAffectedDocsAndKnockOnReferences() {
@@ -505,7 +547,7 @@ public class Engine {
 			assertTrue(workspace.query().exists("/id('b2')"));
 			assertFalse(workspace.query().exists("/id('b3')"));
 			assertEquals(1, doc.query().all("*").size());
-			assertEquals(3, engine.numModsWithdrawn.value());
+			assertEquals(3, engine.stats.numModsWithdrawn.value());
 		}
 
 		@Test public void withdrawMod() {
@@ -523,7 +565,7 @@ public class Engine {
 			assertFalse(modStore.query().exists("/id('m1')"));
 			assertTrue(modStore.query().exists("/id('m2')"));
 			assertEquals(1, modStore.query().all("*").size());
-			assertEquals(1, engine.numModsWithdrawn.value());
+			assertEquals(1, engine.stats.numModsWithdrawn.value());
 		}
 
 		@Test public void withdrawRule() {
@@ -541,7 +583,7 @@ public class Engine {
 			assertFalse(modStore.query().exists("/id('m1')"));
 			assertTrue(modStore.query().exists("/id('m2')"));
 			assertEquals(1, modStore.query().all("*").size());
-			assertEquals(1, engine.numModsWithdrawn.value());
+			assertEquals(1, engine.stats.numModsWithdrawn.value());
 		}
 
 		private <E> Matcher<Collection<E>> aCollectionOf(E... items) {
