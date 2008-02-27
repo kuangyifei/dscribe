@@ -1,14 +1,14 @@
-#### cycle 0
+#### run 0
 
-## set file source.xml
+## load file source.xml
 <foo xml:id='f'/>
 
-## set rules
+## load rules
 to insert bar into foo [r1]
 	for each target: //foo
 	insert: <bar/>
 
-#### cycle 1
+#### run 1
 
 ## check file source.xml
 <foo xml:id='f'><bar xml:id='_r1.f.1.'/></foo>
@@ -24,3 +24,4 @@ to insert bar into foo [r1]
 		<checksum xmlns='' digest-type='*'>*</checksum>
 	</block>
 </mod>
+

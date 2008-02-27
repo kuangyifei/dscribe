@@ -1,11 +1,11 @@
-#### cycle 0
+#### run 0
 
-## set rules
+## load rules
 to create document foo [r1]
 	create-doc: foo.xml
 	insert: <foo/>
 
-#### cycle 1
+#### run 1
 
 ## check file foo.xml
 <foo xml:id='_r1.1.'/>

@@ -7,6 +7,7 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.regex.*;
 
+import org.apache.log4j.*;
 import org.custommonkey.xmlunit.*;
 import org.exist.fluent.*;
 import org.junit.*;
@@ -36,13 +37,30 @@ public class SystemTest extends DatabaseTestCase {
 		return k > 0 ? filename.substring(0, k) : filename;
 	}
 	
-	private static final Pattern STAGE_RE = Pattern.compile("#### cycle (\\d+)");
-	private static final Pattern INSTRUCTION_RE = Pattern.compile("## (set|check) (file|rules|mods)(.*)");
+	private static Level previousLoggerLevel;
+	private static Priority previousAppenderThreshold;
+	@BeforeClass public static void configureLogging() {
+		ConsoleAppender appender = (ConsoleAppender) Logger.getRootLogger().getAllAppenders().nextElement();
+		previousAppenderThreshold = appender.getThreshold();
+		appender.setThreshold(Level.DEBUG);
+		Logger logger = Logger.getLogger("com.ideanest.dscribe.mixt");
+		previousLoggerLevel = logger.getLevel();
+		logger.setLevel(Level.DEBUG);
+	}
+	@AfterClass public static void unconfigureLogging() {
+		((ConsoleAppender) Logger.getRootLogger().getAllAppenders().nextElement()).setThreshold(previousAppenderThreshold);
+		Logger.getLogger("com.ideanest.dscribe.mixt").setLevel(previousLoggerLevel);
+	}
+	
+	private static final Pattern STAGE_RE = Pattern.compile("#### run (\\d+)");
+	private static final Pattern INSTRUCTION_RE = Pattern.compile("## (load|check) (file|rules|mods|stats)(.*)");
+	private static final Pattern STATS_RE = Pattern.compile("(\\w+)\\s*=\\s*(\\d+)");
 	
 	private Folder workspace, rulespace;
 	private Transformer transformer;
-	private int cycle = -1;
+	private int run = -1;
 	private File specFile;
+	private Engine.Stats stats;
 	
 	public SystemTest(String name, File specFile) {
 		this.specFile = specFile;
@@ -54,7 +72,7 @@ public class SystemTest extends DatabaseTestCase {
 		transformer = new Transformer(workspace, rulespace);
 	}
 	
-	@Test public void run() throws IOException, ParseException, RuleBaseException, TransformException, InterruptedException, SAXException {
+	@Test public void run() throws IOException, ParseException, RuleBaseException, TransformException, InterruptedException, SAXException, IllegalArgumentException, SecurityException, IllegalAccessException, NoSuchFieldException {
 		BufferedReader reader = new BufferedReader(new FileReader(specFile));
 		String line = reader.readLine();
 		while (line != null) {
@@ -64,23 +82,25 @@ public class SystemTest extends DatabaseTestCase {
 				Matcher matcher = STAGE_RE.matcher(line);
 				if (!matcher.matches()) throw new IOException("bad #### line: " + line);
 				int nextStage = Integer.parseInt(matcher.group(1));
-				if (nextStage != ++cycle) throw new IOException("non-consecutive cycle: " + line);
-				if (cycle != 0) transformer.executeOnce();
+				if (nextStage != ++run) throw new IOException("non-consecutive cycle: " + line);
+				if (run != 0) stats = transformer.executeOnce();
 				line = reader.readLine();
 			} else if (line.startsWith("##")) {
 				Matcher matcher = INSTRUCTION_RE.matcher(line);
 				if (!matcher.matches()) throw new IOException("bad ## line: " + line);
 				String instruction = matcher.group(1) + " " + matcher.group(2);
-				if (instruction.equals("set file")) {
+				if (instruction.equals("load file")) {
 					line = doSetFile(reader, line, matcher.group(3).trim());
-				} else if (instruction.equals("set rules")) {
+				} else if (instruction.equals("load rules")) {
 						line = doSetRules(reader);
-				} else if (instruction.equals("set mods")) {
+				} else if (instruction.equals("load mods")) {
 					line = doSetMods(reader);
 				} else if (instruction.equals("check file")) {
 					line = doCheckFile(reader, line, matcher.group(3).trim());
 				} else if (instruction.equals("check mods")) {
 					line = doCheckMods(reader);
+				} else if (instruction.equals("check stats")) {
+					line = doCheckStats(reader);
 				} else {
 					throw new IOException("bad ## instruction: " + line);
 				}
@@ -169,7 +189,22 @@ public class SystemTest extends DatabaseTestCase {
 			}
 		});
 		if (!diff.similar()) {
-			fail("Mods differ after cycle " + cycle + "\n--- Expected:\n" + expected + "\n\n--- Actual: \n" + actual + "\n");
+			fail("Mods differ after cycle " + run + "\n--- Expected:\n" + expected + "\n\n--- Actual: \n" + actual + "\n");
+		}
+		return line;
+	}
+	
+	private String doCheckStats(BufferedReader reader) throws IOException, IllegalArgumentException, SecurityException, IllegalAccessException, NoSuchFieldException {
+		if (stats == null) throw new RuntimeException("can't check stats before first engine run");
+		String line;
+		while ((line = reader.readLine()) != null && !line.startsWith("##")) {
+			line = line.trim();
+			if (line.isEmpty()) continue;
+			Matcher matcher = STATS_RE.matcher(line);
+			if (!matcher.matches()) throw new IOException("bad check stats line: " + line);
+			long expectedValue = Long.parseLong(matcher.group(2));
+			long actualValue = ((Counter) Engine.Stats.class.getField(matcher.group(1)).get(stats)).value();
+			assertEquals("stats field " + matcher.group(1), expectedValue, actualValue);
 		}
 		return line;
 	}

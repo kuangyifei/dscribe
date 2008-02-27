@@ -180,7 +180,8 @@ public class Mod {
 		if (refNodes.size() > 0) {
 			references = new ArrayList<Node>(refNodes.size());
 			for (Node refNode : refNodes.nodes()) {
-				Node node = rule.engine.globalScope().single("/id($_1/@refid)", refNode).node();
+				Node node = rule.engine.globalScope().optional("/id($_1/@refid)", refNode).node();
+				if (!node.extant()) throw new TransformException("missing referenced node " + refNode.query().single("@refid").value());
 				final String actualPath = rule.engine.relativePath(node.document());
 				final String storedPath = refNode.query().single("@doc").value();
 				if (!actualPath.equals(storedPath))
@@ -209,7 +210,7 @@ public class Mod {
 	}
 	
 	@Override public String toString() {
-		return rule + ".mod[" + stage + ":" + key() + "]";
+		return "mod<" + key() + ", stage " + stage + "> of " + rule;
 	}
 	
 	
@@ -445,7 +446,7 @@ public class Mod {
 		 * @param node the node that's referenced by the mod being built
 		 */
 		public void reference(Node node) {
-			if (!node.query().exists("@xml:id")) throw new IllegalArgumentException("referenced node doesn't have an xml:id: " + node);
+			if (!parent.rule.engine.ensureNodeHasXmlId(node)) throw new IllegalArgumentException("referenced node doesn't have an xml:id: " + node);
 			references.add(node);
 			dependOn(node.document());
 		}
@@ -464,7 +465,10 @@ public class Mod {
 		 * @return an ID string with the properties above and a syntax appropriate for an xml:id attribute
 		 */
 		public String generateId(int serial) {
-			return parent.key() + (parent.stage+1) + (serial >= 0 ? "-" + serial : "") + ".";
+			String id = parent.key() + (parent.stage+1) + (serial >= 0 ? "-" + serial : "") + ".";
+			if (parent.rule.engine.globalScope().exists("/id($_1)", id))
+				LOG.error("generated id '" + id + "' already assigned to element " + parent.rule.engine.globalScope().unordered("/id($_1)", id));
+			return id;
 		}
 		
 		public class DependencyModifier {
@@ -554,6 +558,7 @@ public class Mod {
 				allowing(engine).globalScope();  will(returnValue(workspace.query()));
 				allowing(parentMod).key();  will(returnValue("_r1.e13."));
 				allowing(parentMod).variableBindings();  will(returnValue(parentModBindings));
+				allowing(engine).ensureNodeHasXmlId(doc1.query().single("//e1").node());  will(returnValue(true));
 			}});	
 		}
 	}
@@ -681,8 +686,30 @@ public class Mod {
 			assertEquals(Collections.singletonList(doc1.query().single("//e1").node()), builder.references);
 		}
 
+		@Test public void referenceGenerateId() {
+			mockery.checking(new Expectations() {{
+				one(engine).ensureNodeHasXmlId(doc1.root()); will(new Action() {
+					@Override public Object invoke(Invocation invocation) throws Throwable {
+						doc1.root().update().attr("xml:id", "x-123").commit();
+						return true;
+					}
+					@Override public void describeTo(Description description) {
+						description.appendText("add an xml:id to doc1.root()");
+					}
+				});
+			}});
+			builder.reference(doc1.root());
+			assertEquals(Collections.singleton(doc1Name), builder.dependentDocNames);
+			assertEquals(Collections.emptySet(), builder.unverifiedDocNames);
+			assertEquals(Collections.emptySet(), builder.affectedNodeIds);
+			assertEquals(Collections.singletonList(doc1.root()), builder.references);
+		}
+
 		@Test(expected = IllegalArgumentException.class)
 		public void referenceNoId() {
+			mockery.checking(new Expectations() {{
+				one(engine).ensureNodeHasXmlId(doc1.root()); will(returnValue(false));
+			}});
 			builder.reference(doc1.root());
 		}
 		

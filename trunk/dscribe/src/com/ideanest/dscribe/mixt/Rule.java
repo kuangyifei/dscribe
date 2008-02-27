@@ -167,9 +167,17 @@ public class Rule {
 			Iterator<Node> prevBlocksIterator = prevDef.query().all("*").nodes().iterator();
 			for (Node blockDef : def.query().all("*").nodes()) {
 				
-				if (firstDiff == Integer.MAX_VALUE &&
-						!(prevBlocksIterator.hasNext() && equalBlocks(blockDef, prevBlocksIterator.next()))) {
-					firstDiff = blocks.size();
+				if (firstDiff == Integer.MAX_VALUE) {
+					Node prevBlockDef = prevBlocksIterator.hasNext() ? prevBlocksIterator.next() : null;
+					if (prevBlockDef == null || !equalBlocks(blockDef, prevBlockDef)) {
+						if (LOG.isDebugEnabled()) {
+							LOG.debug(
+									this + " blocks differ at stage " + blocks.size() + ";\n" +
+									"--- current block:\n" + blockDef + " with ns prefixes " + blockDef.query().all("in-scope-prefixes(.)") + "\n" +
+									"--- previous block:\n" + prevBlockDef + (prevBlockDef == null ? "" : " with ns prefixes " + prevBlockDef.query().all("in-scope-prefixes(.)")));
+						}
+						firstDiff = blocks.size();
+					}
 				}
 				
 				Block block = defineBlock(blockDef);
@@ -284,14 +292,14 @@ public class Rule {
 			}
 			
 			LOG.debug("resolving mods");
-			engine.numBlocksResolved.increment(mods.size());
+			engine.stats.numBlocksResolved.increment(mods.size());
 			Collection<Mod> nextStageMods = new ArrayList<Mod>();
 			for (Mod mod : mods) nextStageMods.addAll(
 					mod.resolveChildren(block, lastBlock, (stage >= firstDifferentStage) ? null : touchedScope));
 			mods = nextStageMods;
 		}
 		
-		engine.numModsCompleted.increment(mods.size());
+		engine.stats.numModsCompleted.increment(mods.size());
 		firstDifferentStage = Integer.MAX_VALUE;
 	}
 
@@ -349,7 +357,7 @@ public class Rule {
 				if (shouldVerify) {
 					mod.verify();
 					stagesToVerify.removeFirst();
-					engine.numBlocksVerified.increment();
+					engine.stats.numBlocksVerified.increment();
 				}
 			} catch (TransformException e) {
 				if (shouldVerify) {
@@ -394,7 +402,7 @@ public class Rule {
 			LOG.debug("no mods to verify");
 		} else {
 			LOG.debug(MessageFormat.format(
-					"verifying {1,choice,1#1 mod|1<{1,number,integer} mods}",
+					"verifying {0,choice,1#1 mod|1<{0,number,integer} mods}",
 					new Object[] {modsToVerify.size()}
 			));
 			self.verifySubtree(self.bootstrapMod(), modsToVerify, modifiedDocsNames);
@@ -611,10 +619,15 @@ public class Rule {
 		
 		protected Counter injectEngineCounter(String fieldName) {
 			try {
+				if (rule.engine.stats == null) {
+					Field field = Engine.class.getDeclaredField("stats");
+					field.setAccessible(true);
+					field.set(rule.engine, new Engine.Stats());
+				}
 				final Counter counter = new Counter(fieldName + " = {1,number,integer}");
-				Field field = Engine.class.getDeclaredField(fieldName);
+				Field field = Engine.Stats.class.getDeclaredField(fieldName);
 				field.setAccessible(true);
-				field.set(rule.engine, counter);
+				field.set(rule.engine.stats, counter);
 				return counter;
 			} catch (SecurityException e) {
 				throw new RuntimeException(e);
