@@ -6,19 +6,20 @@ import java.util.*;
 
 import org.junit.Assert;
 import org.junit.internal.runners.*;
+import org.junit.runner.Description;
 import org.junit.runner.notification.RunNotifier;
 
 public class ParameterizedShowingArgs extends CompositeRunner {
 	static class TestClassRunnerForParameters extends JUnit4ClassRunner {
 		private final Object[] parameters;
 		private final Constructor<?> constructor;
-		private final String paramString;
+		private final Method runMethod;
 
-		TestClassRunnerForParameters(TestClass testClass, Object[] parameters) throws InitializationError {
+		TestClassRunnerForParameters(TestClass testClass, Method runMethod, Object[] parameters) throws InitializationError {
 			super(testClass.getJavaClass());
+			this.runMethod = runMethod;
 			this.parameters = parameters;
 			this.constructor = getOnlyConstructor();
-			this.paramString = Arrays.asList(parameters).toString();
 		}
 
 		@Override protected Object createTest() throws Exception {
@@ -26,13 +27,17 @@ public class ParameterizedShowingArgs extends CompositeRunner {
 		}
 		
 		@Override protected String getName() {
-			return paramString;
+			return (String) parameters[0];
 		}
 		
 		@Override protected String testName(final Method method) {
-			return method.getName() + paramString;
+			return getName();
 		}
 
+		@Override public Description getDescription() {
+			return Description.createTestDescription(getTestClass().getJavaClass(), testName(runMethod), testAnnotations(runMethod));
+		}
+		
 		private Constructor<?> getOnlyConstructor() {
 			Constructor<?>[] constructors= getTestClass().getJavaClass().getConstructors();
 			Assert.assertEquals(1, constructors.length);
@@ -44,7 +49,7 @@ public class ParameterizedShowingArgs extends CompositeRunner {
 		}
 		
 		@Override public void run(RunNotifier notifier) {
-			runMethods(notifier);
+			invokeTestMethod(runMethod, notifier);
 		}
 	}
 
@@ -59,6 +64,8 @@ public class ParameterizedShowingArgs extends CompositeRunner {
 		super(klass.getName());
 		this.testClass = new TestClass(klass);
 		
+		Method runMethod = klass.getMethod("run");
+		
 		MethodValidator methodValidator = new MethodValidator(testClass);
 		methodValidator.validateStaticMethods();
 		methodValidator.validateInstanceMethods();
@@ -66,7 +73,7 @@ public class ParameterizedShowingArgs extends CompositeRunner {
 		
 		for (final Object each : getParametersList()) {
 			if (each instanceof Object[]) {
-				add(new TestClassRunnerForParameters(testClass, (Object[])each));
+				add(new TestClassRunnerForParameters(testClass, runMethod, (Object[])each));
 			} else {
 				throw new Exception(String.format("%s.%s() must return a Collection of arrays.", testClass.getName(), getParametersMethod().getName()));
 			}

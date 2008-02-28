@@ -12,8 +12,7 @@ import org.custommonkey.xmlunit.*;
 import org.exist.fluent.*;
 import org.junit.*;
 import org.junit.runner.RunWith;
-import org.w3c.dom.*;
-import org.w3c.dom.Node;
+import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 import com.ideanest.dscribe.mixt.*;
@@ -52,13 +51,15 @@ public class SystemTest extends DatabaseTestCase {
 		Logger.getLogger("com.ideanest.dscribe.mixt").setLevel(previousLoggerLevel);
 	}
 	
+	private static final Logger LOG = Logger.getLogger(SystemTest.class);
+	
 	private static final Pattern STAGE_RE = Pattern.compile("#### run (\\d+)");
-	private static final Pattern INSTRUCTION_RE = Pattern.compile("## (load|check) (file|rules|mods|stats)(.*)");
+	private static final Pattern INSTRUCTION_RE = Pattern.compile("## (load|modify|check) (file|rules|mods|stats)(.*)");
 	private static final Pattern STATS_RE = Pattern.compile("(\\w+)\\s*=\\s*(\\d+)");
 	
 	private Folder workspace, rulespace;
 	private Transformer transformer;
-	private int run = -1;
+	private int run = 0;
 	private File specFile;
 	private Engine.Stats stats;
 	
@@ -69,10 +70,12 @@ public class SystemTest extends DatabaseTestCase {
 	@Before public void setUp() {
 		workspace = db.createFolder("/workspace");
 		rulespace = db.createFolder("/rulespace");
+		rulespace.namespaceBindings().put("", Transformer.RULES_NS);
 		transformer = new Transformer(workspace, rulespace);
 	}
 	
 	@Test public void run() throws IOException, ParseException, RuleBaseException, TransformException, InterruptedException, SAXException, IllegalArgumentException, SecurityException, IllegalAccessException, NoSuchFieldException {
+		LOG.debug("starting system test " + specFile);
 		BufferedReader reader = new BufferedReader(new FileReader(specFile));
 		String line = reader.readLine();
 		while (line != null) {
@@ -83,18 +86,24 @@ public class SystemTest extends DatabaseTestCase {
 				if (!matcher.matches()) throw new IOException("bad #### line: " + line);
 				int nextStage = Integer.parseInt(matcher.group(1));
 				if (nextStage != ++run) throw new IOException("non-consecutive cycle: " + line);
-				if (run != 0) stats = transformer.executeOnce();
+				LOG.debug("system test " + specFile + " starting run " + run);
+				stats = transformer.executeOnce();
+				LOG.debug("system test " + specFile + " finished run " + run);
 				line = reader.readLine();
 			} else if (line.startsWith("##")) {
 				Matcher matcher = INSTRUCTION_RE.matcher(line);
 				if (!matcher.matches()) throw new IOException("bad ## line: " + line);
 				String instruction = matcher.group(1) + " " + matcher.group(2);
 				if (instruction.equals("load file")) {
-					line = doSetFile(reader, line, matcher.group(3).trim());
+					line = doLoadFile(reader, line, matcher.group(3).trim());
 				} else if (instruction.equals("load rules")) {
-						line = doSetRules(reader);
+						line = doLoadRules(reader);
 				} else if (instruction.equals("load mods")) {
-					line = doSetMods(reader);
+					line = doLoadMods(reader);
+				} else if (instruction.equals("modify file")) {
+					line = doModifyFile(reader, line, matcher.group(3).trim());
+				} else if (instruction.equals("modify rules")) {
+					line = doModifyRules(reader);
 				} else if (instruction.equals("check file")) {
 					line = doCheckFile(reader, line, matcher.group(3).trim());
 				} else if (instruction.equals("check mods")) {
@@ -106,9 +115,10 @@ public class SystemTest extends DatabaseTestCase {
 				}
 			}
 		}
+		LOG.debug("finished system test " + specFile);
 	}
 
-	private String doSetRules(BufferedReader reader) throws IOException, ParseException {
+	private String doLoadRules(BufferedReader reader) throws IOException, ParseException {
 		StringBuilder buf = new StringBuilder();
 		String line = readUntilNextInstruction(reader, buf);
 		Reader bufReader = new StringReader(buf.toString());
@@ -120,7 +130,22 @@ public class SystemTest extends DatabaseTestCase {
 		return line;
 	}
 
-	private String doSetFile(BufferedReader reader, String line, String path) throws IOException {
+	private String doModifyRules(BufferedReader reader) throws IOException, ParseException {
+		StringBuilder buf = new StringBuilder();
+		String line = readUntilNextInstruction(reader, buf);
+		Reader bufReader = new StringReader(buf.toString());
+		try {
+			XMLDocument newRules = rulespace.documents().load(Name.adjust("rules"), CompactFormTranslator.compactToXml(bufReader));
+			for (Node rule : rulespace.query().unordered("/id($_1//rule/@xml:id)", newRules).nodes()) {
+				if (!rule.document().equals(newRules)) rule.delete();
+			}
+		} finally {
+			bufReader.close();
+		}
+		return line;
+	}
+
+	private String doLoadFile(BufferedReader reader, String line, String path) throws IOException {
 		if (path.isEmpty()) throw new IOException("no file path: " + line);
 		StringBuilder buf = new StringBuilder();
 		line = readUntilNextInstruction(reader, buf);
@@ -128,9 +153,17 @@ public class SystemTest extends DatabaseTestCase {
 		return line;
 	}
 	
-	private String doSetMods(BufferedReader reader) throws IOException {
+	private String doModifyFile(BufferedReader reader, String line, String path) throws IOException {
+		if (path.isEmpty()) throw new IOException("no file path: " + line);
 		StringBuilder buf = new StringBuilder();
-		buf.append("<mods xmlns='" + Transformer.MOD_NS + "'>\n");
+		line = readUntilNextInstruction(reader, buf);
+		workspace.documents().get(path).query().all(buf.toString());
+		return line;
+	}
+	
+	private String doLoadMods(BufferedReader reader) throws IOException {
+		StringBuilder buf = new StringBuilder();
+		buf.append("<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>\n");
 		String line = readUntilNextInstruction(reader, buf);
 		buf.append("</mods>");
 		db.createFolder(Transformer.recordsRootPath() + workspace.path())
@@ -146,7 +179,7 @@ public class SystemTest extends DatabaseTestCase {
 		XMLDocument expected = workspace.documents().load(Name.generate(), Source.xml(buf.toString()));
 		try {
 			assertTrue(
-					"Document " + path + "\n--- Expected:\n" + expected.contentsAsString() + "\n\n--- Actual:\n" + actual.contentsAsString() + "\n",
+					"Document " + path + " after run " + run + "\n--- Expected:\n" + expected.contentsAsString() + "\n\n--- Actual:\n" + actual.contentsAsString() + "\n",
 					workspace.query().single("deep-equal($_1, $_2)", actual.root(), expected.root()).booleanValue());
 		} finally {
 			expected.delete();
@@ -156,7 +189,7 @@ public class SystemTest extends DatabaseTestCase {
 
 	private String doCheckMods(BufferedReader reader) throws IOException, SAXException {
 		StringBuilder buf = new StringBuilder();
-		buf.append("<mods xmlns='" + Transformer.MOD_NS + "'>\n");
+		buf.append("<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>\n");
 		String line = readUntilNextInstruction(reader, buf);
 		buf.append("</mods>");
 		String expected = buf.toString();
@@ -174,7 +207,7 @@ public class SystemTest extends DatabaseTestCase {
 					return DifferenceListener.RETURN_ACCEPT_DIFFERENCE;
 				}
 			}
-			public void skippedComparison(Node control, Node test) {
+			public void skippedComparison(org.w3c.dom.Node control, org.w3c.dom.Node test) {
 			}
 		});
 		diff.overrideElementQualifier(new ElementQualifier() {
@@ -189,7 +222,7 @@ public class SystemTest extends DatabaseTestCase {
 			}
 		});
 		if (!diff.similar()) {
-			fail("Mods differ after cycle " + run + "\n--- Expected:\n" + expected + "\n\n--- Actual: \n" + actual + "\n");
+			fail("Mods differ after run " + run + "\n--- Expected:\n" + expected + "\n\n--- Actual: \n" + actual + "\n");
 		}
 		return line;
 	}
@@ -204,7 +237,7 @@ public class SystemTest extends DatabaseTestCase {
 			if (!matcher.matches()) throw new IOException("bad check stats line: " + line);
 			long expectedValue = Long.parseLong(matcher.group(2));
 			long actualValue = ((Counter) Engine.Stats.class.getField(matcher.group(1)).get(stats)).value();
-			assertEquals("stats field " + matcher.group(1), expectedValue, actualValue);
+			assertEquals("stat " + matcher.group(1) + " after run " + run, expectedValue, actualValue);
 		}
 		return line;
 	}

@@ -329,7 +329,7 @@ public class Engine {
 					"  <rule xml:id='r1' name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
-			Node modStore = workspace.documents().load(Name.generate(), Source.xml("<mods xmlns='" + Transformer.MOD_NS + "'/>")).root();
+			Node modStore = workspace.documents().load(Name.generate(), Source.xml("<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'/>")).root();
 			Engine engine = new Engine(workspace, modStore);
 			engine.parseRules(rulespace, prevrulespace);
 			assertEquals(1, engine.rules.size());
@@ -344,7 +344,7 @@ public class Engine {
 					"</rules>"
 			));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
 					"<mod xml:id='_r1.1' rule='r1'/>" +
 					"<mod xml:id='_r1.2' rule='r1'><block><dependency doc='foo'/></block></mod>" +
 					"<mod xml:id='_r1.3' rule='r1'><block><dependency doc='bar/foo'/></block></mod>" +
@@ -385,7 +385,7 @@ public class Engine {
 		@Test public void executeTransform() throws TransformException, InterruptedException {
 			final XMLDocument olddoc1 = workspace.documents().load(Name.create("olddoc1"), Source.xml("<bar/>"));
 			final XMLDocument olddoc2 = workspace.documents().load(Name.create("olddoc2"), Source.xml("<bar/>"));
-			final Node modStore = workspace.documents().load(Name.generate(), Source.xml("<mods xmlns='" + Transformer.MOD_NS + "'/>")).root();
+			final Node modStore = workspace.documents().load(Name.generate(), Source.xml("<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'/>")).root();
 			final Rule rule = mockery.mock(Rule.class);
 			Engine engine = new Engine(workspace, modStore);
 			final Accumulator.Locator<XMLDocument> locator = engine.modifiedDocs.anchor();
@@ -412,7 +412,7 @@ public class Engine {
 		
 		@Test(expected = InterruptedException.class)
 		public void executeTransformCanBeInterrupted() throws TransformException, InterruptedException {
-			final Node modStore = workspace.documents().load(Name.generate(), Source.xml("<mods xmlns='" + Transformer.MOD_NS + "'/>")).root();
+			final Node modStore = workspace.documents().load(Name.generate(), Source.xml("<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'/>")).root();
 			final Rule rule = mockery.mock(Rule.class);
 			Engine engine = new Engine(workspace, modStore);
 			mockery.checking(new Expectations() {{
@@ -434,7 +434,7 @@ public class Engine {
 		
 		@Test public void withdrawModsSimple() {
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
 					"  <mod xml:id='m1' rule='r1'/>" +
 					"  <mod xml:id='m2' rule='r1'/>" +
 					"</mods>")).root();
@@ -452,7 +452,7 @@ public class Engine {
 
 		@Test public void withdrawModsWithDescendants() {
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
 					"  <mod xml:id='m1' rule='r1'>" +
 					"  	<mod xml:id='m1.1' rule='r1'/>" +
 					"	</mod>" +
@@ -475,7 +475,7 @@ public class Engine {
 			final Document doc = workspace.documents().load(Name.generate(), Source.xml(
 					"<foo><bar xml:id='b1'/><bar xml:id='b2'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
 					"  <mod xml:id='m1' rule='r1'><block><affected refid='b1'/></block></mod>" +
 					"  <mod xml:id='m2' rule='r1'/>" +
 					"</mods>")).root();
@@ -500,7 +500,7 @@ public class Engine {
 			workspace.documents().load(Name.create("c"), Source.xml(
 					"<foo><baz xml:id='c1'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
 					"  <mod xml:id='m1' rule='r1'><block><affected refid='b1'/></block>" +
 					"  	<mod xml:id='m1.1' rule='r1'><block><dependency doc='b'/></block></mod>" +
 					"	</mod>" +
@@ -526,7 +526,7 @@ public class Engine {
 			final Document doc = workspace.documents().load(Name.generate(), Source.xml(
 					"<foo><bar xml:id='b1'><baz xml:id='b1a'/></bar><bar xml:id='b2'/><xyz xml:id='b3'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
 					"  <mod xml:id='m1' rule='r1'><block><affected refid='b1'/></block></mod>" +
 					"  <mod xml:id='m3' rule='r2'><block><reference refid='b1'/></block></mod>" +
 					"  <mod xml:id='m4' rule='r2'><block><reference refid='b1a'/><affected refid='b3'/></block></mod>" +
@@ -552,7 +552,7 @@ public class Engine {
 
 		@Test public void withdrawMod() {
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
 					"  <mod xml:id='m1' rule='r1'/>" +
 					"  <mod xml:id='m2' rule='r1'/>" +
 					"</mods>")).root();
@@ -570,7 +570,7 @@ public class Engine {
 
 		@Test public void withdrawRule() {
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
 					"  <mod xml:id='m1' rule='r1'/>" +
 					"  <mod xml:id='m2' rule='r2'/>" +
 					"</mods>")).root();

@@ -53,7 +53,7 @@ public class Mod {
 	
 	private interface Shim {
 		QueryService prepScopeClone(QueryService queryService);
-		Mod deriveChild(Block block, String value);
+		Mod deriveChild(Block block, String key);
 		
 	}
 	
@@ -78,7 +78,7 @@ public class Mod {
 	}
 
 	public QueryService globalScope() {
-		return scope(rule.engine.globalScope());
+		return rule.engine.globalScope();
 	}
 	
 	/**
@@ -165,7 +165,7 @@ public class Mod {
 	}
 	
 	Mod restoreChild(Block block, Node blockData) throws TransformException {
-		Mod mod = self.deriveChild(block, blockData.query().single("../@xml:id").value());
+		Mod mod = self.deriveChild(block, block instanceof KeyBlock ? blockData.query().single("../@xml:id").value() : null);
 		mod.data = blockData;
 		mod.restore();
 		return mod;
@@ -537,7 +537,7 @@ public class Mod {
 			engine = mockery.mock(Engine.class);
 			
 			modStore = db.getFolder("/").documents().load(
-					Name.generate(), Source.xml("<mods xmlns='" + Transformer.MOD_NS + "'/>")).root();
+					Name.generate(), Source.xml("<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'/>")).root();
 			modStore.namespaceBindings().put("", Transformer.MOD_NS);
 			
 			rule = mockery.mock(Rule.class);
@@ -621,7 +621,7 @@ public class Mod {
 			mod_rule.set(ancestor, rule);
 			mod_stage.set(ancestor, 2);
 			final Node ancestorData = db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
 					"  <mod>" + 
 					"    <dependency kind='verified' doc='d" + n + "v.xml'/>" + 
 					"    <dependency kind='unverified' doc='d" + n + "u.xml'/>" + 
@@ -1124,6 +1124,7 @@ public class Mod {
 		}
 		
 		@Test public void restoreChild() throws TransformException {
+			block = mockery.mock(KeyBlock.class);
 			final Mod mod = new Mod(parentMod);
 			mod.self = mockery.mock(Mod.Shim.class);
 			final Mod child = mockery.mock(Mod.class, "child");

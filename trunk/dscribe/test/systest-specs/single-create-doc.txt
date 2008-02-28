@@ -1,7 +1,5 @@
-#### run 0
-
 ## load rules
-to create document foo [r1]
+rule create document foo [r1]
 	create-doc: foo.xml
 	insert: <foo/>
 
