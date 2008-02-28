@@ -1,0 +1,75 @@
+## load file source.xml
+<foo xml:id='f'>
+	<fob xml:id='g' name='hello'/>
+</foo>
+
+## load rules
+rule doc per foo [r1]
+	for each $foo: /foo
+	create-doc: result-{$foo/@xml:id}.xml
+	insert: <foo2 original='{$foo/@xml:id}'/>
+
+rule copy fob name [r2]
+	for each $fob: //fob
+	for one target: /foo2[@original=$fob/parent::foo/@xml:id]
+	insert: <bar>{$fob/@name/string()}</bar>
+
+#### run 1
+
+## check mods
+<mod xml:id='_r1.f.' rule='r1' stage='2'>
+	<block stage='0'>
+		<dependency doc='source.xml' kind='verified'/>
+		<reference doc='source.xml' refid='f'/>
+	</block>
+	<block stage='1'>
+		<dependency doc='source.xml' kind='verified'/>
+		<docname xmlns=''>result-f.xml</docname>
+	</block>
+	<block stage='2'>
+		<dependency doc='source.xml' kind='verified'/>
+		<affected refid='_r1.f.2.'/>
+		<checksum xmlns='' digest-type='*'>*</checksum>
+	</block>
+</mod>
+<mod xml:id='_r2.g.' rule='r2' stage='2'>
+	<block stage='0'>
+		<dependency doc='source.xml' kind='verified'/>
+		<reference doc='source.xml' refid='g'/>
+	</block>
+	<block stage='1'>
+		<dependency doc='result-f.xml' kind='verified'/>
+		<dependency doc='source.xml' kind='verified'/>
+		<reference doc='result-f.xml' refid='_r1.f.2.'/>
+	</block>
+	<block stage='2'>
+		<dependency doc='source.xml' kind='verified'/>
+		<affected refid='_r2.g.2.'/>
+		<checksum xmlns='' digest-type='*'>*</checksum>
+	</block>
+</mod>
+
+## check file result-f.xml
+<foo2 xml:id='_r1.f.2.' original='f'>
+	<bar xml:id='_r2.g.2.'>hello</bar>
+</foo2>
+
+## modify file source.xml
+update value //fob/@name with 'bye'
+
+## check file source.xml
+<foo xml:id='f'>
+	<fob xml:id='g' name='bye'/>
+</foo>
+
+#### run 2
+
+## check file result-f.xml
+<foo2 xml:id='_r1.f.2.' original='f'>
+	<bar xml:id='_r2.g.2.'>bye</bar>
+</foo2>
+
+## check stats
+numBlocksVerified = 6
+numBlocksResolved = 1
+numModsWithdrawn = 1

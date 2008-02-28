@@ -93,7 +93,7 @@ public class Transformer {
 	private Node initModStore() {
 		Node modStore = recordspace.query().optional("/mod:mods").node();
 		if (!modStore.extant()) {
-			modStore = recordspace.documents().load(Name.overwrite("mods"), Source.xml("<mods xmlns='" + MOD_NS + "'/>")).root();
+			modStore = recordspace.documents().load(Name.overwrite("mods"), Source.xml("<mods xmlns='" + MOD_NS + "' stage='-1'/>")).root();
 		}
 		modStore.namespaceBindings().sever();
 		modStore.namespaceBindings().clear();
@@ -152,7 +152,7 @@ public class Transformer {
 			compactRules.deleteOnExit();
 			FileWriter out = new FileWriter(compactRules);
 			out.append(
-					"to do something or other [r1]\n" +
+					"rule do something or other [r1]\n" +
 					"	for any $x: foo bar bar : is blah\n");
 			out.close();
 			transformer.loadCompactRules(compactRules);
@@ -175,7 +175,7 @@ public class Transformer {
 		}
 
 		@Test public void initModStoreExisting() {
-			recordspace.documents().load(Name.generate(), Source.xml("<mods xmlns='" + MOD_NS + "'><mod xml:id='_foo.'/></mods>"));
+			recordspace.documents().load(Name.generate(), Source.xml("<mods xmlns='" + MOD_NS + "' stage='-1'><mod xml:id='_foo.'/></mods>"));
 			Node modsRoot = transformer.initModStore();
 			assertEquals(MOD_NS, modsRoot.namespaceBindings().get(""));
 			assertTrue(modsRoot.query().optional("self::mods").extant());
@@ -231,7 +231,7 @@ public class Transformer {
 			workspace.documents().load(Name.create("dead2"), Source.xml("<foo xml:id='bad5'><bar xml:id='bad6'/></foo>"));
 			workspace.children().create("nested").documents().load(Name.generate(), Source.xml("<foo xml:id='ok5'><bar xml:id='bad7'/></foo>"));
 			recordspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
 					"  <mod><affected refid='bad1'/><affected refid='bad2'/></mod>" +
 					"  <mod><affected refid='bad3'/><affected refid='bad4'/></mod>" +
 					"  <mod><affected refid='bad5'/><affected refid='bad6'/><affected refid='bad7'/></mod>" +

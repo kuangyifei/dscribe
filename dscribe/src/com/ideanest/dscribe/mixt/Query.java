@@ -1,12 +1,12 @@
 package com.ideanest.dscribe.mixt;
 
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.Iterator;
 
 import org.exist.fluent.*;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 public abstract class Query {
 	private final String query;
@@ -70,11 +70,11 @@ public abstract class Query {
 
 	public static class Text extends Query {
 		public Text(Node def) {
-			super(def, "<text>" + serializeContents(def) + "</text>");
+			super(def, "<text value='" + serializeContents(def).replace("'", "''") + "'/>");
 		}
 		
 		public String runOn(QueryService qs) {
-			return super.execute(qs).get(0).value();
+			return super.execute(qs).get(0).query().single("@value").value();
 		}
 	}
 	

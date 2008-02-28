@@ -15,7 +15,7 @@ import com.ideanest.dscribe.Namespace;
 public class CompactFormTranslator {
 	
 	private static final Pattern INDENT_PATTERN = Pattern.compile("^(\\s*)(.*)$");
-	private static final Pattern TO_PATTERN = Pattern.compile("^to (.*) \\[(.+)\\]$");
+	private static final Pattern TO_PATTERN = Pattern.compile("^rule (.*) \\[(.+)\\]$");
 
 	private CompactFormTranslator() {}
 	
@@ -80,7 +80,7 @@ public class CompactFormTranslator {
 				} else {
 					if (inPreamble) buf.append(">");
 					inPreamble = false;
-					if (keyword.equals("to")) {
+					if (keyword.equals("rule")) {
 						if (indents.size() != 1) throw new ParseException("rule definitions must be at outermost level, but found a nested one on line " + lineNumber + ":\n" + line, indent.length());
 						Matcher toMatcher = TO_PATTERN.matcher(content);
 						if (!toMatcher.matches()) throw new ParseException("rule definition syntax doesn't match 'to <rule name> [<id>]' on line " + lineNumber + ":\n" + line, indent.length());
@@ -164,7 +164,7 @@ public class CompactFormTranslator {
 		
 		@Test public void oneRuleWithoutBlocks() throws IOException, ParseException {
 			captureInput();
-			_("to do something or other [r1]");
+			_("rule do something or other [r1]");
 			captureOutput();
 			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something or other'/>");
@@ -174,8 +174,8 @@ public class CompactFormTranslator {
 		
 		@Test public void twoRulesWithoutBlocks1() throws IOException, ParseException {
 			captureInput();
-			_("to do something [r1]");
-			_("to do other [r2]");
+			_("rule do something [r1]");
+			_("rule do other [r2]");
 			captureOutput();
 			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something'/>");
@@ -186,9 +186,9 @@ public class CompactFormTranslator {
 		
 		@Test public void twoRulesWithoutBlocks2() throws IOException, ParseException {
 			captureInput();
-			_("to do something [r1]");
+			_("rule do something [r1]");
 			_("");
-			_("to do other [r2]");
+			_("rule do other [r2]");
 			_("");
 			captureOutput();
 			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
@@ -200,7 +200,7 @@ public class CompactFormTranslator {
 		
 		@Test public void oneRuleWithEmptyBlocks() throws IOException, ParseException {
 			captureInput();
-			_("to do something or other [r1]");
+			_("rule do something or other [r1]");
 			_("	for");
 			_("	insert");
 			captureOutput();
@@ -214,7 +214,7 @@ public class CompactFormTranslator {
 
 		@Test public void blockWithAttributes() throws IOException, ParseException {
 			captureInput();
-			_("to do something or other [r1]");
+			_("rule do something or other [r1]");
 			_("	for some $x and $y");
 			captureOutput();
 			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
@@ -227,7 +227,7 @@ public class CompactFormTranslator {
 
 		@Test public void blockWithInlineText() throws IOException, ParseException {
 			captureInput();
-			_("to do something or other [r1]");
+			_("rule do something or other [r1]");
 			_("	for: foo bar bar : is blah");
 			captureOutput();
 			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
@@ -240,7 +240,7 @@ public class CompactFormTranslator {
 
 		@Test public void blockWithInlineElements() throws IOException, ParseException {
 			captureInput();
-			_("to do something or other [r1]");
+			_("rule do something or other [r1]");
 			_("	insert: <bar/>");
 			captureOutput();
 			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
@@ -253,7 +253,7 @@ public class CompactFormTranslator {
 
 		@Test public void blockWithAttributesAndInlineText() throws IOException, ParseException {
 			captureInput();
-			_("to do something or other [r1]");
+			_("rule do something or other [r1]");
 			_("	for any $x: foo bar bar : is blah");
 			captureOutput();
 			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
@@ -266,7 +266,7 @@ public class CompactFormTranslator {
 
 		@Test public void blockWithInlineTextBetweenOtherBlocks() throws IOException, ParseException {
 			captureInput();
-			_("to do something or other [r1]");
+			_("rule do something or other [r1]");
 			_("	with this $x");
 			_("	for: foo bar bar : is blah");
 			_("	with that $y");
@@ -283,7 +283,7 @@ public class CompactFormTranslator {
 
 		@Test public void blockWithIndentedText() throws IOException, ParseException {
 			captureInput();
-			_("to do something or other [r1]");
+			_("rule do something or other [r1]");
 			_("	for:");
 			_("		something like: this and");
 			_("			this more indented stuff too");
@@ -304,7 +304,7 @@ public class CompactFormTranslator {
 		
 		@Test public void nestedBlocks() throws IOException, ParseException {
 			captureInput();
-			_("to do something or other [r1]");
+			_("rule do something or other [r1]");
 			_("	for");
 			_("		with that $y");
 			_("		with this $x");
@@ -324,7 +324,7 @@ public class CompactFormTranslator {
 		@Test(expected = ParseException.class)
 		public void namespaceAfterPreamble() throws ParseException, IOException {
 			captureInput();
-			_("to do stuff [r1]");
+			_("rule do stuff [r1]");
 			_("namespace java http://foo");
 			translateBadInput();
 		}
@@ -346,7 +346,7 @@ public class CompactFormTranslator {
 		@Test(expected = ParseException.class)
 		public void badIndent1() throws ParseException, IOException {
 			captureInput();
-			_("to do stuff [r1]");
+			_("rule do stuff [r1]");
 			_("	for");
 			_("  bar");
 			translateBadInput();
@@ -355,7 +355,7 @@ public class CompactFormTranslator {
 		@Test(expected = ParseException.class)
 		public void badIndent2() throws ParseException, IOException {
 			captureInput();
-			_("to do stuff [r1]");
+			_("rule do stuff [r1]");
 			_("	for:");
 			_("	bar");
 			translateBadInput();
@@ -364,7 +364,7 @@ public class CompactFormTranslator {
 		@Test(expected = ParseException.class)
 		public void badIndent3() throws ParseException, IOException {
 			captureInput();
-			_("to do stuff [r1]");
+			_("rule do stuff [r1]");
 			_("	for:");
 			_("		line 1");
 			_("	  line 2");
@@ -374,7 +374,7 @@ public class CompactFormTranslator {
 		@Test(expected = ParseException.class)
 		public void badIndent4() throws ParseException, IOException {
 			captureInput();
-			_("to do stuff [r1]");
+			_("rule do stuff [r1]");
 			_("for");
 			translateBadInput();
 		}
@@ -382,7 +382,7 @@ public class CompactFormTranslator {
 		@Test(expected = ParseException.class)
 		public void ruleNotAtTopLevel() throws ParseException, IOException {
 			captureInput();
-			_("to do stuff [r1]");
+			_("rule do stuff [r1]");
 			_("	to do nested [r2]");
 			translateBadInput();
 		}
@@ -390,14 +390,14 @@ public class CompactFormTranslator {
 		@Test(expected = ParseException.class)
 		public void badRuleDeclaration() throws ParseException, IOException {
 			captureInput();
-			_("to do stuff");
+			_("rule do stuff");
 			translateBadInput();
 		}
 
 		@Test(expected = ParseException.class)
 		public void unpairedAttribute() throws ParseException, IOException {
 			captureInput();
-			_("to do stuff [r1]");
+			_("rule do stuff [r1]");
 			_("	for any $x empty");
 			translateBadInput();
 		}

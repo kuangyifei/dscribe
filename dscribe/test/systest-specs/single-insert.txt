@@ -1,10 +1,8 @@
-#### run 0
-
 ## load file source.xml
 <foo xml:id='f'/>
 
 ## load rules
-to insert bar into foo [r1]
+rule insert bar into foo [r1]
 	for each target: //foo
 	insert: <bar/>
 
@@ -25,3 +23,7 @@ to insert bar into foo [r1]
 	</block>
 </mod>
 
+#### run 2
+
+## check stats
+numCycles = 1
