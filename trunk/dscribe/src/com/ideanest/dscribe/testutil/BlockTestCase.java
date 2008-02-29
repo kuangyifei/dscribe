@@ -87,7 +87,7 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		final Node data = db.createFolder("/supplement").documents().build(Name.generate()).node(
 				db.query().single(xml).node()).commit().root();
 		mockery.checking(new Expectations() {{
-			allowing(mod).data(); will(returnValue(data));
+			allowing(mod).node(); will(returnValue(data));
 		}});
 	}
 	

@@ -9,12 +9,12 @@ rule create document foo [r1]
 <foo xml:id='_r1.1.'/>
 
 ## check mods
-<mod xml:id='_r1.' rule='r1' stage='1'>
-	<block stage='0'>
+<mods xml:id='_r1.' rule='r1'>
+	<mod stage='0'>
 		<docname xmlns=''>foo.xml</docname>
-	</block>
-	<block stage='1'>
-		<affected refid='_r1.1.'/>
-		<checksum xmlns='' digest-type='*'>*</checksum>
-	</block>
-</mod>
+		<mod stage='1'>
+			<affected refid='_r1.1.'/>
+			<checksum xmlns='' digest-type='*'>*</checksum>
+		</mod>
+	</mod>
+</mods>

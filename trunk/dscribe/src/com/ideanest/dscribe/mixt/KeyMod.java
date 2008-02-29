@@ -110,7 +110,7 @@ public class KeyMod extends Mod {
 			final Seg seg1 = mockery.mock(Seg.class, "seg1");
 			final Seg seg2 = mockery.mock(Seg.class, "seg2");
 			mockery.checking(new Expectations() {{
-				exactly(2).of(parentMod).node();  will(returnValue(modStore));
+				allowing(parentMod).node();  will(returnValue(modStore));
 				exactly(2).of(block).createSeg(with(any(Mod.class)));
 					will(onConsecutiveCalls(returnValue(seg1), returnValue(seg2)));
 				one(seg1).restore();

@@ -70,11 +70,11 @@ public class Engine {
 		parseRules(rulespace, prevrulespace);
 		
 		LOG.debug("withdrawing mods of obsolete rules");
-		withdrawMods(modStore.query().unordered("for $mod in //mod:mod where not(exists($_1/id($mod/@rule))) return $mod", rulespace));
+		withdrawMods(modStore.query().unordered("for $mods in mods where not(exists($_1/id($mods/@rule))) return $mods", rulespace));
 		LOG.debug("withdrawing mods on obsolete documents");
 		// must run in workspace context to provide correct base URI for doc-available()
 		withdrawMods(workspace.query()
-				.unordered("$_1//mod:mod[some $dep in .//mod:dependency/@doc satisfies not(doc-available($dep))]", modStore));
+				.unordered("$_1//mod:mod[some $dep in ./mod:dependency/@doc satisfies not(doc-available($dep))]", modStore));
 
 		// TODO: sort rules into best-effort dependency order
 	}
@@ -217,15 +217,17 @@ public class Engine {
 	}
 	
 	public Stats stats() {return stats;}
-
-	void withdrawMod(String key) {
-		LOG.debug("withdrawing mod[" + key + "]");
-		withdrawMods(modStore.query().unordered("/id($_1)/self::mod", key));
+	
+	void withdrawMod(Node modNode) {
+		if (LOG.isDebugEnabled()) {
+			LOG.debug("withdrawing mod " + modNode.query().single("./ancestor-or-self::mod[@xml:id][1]/@xml:id").value() + " at stage " + modNode.query().single("@stage").value());
+		}
+		withdrawMods(modNode.query().unordered("self::*"));
 	}
 	
 	void withdrawRule(String ruleId) {
 		LOG.debug("withdrawing all mods for rule[" + ruleId + "]");
-		withdrawMods(modStore.query().unordered("//mod[@rule=$_1]", ruleId));
+		withdrawMods(modStore.query().unordered("mods[@rule=$_1]", ruleId));
 	}
 
 	void withdrawMods(ItemList newMods)	{
@@ -236,15 +238,19 @@ public class Engine {
 			ItemList newAffected = workspace.query().unordered("/id($_1//mod:affected/@refid)", newMods);
 			affected = utilQuery.unordered("$_1 union $_2", affected, newAffected);
 			mods = utilQuery.unordered("$_1 union $_2", mods, newMods);
+			// TODO: refactor query to use idref() once we can declare @refid as type IDREF
 			newMods = modStore.query().unordered(
-					"//mod[block/reference/@refid=$_1/descendant-or-self::*/@xml:id] except $_2",
+					"//mod[reference/@refid=$_1/descendant-or-self::*/@xml:id] except $_2",
 					newAffected, mods);
 		}
 		
-		for (String ruleId : utilQuery.unordered("distinct-values($_1/@rule)", mods).values()) {
+		mods = mods.query().namespace("", Transformer.MOD_NS).unordered("$_1 except $_1/descendant::*", mods);
+		
+		for (String ruleId : utilQuery.unordered("distinct-values($_1/ancestor-or-self::*/@rule)", mods).values()) {
 			Rule rule = ruleMap.get(ruleId);
 			if (rule == null) continue;
-			ItemList docPaths = utilQuery.unordered("distinct-values($_1[@rule=$_2]//mod:dependency/@doc)", mods, ruleId);
+			// Touch only the dependencies of the highest withdrawn mods, since any children will be resolved in global scope anyway.
+			ItemList docPaths = utilQuery.unordered("distinct-values($_1[ancestor-or-self::*/@rule=$_2]/mod:dependency/@doc)", mods, ruleId);
 			List<Document> docs = new ArrayList<Document>(docPaths.size());
 			for (String docPath : docPaths.values()) {
 				if (workspace.documents().contains(docPath)) docs.add(workspace.documents().get(docPath));
@@ -329,7 +335,7 @@ public class Engine {
 					"  <rule xml:id='r1' name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
-			Node modStore = workspace.documents().load(Name.generate(), Source.xml("<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'/>")).root();
+			Node modStore = workspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + Transformer.MOD_NS + "'/>")).root();
 			Engine engine = new Engine(workspace, modStore);
 			engine.parseRules(rulespace, prevrulespace);
 			assertEquals(1, engine.rules.size());
@@ -344,13 +350,17 @@ public class Engine {
 					"</rules>"
 			));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
-					"<mod xml:id='_r1.1' rule='r1'/>" +
-					"<mod xml:id='_r1.2' rule='r1'><block><dependency doc='foo'/></block></mod>" +
-					"<mod xml:id='_r1.3' rule='r1'><block><dependency doc='bar/foo'/></block></mod>" +
-					"<mod xml:id='_r1.4' rule='r1'><block><dependency doc='bar/baz'/></block></mod>" +
-					"<mod xml:id='_r2.1' rule='r2'/>" +
-					"</mods>")).root();
+					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods rule='r1'>" +
+					"	<mod xml:id='_r1.1'/>" +
+					"	<mod xml:id='_r1.2'><dependency doc='foo'/></mod>" +
+					"	<mod xml:id='_r1.3'><dependency doc='bar/foo'/></mod>" +
+					"	<mod xml:id='_r1.4'><dependency doc='bar/baz'/></mod>" +
+					"</mods>" +
+					"<mods rule='r2'>" +
+					"	<mod xml:id='_r2.1'/>" +
+					"</mods>" +
+					"</modstore>")).root();
 			modStore.namespaceBindings().put("", Transformer.MOD_NS);
 			modStore.namespaceBindings().put("mod", Transformer.MOD_NS);
 			workspace.documents().load(Name.create("foo"), Source.xml("<foo/>"));
@@ -376,16 +386,16 @@ public class Engine {
 		
 		@Test public void ensureNodeHasXmlIdNoIdWithAutogen() {
 			Engine engine = new Engine(workspace, null);
-			engine.autoGenerateIdsWithPrefix("x-");
+			engine.autoGenerateIdsWithPrefix("mixt-");
 			Node node = workspace.documents().load(Name.generate(), Source.xml("<foo/>")).root();
 			assertTrue(engine.ensureNodeHasXmlId(node));
-			assertTrue(node.query().single("@xml:id").value().startsWith("x-"));
+			assertTrue(node.query().single("@xml:id").value().startsWith("mixt-"));
 		}
 		
 		@Test public void executeTransform() throws TransformException, InterruptedException {
 			final XMLDocument olddoc1 = workspace.documents().load(Name.create("olddoc1"), Source.xml("<bar/>"));
 			final XMLDocument olddoc2 = workspace.documents().load(Name.create("olddoc2"), Source.xml("<bar/>"));
-			final Node modStore = workspace.documents().load(Name.generate(), Source.xml("<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'/>")).root();
+			final Node modStore = workspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + Transformer.MOD_NS + "'/>")).root();
 			final Rule rule = mockery.mock(Rule.class);
 			Engine engine = new Engine(workspace, modStore);
 			final Accumulator.Locator<XMLDocument> locator = engine.modifiedDocs.anchor();
@@ -412,7 +422,7 @@ public class Engine {
 		
 		@Test(expected = InterruptedException.class)
 		public void executeTransformCanBeInterrupted() throws TransformException, InterruptedException {
-			final Node modStore = workspace.documents().load(Name.generate(), Source.xml("<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'/>")).root();
+			final Node modStore = workspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + Transformer.MOD_NS + "'/>")).root();
 			final Rule rule = mockery.mock(Rule.class);
 			Engine engine = new Engine(workspace, modStore);
 			mockery.checking(new Expectations() {{
@@ -434,10 +444,12 @@ public class Engine {
 		
 		@Test public void withdrawModsSimple() {
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
-					"  <mod xml:id='m1' rule='r1'/>" +
-					"  <mod xml:id='m2' rule='r1'/>" +
-					"</mods>")).root();
+					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods rule='r1'>" +
+					"  <mod xml:id='m1'/>" +
+					"  <mod xml:id='m2'/>" +
+					"</mods>" +
+					"</modstore>")).root();
 			Engine engine = new Engine(workspace, modStore);
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
 			mockery.checking(new Expectations() {{
@@ -446,18 +458,20 @@ public class Engine {
 			engine.withdrawMods(modStore.query().all("/id('m1')"));
 			assertFalse(modStore.query().exists("/id('m1')"));
 			assertTrue(modStore.query().exists("/id('m2')"));
-			assertEquals(1, modStore.query().all("*").size());
+			assertEquals(1, modStore.query().all("//mod").size());
 			assertEquals(1, engine.stats.numModsWithdrawn.value());
 		}
 
 		@Test public void withdrawModsWithDescendants() {
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
-					"  <mod xml:id='m1' rule='r1'>" +
-					"  	<mod xml:id='m1.1' rule='r1'/>" +
+					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods rule='r1'>" +
+					"  <mod xml:id='m1'>" +
+					"  	<mod xml:id='m1.1'/>" +
 					"	</mod>" +
-					"  <mod xml:id='m2' rule='r1'/>" +
-					"</mods>")).root();
+					"  <mod xml:id='m2'/>" +
+					"</mods>" +
+					"</modstore>")).root();
 			Engine engine = new Engine(workspace, modStore);
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
 			mockery.checking(new Expectations() {{
@@ -467,7 +481,7 @@ public class Engine {
 			assertFalse(modStore.query().exists("/id('m1')"));
 			assertFalse(modStore.query().exists("/id('m1.1')"));
 			assertTrue(modStore.query().exists("/id('m2')"));
-			assertEquals(1, modStore.query().all("*").size());
+			assertEquals(1, modStore.query().all("//mod").size());
 			assertEquals(2, engine.stats.numModsWithdrawn.value());
 		}
 		
@@ -475,10 +489,12 @@ public class Engine {
 			final Document doc = workspace.documents().load(Name.generate(), Source.xml(
 					"<foo><bar xml:id='b1'/><bar xml:id='b2'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
-					"  <mod xml:id='m1' rule='r1'><block><affected refid='b1'/></block></mod>" +
-					"  <mod xml:id='m2' rule='r1'/>" +
-					"</mods>")).root();
+					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods rule='r1'>" +
+					"  <mod xml:id='m1'><affected refid='b1'/></mod>" +
+					"  <mod xml:id='m2'/>" +
+					"</mods>" +
+					"</modstore>")).root();
 			Engine engine = new Engine(workspace, modStore);
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
 			mockery.checking(new Expectations() {{
@@ -487,25 +503,29 @@ public class Engine {
 			engine.withdrawMods(modStore.query().all("/id('m1')"));
 			assertFalse(modStore.query().exists("/id('m1')"));
 			assertTrue(modStore.query().exists("/id('m2')"));
-			assertEquals(1, modStore.query().all("*").size());
+			assertEquals(1, modStore.query().all("//mod").size());
 			assertFalse(workspace.query().exists("/id('b1')"));
 			assertTrue(workspace.query().exists("/id('b2')"));
 			assertEquals(1, doc.query().all("*").size());
 			assertEquals(1, engine.stats.numModsWithdrawn.value());
 		}
 
-		@Test public void withdrawModsWithAffectedDocsAndDescendantDependencies() {
-			final Document doc = workspace.documents().load(Name.create("b"), Source.xml(
+		@Test public void withdrawModsWithAffectedDocsAndDependencies() {
+			final Document doc = workspace.documents().load(Name.create("a"), Source.xml(
+			"<foo><baz xml:id='a1'/></foo>"));
+			workspace.documents().load(Name.create("b"), Source.xml(
 					"<foo><bar xml:id='b1'/><bar xml:id='b2'/></foo>"));
 			workspace.documents().load(Name.create("c"), Source.xml(
 					"<foo><baz xml:id='c1'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
-					"  <mod xml:id='m1' rule='r1'><block><affected refid='b1'/></block>" +
-					"  	<mod xml:id='m1.1' rule='r1'><block><dependency doc='b'/></block></mod>" +
+					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods rule='r1'>" +
+					"  <mod xml:id='m1'><affected refid='b1'/><dependency doc='a'/>" +
+					"  	<mod xml:id='m1.1'><dependency doc='c'/></mod>" +
 					"	</mod>" +
-					"  <mod xml:id='m2' rule='r1'><block><dependency doc='c'/></block></mod>" +
-					"</mods>")).root();
+					"  <mod xml:id='m2'><dependency doc='b'/></mod>" +
+					"</mods>" +
+					"</modstore>")).root();
 			Engine engine = new Engine(workspace, modStore);
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
 			mockery.checking(new Expectations() {{
@@ -515,7 +535,7 @@ public class Engine {
 			engine.withdrawMods(modStore.query().all("/id('m1')"));
 			assertFalse(modStore.query().exists("/id('m1')"));
 			assertTrue(modStore.query().exists("/id('m2')"));
-			assertEquals(1, modStore.query().all("*").size());
+			assertEquals(1, modStore.query().all("//mod").size());
 			assertFalse(workspace.query().exists("/id('b1')"));
 			assertTrue(workspace.query().exists("/id('b2')"));
 			assertEquals(1, doc.query().all("*").size());
@@ -526,12 +546,16 @@ public class Engine {
 			final Document doc = workspace.documents().load(Name.generate(), Source.xml(
 					"<foo><bar xml:id='b1'><baz xml:id='b1a'/></bar><bar xml:id='b2'/><xyz xml:id='b3'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
-					"  <mod xml:id='m1' rule='r1'><block><affected refid='b1'/></block></mod>" +
-					"  <mod xml:id='m3' rule='r2'><block><reference refid='b1'/></block></mod>" +
-					"  <mod xml:id='m4' rule='r2'><block><reference refid='b1a'/><affected refid='b3'/></block></mod>" +
-					"  <mod xml:id='m2' rule='r1'/>" +
-					"</mods>")).root();
+					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods rule='r1'>" +
+					"  <mod xml:id='m1'><affected refid='b1'/></mod>" +
+					"  <mod xml:id='m2'/>" +
+					"</mods>" +
+					"<mods rule='r2'>" +
+					"  <mod xml:id='m3'><reference refid='b1'/></mod>" +
+					"  <mod xml:id='m4'><reference refid='b1a'/><affected refid='b3'/></mod>" +
+					"</mods>" +
+					"</modstore>")).root();
 			Engine engine = new Engine(workspace, modStore);
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
 			mockery.checking(new Expectations() {{
@@ -542,7 +566,7 @@ public class Engine {
 			assertFalse(modStore.query().exists("/id('m3')"));
 			assertFalse(modStore.query().exists("/id('m4')"));
 			assertTrue(modStore.query().exists("/id('m2')"));
-			assertEquals(1, modStore.query().all("*").size());
+			assertEquals(1, modStore.query().all("//mod").size());
 			assertFalse(workspace.query().exists("/id('b1')"));
 			assertTrue(workspace.query().exists("/id('b2')"));
 			assertFalse(workspace.query().exists("/id('b3')"));
@@ -550,30 +574,16 @@ public class Engine {
 			assertEquals(3, engine.stats.numModsWithdrawn.value());
 		}
 
-		@Test public void withdrawMod() {
-			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
-					"  <mod xml:id='m1' rule='r1'/>" +
-					"  <mod xml:id='m2' rule='r1'/>" +
-					"</mods>")).root();
-			Engine engine = new Engine(workspace, modStore);
-			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
-			mockery.checking(new Expectations() {{
-				allowing(r1).addTouched(with(anEmptyCollection(Document.class)));
-			}});
-			engine.withdrawMod("m1");
-			assertFalse(modStore.query().exists("/id('m1')"));
-			assertTrue(modStore.query().exists("/id('m2')"));
-			assertEquals(1, modStore.query().all("*").size());
-			assertEquals(1, engine.stats.numModsWithdrawn.value());
-		}
-
 		@Test public void withdrawRule() {
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
-					"  <mod xml:id='m1' rule='r1'/>" +
-					"  <mod xml:id='m2' rule='r2'/>" +
-					"</mods>")).root();
+					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods rule='r1'>" +
+					"  <mod xml:id='m1'/>" +
+					"</mods>" +
+					"<mods rule='r2'>" +
+					"  <mod xml:id='m2'/>" +
+					"</mods>" +
+					"</modstore>")).root();
 			Engine engine = new Engine(workspace, modStore);
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
 			mockery.checking(new Expectations() {{
@@ -582,7 +592,27 @@ public class Engine {
 			engine.withdrawRule("r1");
 			assertFalse(modStore.query().exists("/id('m1')"));
 			assertTrue(modStore.query().exists("/id('m2')"));
-			assertEquals(1, modStore.query().all("*").size());
+			assertEquals(1, modStore.query().all("//mod").size());
+			assertEquals(1, engine.stats.numModsWithdrawn.value());
+		}
+
+		@Test public void withdrawMod() {
+			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
+					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<mods rule='r1'>" +
+					"  <mod xml:id='m1'/>" +
+					"  <mod xml:id='m2'/>" +
+					"</mods>" +
+					"</modstore>")).root();
+			Engine engine = new Engine(workspace, modStore);
+			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
+			mockery.checking(new Expectations() {{
+				allowing(r1).addTouched(with(anEmptyCollection(Document.class)));
+			}});
+			engine.withdrawMod(modStore.query().single("/id('m1')").node());
+			assertFalse(modStore.query().exists("/id('m1')"));
+			assertTrue(modStore.query().exists("/id('m2')"));
+			assertEquals(1, modStore.query().all("//mod").size());
 			assertEquals(1, engine.stats.numModsWithdrawn.value());
 		}
 
@@ -593,7 +623,7 @@ public class Engine {
 					return new HashSet<E>(item).equals(itemList);
 				}
 				public void describeTo(Description description) {
-					description.appendText("collection contents are " + itemList);
+					description.appendText("collection of  " + itemList);
 				}
 			};
 		}

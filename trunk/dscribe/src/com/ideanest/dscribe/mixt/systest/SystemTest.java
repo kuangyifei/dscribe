@@ -163,9 +163,9 @@ public class SystemTest extends DatabaseTestCase {
 	
 	private String doLoadMods(BufferedReader reader) throws IOException {
 		StringBuilder buf = new StringBuilder();
-		buf.append("<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>\n");
+		buf.append("<modstore xmlns='" + Transformer.MOD_NS + "'>\n");
 		String line = readUntilNextInstruction(reader, buf);
-		buf.append("</mods>");
+		buf.append("</modstore>");
 		db.createFolder(Transformer.recordsRootPath() + workspace.path())
 				.documents().load(Name.overwrite("mods"), Source.xml(buf.toString()));
 		return line;
@@ -189,9 +189,9 @@ public class SystemTest extends DatabaseTestCase {
 
 	private String doCheckMods(BufferedReader reader) throws IOException, SAXException {
 		StringBuilder buf = new StringBuilder();
-		buf.append("<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>\n");
+		buf.append("<modstore xmlns='" + Transformer.MOD_NS + "'>\n");
 		String line = readUntilNextInstruction(reader, buf);
-		buf.append("</mods>");
+		buf.append("</modstore>");
 		String expected = buf.toString();
 		String actual = db.getDocument(Transformer.recordsRootPath() + workspace.path() + "/mods").contentsAsString();
 		XMLUnit.setNormalizeWhitespace(true);

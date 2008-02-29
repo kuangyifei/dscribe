@@ -91,9 +91,9 @@ public class Transformer {
 	}
 	
 	private Node initModStore() {
-		Node modStore = recordspace.query().optional("/mod:mods").node();
+		Node modStore = recordspace.query().optional("/mod:modstore").node();
 		if (!modStore.extant()) {
-			modStore = recordspace.documents().load(Name.overwrite("mods"), Source.xml("<mods xmlns='" + MOD_NS + "' stage='-1'/>")).root();
+			modStore = recordspace.documents().load(Name.overwrite("mods"), Source.xml("<modstore xmlns='" + MOD_NS + "'/>")).root();
 		}
 		modStore.namespaceBindings().sever();
 		modStore.namespaceBindings().clear();
@@ -170,16 +170,16 @@ public class Transformer {
 		@Test public void initModStoreFresh() {
 			Node modsRoot = transformer.initModStore();
 			assertEquals(MOD_NS, modsRoot.namespaceBindings().get(""));
-			assertTrue(modsRoot.query().optional("self::mods").extant());
-			assertEquals(recordspace.query().optional("/mod:mods").node(), modsRoot);
+			assertTrue(modsRoot.query().optional("self::modstore").extant());
+			assertEquals(recordspace.query().optional("/mod:modstore").node(), modsRoot);
 		}
 
 		@Test public void initModStoreExisting() {
-			recordspace.documents().load(Name.generate(), Source.xml("<mods xmlns='" + MOD_NS + "' stage='-1'><mod xml:id='_foo.'/></mods>"));
+			recordspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + MOD_NS + "'><mod xml:id='_foo.'/></modstore>"));
 			Node modsRoot = transformer.initModStore();
 			assertEquals(MOD_NS, modsRoot.namespaceBindings().get(""));
-			assertTrue(modsRoot.query().optional("self::mods").extant());
-			assertEquals(recordspace.query().optional("/mod:mods").node(), modsRoot);
+			assertTrue(modsRoot.query().optional("self::modstore").extant());
+			assertEquals(recordspace.query().optional("/mod:modstore").node(), modsRoot);
 			assertTrue(modsRoot.query().optional("mod").extant());
 		}
 		
@@ -231,11 +231,11 @@ public class Transformer {
 			workspace.documents().load(Name.create("dead2"), Source.xml("<foo xml:id='bad5'><bar xml:id='bad6'/></foo>"));
 			workspace.children().create("nested").documents().load(Name.generate(), Source.xml("<foo xml:id='ok5'><bar xml:id='bad7'/></foo>"));
 			recordspace.documents().load(Name.generate(), Source.xml(
-					"<mods xmlns='" + Transformer.MOD_NS + "' stage='-1'>" +
+					"<modstore xmlns='" + Transformer.MOD_NS + "'><mods>" +
 					"  <mod><affected refid='bad1'/><affected refid='bad2'/></mod>" +
 					"  <mod><affected refid='bad3'/><affected refid='bad4'/></mod>" +
 					"  <mod><affected refid='bad5'/><affected refid='bad6'/><affected refid='bad7'/></mod>" +
-					"</mods>"));
+					"</mods></modstore>"));
 			transformer.wipeRecords();
 			for (int i=1; i<=5; i++) assertTrue(workspace.query().presub().exists("/id('ok$1')", Integer.toString(i)));
 			for (int i=1; i<=7; i++) assertFalse(workspace.query().presub().exists("/id('bad$1')", Integer.toString(i)));
