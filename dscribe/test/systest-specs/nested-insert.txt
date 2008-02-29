@@ -23,23 +23,23 @@ numCycles = 2
 </foo>
 
 ## check mods
-<mod xml:id='_r1.f.' rule='r1' stage='1'>
-	<block stage='0'>
+<mods xml:id='_r1.' rule='r1'>
+	<mod xml:id='_r1.f.' stage='0'>
 		<dependency doc='source.xml' kind='verified'/>
 		<reference doc='source.xml' refid='f'/>
-	</block>
-	<block stage='1'>
-		<affected refid='_r1.f.1.'/>
-		<checksum xmlns='' digest-type='*'>*</checksum>
-	</block>
-</mod>
-<mod xml:id='_r2._r1.f.1..' rule='r2' stage='1'>
-	<block stage='0'>
+		<mod stage='1'>
+			<affected refid='_r1.f.1.'/>
+			<checksum xmlns='' digest-type='*'>*</checksum>
+		</mod>
+	</mod>
+</mods>
+<mods xml:id='_r2.' rule='r2'>
+	<mod xml:id='_r2._r1.f.1..' stage='0'>
 		<dependency doc='source.xml' kind='verified'/>
 		<reference doc='source.xml' refid='_r1.f.1.'/>
-	</block>
-	<block stage='1'>
-		<affected refid='_r2._r1.f.1..1.'/>
-		<checksum xmlns='' digest-type='*'>*</checksum>
-	</block>
-</mod>
+		<mod stage='1'>
+			<affected refid='_r2._r1.f.1..1.'/>
+			<checksum xmlns='' digest-type='*'>*</checksum>
+		</mod>
+	</mod>
+</mods>

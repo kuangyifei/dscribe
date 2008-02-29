@@ -59,7 +59,7 @@ public class CreateDoc implements BlockType {
 			CreateDocSeg(Mod mod) {super(mod);}
 			
 			@Override public void restore() throws TransformException {
-				name = mod.data().query().single("docname").value();
+				name = mod.node().query().single("docname").value();
 			}
 			
 			@Override public void analyze() {

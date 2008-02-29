@@ -1,33 +1,33 @@
 default namespace mod = "http://ideanest.com/reef/ns/mod"
 namespace none = ""
 
-start = element mods {
-	Mod *
+start = element modstore {
+	element mods {
+		attribute rule {xsd:NMTOKEN},
+		Mod *
+	}
 }
 
 Mod = element mod {
-	attribute xml:id {xsd:NMTOKEN},
-	attribute stage {xsd:integer},
-	attribute rule {xsd:NMTOKEN},
-	
-	Block *,
-	Mod *
-}
+	attribute xml:id {xsd:NMTOKEN} ?,
+	attribute stage {xsd:integer}, # = ../@stage + 1
 
-Block = element block {
-	attribute stage {xsd:integer} &
-	element dependency {
-		attribute kind {"verified" | "unverified"},
-		attribute doc {xsd:string}
-	} * &
-	element affected {
-		attribute refid {xsd:NMTOKEN}
-	} * &
-	element reference {
-		attribute refid {xsd:NMTOKEN},
-		attribute doc {xsd:string}
-	} * &
-	Supplement *
+	(	
+		element dependency {
+			attribute kind {"verified" | "unverified"},
+			attribute doc {xsd:string}
+		} * &
+		element affected {
+			attribute refid {xsd:NMTOKEN}
+		} * &
+		element reference {
+			attribute refid {xsd:NMTOKEN},
+			attribute doc {xsd:string}
+		} * &
+		Supplement *
+	),
+	
+	Mod *
 }
 
 Supplement = element none:* {attribute * {text} * & Supplement & text}
