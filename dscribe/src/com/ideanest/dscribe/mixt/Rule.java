@@ -167,8 +167,8 @@ public class Rule {
 		int firstDiff = Integer.MAX_VALUE;
 		try {
 			Mod mod = self.rootMod();
-			Iterator<Node> prevBlocksIterator = prevDef.query().all("*").nodes().iterator();
-			for (Node blockDef : def.query().all("*").nodes()) {
+			Iterator<Node> prevBlocksIterator = prevDef.query().all("* except alias").nodes().iterator();
+			for (Node blockDef : def.query().all("* except alias").nodes()) {
 				
 				if (firstDiff == Integer.MAX_VALUE) {
 					Node prevBlockDef = prevBlocksIterator.hasNext() ? prevBlocksIterator.next() : null;
@@ -1108,7 +1108,6 @@ public class Rule {
 			}
 		}
 		
-		private KeyMod rootMod;
 		private Matcher<QueryService> qsDocsMatcher;
 		private Sequence seq;
 		private List<Mod> prevMods;
@@ -1119,7 +1118,7 @@ public class Rule {
 			modStore.query().run("update insert <mods rule='r2' xml:id='_r2.'><mod stage='0'/></mods> into .");
 
 			rule.firstDifferentStage = Integer.MAX_VALUE;
-			rootMod = mockMod(KeyMod.class, "_r1.", -1);
+			mockMod(KeyMod.class, "_r1.", -1);
 			injectEngineCounter("numModsCompleted");
 			
 			seq = mockery.sequence("process");

@@ -66,7 +66,9 @@ public class Engine {
 		rulespace.namespaceBindings().put("", Transformer.RULES_NS);
 		prevrulespace.namespaceBindings().put("", Transformer.RULES_NS);
 		prevrulespace.namespaceBindings().put("record", Transformer.RULES_NS);
+		
 		invalidateIncompatibleBlocks(prevrulespace);
+		assignRuleIds(rulespace, prevrulespace);
 		parseRules(rulespace, prevrulespace);
 		
 		LOG.debug("withdrawing mods of obsolete rules");
@@ -105,6 +107,7 @@ public class Engine {
 	}
 	
 	private void invalidateIncompatibleBlocks(Resource prevrulespace) {
+		LOG.debug("invalidating blocks with incompatible previous versions");
 		for (QName badBlockName : Rule.verifyBlockTypeVersions(prevrulespace)) {
 			for (Node badBlock : prevrulespace.query()
 					.namespace("", badBlockName.getNamespaceURI()).presub()
@@ -115,6 +118,60 @@ public class Engine {
 						.attr("record:version-mismatch", "true").commit();
 			}
 		}		
+	}
+	
+	private void assignRuleIds(Resource rulespace, Resource prevrulespace) {
+		LOG.debug("assigning IDs to rules that lack them");
+		for (Node rule : rulespace.query().unordered("//rule[not(@xml:id)]").nodes()) {
+			String id;
+			ItemList oldIds = prevrulespace.query().unordered("let $names := ($_1/@name/string(), $_1/alias/@name/string()) return //rule[$names = (@name, alias/@name)]/@xml:id", rule);
+			if (oldIds.size() == 1) {
+				id = oldIds.get(0).value();
+			} else {
+				String ruleName = rule.query().single("@name").value();
+				if (oldIds.size() > 1) LOG.warn("multiple old IDs match rule '" + ruleName + "' and its aliases, generating new ID");
+				id = generateUniqueId("r" + acronymize(ruleName), workspace.database().query(rulespace, prevrulespace));
+			}
+			rule.update().attr("xml:id", id).commit();
+		}
+	}
+	
+	private String acronymize(String name) {
+		if (name.length() < 1) throw new IllegalArgumentException("name to acronymize is empty");
+		StringBuilder acronym = new StringBuilder();
+		StringTokenizer tokenizer = new StringTokenizer(name, "-_ .");
+		if (tokenizer.countTokens() >= 2) {
+			while(tokenizer.hasMoreTokens()) {
+				String token = tokenizer.nextToken();
+				if (token.length() > 0) {
+					char c = token.charAt(0);
+					if (Character.isLetter(c)) acronym.append(Character.toLowerCase(c));
+				}
+			}
+		} else {
+			int i=0, k=-1;
+			for ( ; i < name.length(); i++) {
+				char c = name.charAt(i);
+				if (Character.isLetter(c)) {
+					acronym.append(Character.toLowerCase(c));
+					i++;
+					k = i;
+					break;
+				}
+			}
+			for ( ; i < name.length() && acronym.length() < 4; i++) {
+				char c = name.charAt(i);
+				if (Character.isUpperCase(c) || Character.isTitleCase(c)) acronym.append(Character.toLowerCase(c));
+			}
+			if (acronym.length() == 1) {
+				assert k != -1;
+				for (i=k; i < name.length() && acronym.length() < 3; i++) {
+					char c = name.charAt(i);
+					if (Character.isLetter(c)) acronym.append(Character.toLowerCase(c));
+				}
+			}
+		}
+		return acronym.toString();
 	}
 	
 	/**
@@ -155,15 +212,19 @@ public class Engine {
 		autoGenIdPrefix = prefix;
 	}
 	
-	boolean ensureNodeHasXmlId(Node node) {
+	boolean ensureWorkspaceNodeHasXmlId(Node node) {
 		if (node.query().exists("@xml:id")) return true;
 		if (autoGenIdPrefix == null) return false;
+		node.update().attr("xml:id", generateUniqueId(autoGenIdPrefix, globalScope)).commit();
+		return true;
+	}
+	
+	String generateUniqueId(String prefix, QueryService scope) {
 		String id;
 		do {
-			id = autoGenIdPrefix + Integer.toString(random.nextInt(Integer.MAX_VALUE), Character.MAX_RADIX);
-		} while (globalScope.exists("/id($_1)", id));
-		node.update().attr("xml:id", id).commit();
-		return true;
+			id = prefix + Integer.toString(random.nextInt(Integer.MAX_VALUE), Character.MAX_RADIX);
+		} while (scope.exists("/id($_1)", id));
+		return id;
 	}
 
 	private final Document.Listener modifiedDocListener = new Document.Listener() {
@@ -244,12 +305,12 @@ public class Engine {
 					newAffected, mods);
 		}
 		
+		// Touch only the dependencies of the highest withdrawn mods, since any children will be resolved in global scope anyway.
 		mods = mods.query().namespace("", Transformer.MOD_NS).unordered("$_1 except $_1/descendant::*", mods);
 		
 		for (String ruleId : utilQuery.unordered("distinct-values($_1/ancestor-or-self::*/@rule)", mods).values()) {
 			Rule rule = ruleMap.get(ruleId);
 			if (rule == null) continue;
-			// Touch only the dependencies of the highest withdrawn mods, since any children will be resolved in global scope anyway.
 			ItemList docPaths = utilQuery.unordered("distinct-values($_1[ancestor-or-self::*/@rule=$_2]/mod:dependency/@doc)", mods, ruleId);
 			List<Document> docs = new ArrayList<Document>(docPaths.size());
 			for (String docPath : docPaths.values()) {
@@ -343,6 +404,107 @@ public class Engine {
 			assertEquals(0, firstDifferentStage.get(engine.rules.get(0)));
 		}
 		
+		@Test public void assignRuleIDs_generateFreshID() {
+			rulespace.documents().load(Name.generate(), Source.xml(
+					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
+					"	<rule xml:id='r2' name='mysecondrule'/>" +
+					"</rules>"
+			));
+			Engine engine = new Engine(workspace, null);
+			engine.assignRuleIds(rulespace, prevrulespace);
+			assertTrue(rulespace.query().exists("//rule[@name='mysecondrule'][@xml:id='r2']"));
+			assertTrue(rulespace.query().exists("//rule[@name='myrule']/@xml:id"));
+			assertFalse("r2".equals(rulespace.query().single("//rule[@name='myrule']/@xml:id").value()));
+		}
+		
+		@Test public void assignRuleIDs_copyPrevID() {
+			prevrulespace.documents().load(Name.generate(), Source.xml(
+					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"  <rule xml:id='r1' name='myrule'/>" +
+					"  <rule xml:id='r2' name='some other rule'/>" +
+					"</rules>"
+			));
+			rulespace.documents().load(Name.generate(), Source.xml(
+					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
+					"</rules>"
+			));
+			Engine engine = new Engine(workspace, null);
+			engine.assignRuleIds(rulespace, prevrulespace);
+			assertEquals("r1", rulespace.query().single("//rule[@name='myrule']/@xml:id").value());
+		}
+		
+		@Test public void assignRuleIDs_matchAliasToName() {
+			prevrulespace.documents().load(Name.generate(), Source.xml(
+					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"  <rule xml:id='r1' name='myrule'/>" +
+					"  <rule xml:id='r2' name='some other rule'/>" +
+					"</rules>"
+			));
+			rulespace.documents().load(Name.generate(), Source.xml(
+					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"  <rule name='foo'><alias name='myrule'/><create-doc>foobar</create-doc></rule>" +
+					"</rules>"
+			));
+			Engine engine = new Engine(workspace, null);
+			engine.assignRuleIds(rulespace, prevrulespace);
+			assertEquals("r1", rulespace.query().single("//rule[@name='foo']/@xml:id").value());
+		}
+		
+		@Test public void assignRuleIDs_matchNameToAlias() {
+			prevrulespace.documents().load(Name.generate(), Source.xml(
+					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"  <rule xml:id='r1' name='foo'><alias name='myrule'/></rule>" +
+					"  <rule xml:id='r2' name='some other rule'/>" +
+					"</rules>"
+			));
+			rulespace.documents().load(Name.generate(), Source.xml(
+					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
+					"</rules>"
+			));
+			Engine engine = new Engine(workspace, null);
+			engine.assignRuleIds(rulespace, prevrulespace);
+			assertEquals("r1", rulespace.query().single("//rule[@name='myrule']/@xml:id").value());
+		}
+		
+		@Test public void assignRuleIDs_matchAliasToAlias() {
+			prevrulespace.documents().load(Name.generate(), Source.xml(
+					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"  <rule xml:id='r1' name='foo'><alias name='myrule'/></rule>" +
+					"  <rule xml:id='r2' name='some other rule'/>" +
+					"</rules>"
+			));
+			rulespace.documents().load(Name.generate(), Source.xml(
+					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"  <rule name='bar'><alias name='myrule'/><create-doc>foobar</create-doc></rule>" +
+					"</rules>"
+			));
+			Engine engine = new Engine(workspace, null);
+			engine.assignRuleIds(rulespace, prevrulespace);
+			assertEquals("r1", rulespace.query().single("//rule[@name='bar']/@xml:id").value());
+		}
+		
+		@Test public void assignRuleIDs_multipleMatch() {
+			prevrulespace.documents().load(Name.generate(), Source.xml(
+					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"  <rule xml:id='r1' name='foo'><alias name='myrule'/></rule>" +
+					"  <rule xml:id='r2' name='myrule'/>" +
+					"</rules>"
+			));
+			rulespace.documents().load(Name.generate(), Source.xml(
+					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
+					"</rules>"
+			));
+			Engine engine = new Engine(workspace, null);
+			engine.assignRuleIds(rulespace, prevrulespace);
+			assertTrue(rulespace.query().exists("//rule[@name='myrule']/@xml:id"));
+			assertFalse("r1".equals(rulespace.query().single("//rule[@name='myrule']/@xml:id").value()));
+			assertFalse("r2".equals(rulespace.query().single("//rule[@name='myrule']/@xml:id").value()));
+		}
+		
 		@Test public void create() throws RuleBaseException, IllegalArgumentException {
 			rulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
@@ -374,21 +536,21 @@ public class Engine {
 			assertFalse("did not withdraw mod of dead rule", workspace.query().exists("/id('_r2.1')"));
 		}
 		
-		@Test public void ensureNodeHasXmlId() {
+		@Test public void ensureWorkspaceNodeHasXmlId() {
 			Engine engine = new Engine(workspace, null);
-			assertTrue(engine.ensureNodeHasXmlId(workspace.documents().load(Name.generate(), Source.xml("<foo xml:id='f'/>")).root()));
+			assertTrue(engine.ensureWorkspaceNodeHasXmlId(workspace.documents().load(Name.generate(), Source.xml("<foo xml:id='f'/>")).root()));
 		}
 		
-		@Test public void ensureNodeHasXmlIdNoIdNoAutogen() {
+		@Test public void ensureWorkspaceNodeHasXmlId_noIdNoAutogen() {
 			Engine engine = new Engine(workspace, null);
-			assertFalse(engine.ensureNodeHasXmlId(workspace.documents().load(Name.generate(), Source.xml("<foo/>")).root()));
+			assertFalse(engine.ensureWorkspaceNodeHasXmlId(workspace.documents().load(Name.generate(), Source.xml("<foo/>")).root()));
 		}
 		
-		@Test public void ensureNodeHasXmlIdNoIdWithAutogen() {
+		@Test public void ensureWorkspaceNodeHasXmlId_noIdWithAutogen() {
 			Engine engine = new Engine(workspace, null);
 			engine.autoGenerateIdsWithPrefix("mixt-");
 			Node node = workspace.documents().load(Name.generate(), Source.xml("<foo/>")).root();
-			assertTrue(engine.ensureNodeHasXmlId(node));
+			assertTrue(engine.ensureWorkspaceNodeHasXmlId(node));
 			assertTrue(node.query().single("@xml:id").value().startsWith("mixt-"));
 		}
 		
