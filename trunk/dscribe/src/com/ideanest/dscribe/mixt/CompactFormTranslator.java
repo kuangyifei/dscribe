@@ -15,7 +15,7 @@ import com.ideanest.dscribe.Namespace;
 public class CompactFormTranslator {
 	
 	private static final Pattern INDENT_PATTERN = Pattern.compile("^(\\s*)(.*)$");
-	private static final Pattern TO_PATTERN = Pattern.compile("^rule (.*) \\[(.+)\\]$");
+	private static final Pattern RULE_PATTERN = Pattern.compile("^rule (.*?)( \\[(.+)\\])?$");
 
 	private CompactFormTranslator() {}
 	
@@ -82,9 +82,12 @@ public class CompactFormTranslator {
 					inPreamble = false;
 					if (keyword.equals("rule")) {
 						if (indents.size() != 1) throw new ParseException("rule definitions must be at outermost level, but found a nested one on line " + lineNumber + ":\n" + line, indent.length());
-						Matcher toMatcher = TO_PATTERN.matcher(content);
-						if (!toMatcher.matches()) throw new ParseException("rule definition syntax doesn't match 'to <rule name> [<id>]' on line " + lineNumber + ":\n" + line, indent.length());
-						buf.append("<rules:rule xml:id='" + toMatcher.group(2) + "' name='" + toMatcher.group(1) + "'>");
+						if (k != -1) throw new ParseException("rule definitions must not have text content on line " + lineNumber + ":\n" + line, indent.length());
+						Matcher ruleMatcher = RULE_PATTERN.matcher(content);
+						if (!ruleMatcher.matches()) throw new ParseException("rule definition syntax doesn't match 'to <rule name> [<id>]' on line " + lineNumber + ":\n" + line, indent.length());
+						buf.append("<rules:rule ");
+						if (ruleMatcher.group(2) != null) buf.append("xml:id='" + ruleMatcher.group(3) + "' ");
+						buf.append("name='" + ruleMatcher.group(1) + "'>");
 						tags.addFirst("rule");
 					} else {
 						if (indents.size() == 1) throw new ParseException("rule blocks must be nested in a rule, but found one at outermost level on line " + lineNumber + ":\n" + line, indent.length());
@@ -168,6 +171,16 @@ public class CompactFormTranslator {
 			captureOutput();
 			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something or other'/>");
+			_("</rules:rules>");
+			translateAndCheck();
+		}
+		
+		@Test public void oneRuleWithoutId() throws IOException, ParseException {
+			captureInput();
+			_("rule do something or other");
+			captureOutput();
+			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
+			_("	<rules:rule name='do something or other'/>");
 			_("</rules:rules>");
 			translateAndCheck();
 		}
@@ -390,7 +403,7 @@ public class CompactFormTranslator {
 		@Test(expected = ParseException.class)
 		public void badRuleDeclaration() throws ParseException, IOException {
 			captureInput();
-			_("rule do stuff");
+			_("rule do stuff: xxx");
 			translateBadInput();
 		}
 

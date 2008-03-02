@@ -436,7 +436,7 @@ public class Mod {
 		 * @param node the node that's referenced by the mod being built
 		 */
 		public void reference(Node node) {
-			if (!parent.rule.engine.ensureNodeHasXmlId(node)) throw new IllegalArgumentException("referenced node doesn't have an xml:id: " + node);
+			if (!parent.rule.engine.ensureWorkspaceNodeHasXmlId(node)) throw new IllegalArgumentException("referenced node doesn't have an xml:id: " + node);
 			references.add(node);
 			dependOn(node.document());
 		}
@@ -546,7 +546,7 @@ public class Mod {
 				allowing(engine).modStore();  will(returnValue(modStore));
 				allowing(engine).workspace();  will(returnValue(workspace));
 				allowing(engine).globalScope();  will(returnValue(workspace.query()));
-				allowing(engine).ensureNodeHasXmlId(doc1.query().single("//e1").node());  will(returnValue(true));
+				allowing(engine).ensureWorkspaceNodeHasXmlId(doc1.query().single("//e1").node());  will(returnValue(true));
 				allowing(parentMod).key();  will(returnValue("_r1.e13."));
 				allowing(parentMod).variableBindings();  will(returnValue(parentModBindings));
 			}});	
@@ -678,7 +678,7 @@ public class Mod {
 
 		@Test public void referenceGenerateId() {
 			mockery.checking(new Expectations() {{
-				one(engine).ensureNodeHasXmlId(doc1.root()); will(new Action() {
+				one(engine).ensureWorkspaceNodeHasXmlId(doc1.root()); will(new Action() {
 					@Override public Object invoke(Invocation invocation) throws Throwable {
 						doc1.root().update().attr("xml:id", "x-123").commit();
 						return true;
@@ -698,7 +698,7 @@ public class Mod {
 		@Test(expected = IllegalArgumentException.class)
 		public void referenceNoId() {
 			mockery.checking(new Expectations() {{
-				one(engine).ensureNodeHasXmlId(doc1.root()); will(returnValue(false));
+				one(engine).ensureWorkspaceNodeHasXmlId(doc1.root()); will(returnValue(false));
 			}});
 			builder.reference(doc1.root());
 		}
