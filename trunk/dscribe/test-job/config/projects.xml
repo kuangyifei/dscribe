@@ -13,19 +13,19 @@
 			<job type="project" name="testDiagramAssignerEmpty">
 				<test/>
 				<assign-diagrams>
-					<calculator class="com.ideanest.reef.java.PackageAssignmentCalculator"/>
+					<calculator class="com.ideanest.dscribe.java.PackageAssignmentCalculator"/>
 				</assign-diagrams>
 			</job>
 			<job type="project" name="testDiagramAssignerFirstAndOnly">
 				<test/>
 				<assign-diagrams>
-					<calculator class="com.ideanest.reef.java.PackageAssignmentCalculator"/>
+					<calculator class="com.ideanest.dscribe.java.PackageAssignmentCalculator"/>
 				</assign-diagrams>
 			</job>
 			<job type="project" name="testDiagramAssignerOnePackageToExistingDiagram">
 				<test/>
 				<assign-diagrams>
-					<calculator class="com.ideanest.reef.java.PackageAssignmentCalculator"/>
+					<calculator class="com.ideanest.dscribe.java.PackageAssignmentCalculator"/>
 				</assign-diagrams>
 			</job>
 		</group>
