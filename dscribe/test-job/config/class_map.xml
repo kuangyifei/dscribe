@@ -1,27 +1,27 @@
 <mapping xmlns="http://ideanest.com/reef/ns/config">
 	<mapping namespace="http://ideanest.com/reef/ns/config">
-		<map tag="job" class="com.ideanest.reef.job.JobRun">
+		<map tag="job" class="com.ideanest.dscribe.job.Cycle">
 			<default type="chore" phases="execute"/>
 			<default type="project" phases="prep check agree update build extract elaborate preprules convert layout commit verify"/>
 		</map>
 		
-		<map tag="log" class="com.ideanest.reef.job.WriteLog"/>
-		<map tag="wipe" class="com.ideanest.reef.job.WipeDir"/>
-		<map tag="test" class="com.ideanest.reef.test.TestManager"/>
+		<map tag="log" class="com.ideanest.dscribe.job.WriteLog"/>
+		<map tag="wipe" class="com.ideanest.dscribe.job.WipeDir"/>
+		<map tag="test" class="com.ideanest.dscribe.test.TestManager"/>
 		
-		<map tag="load-files" class="com.ideanest.reef.job.LoadFiles"/>
-		<map tag="schedule-jobs" class="com.ideanest.reef.job.ScheduleJobs"/>
+		<map tag="load-files" class="com.ideanest.dscribe.job.LoadFiles"/>
+		<map tag="schedule-jobs" class="com.ideanest.dscribe.job.ScheduleJobs"/>
 		
-		<map tag="schedule" class="com.ideanest.reef.job.CronTriggerMaker"/>
-		<map tag="filesystem" class="com.ideanest.reef.vcm.Filesystem"/>
-		<map tag="cvs" class="com.ideanest.reef.vcm.CVS"/>
-		<map tag="agree-checkpoint" class="com.ideanest.reef.vcm.CheckpointMediator"/>
+		<map tag="schedule" class="com.ideanest.dscribe.job.CronTriggerMaker"/>
+		<map tag="filesystem" class="com.ideanest.dscribe.vcm.Filesystem"/>
+		<map tag="cvs" class="com.ideanest.dscribe.vcm.CVS"/>
+		<map tag="agree-checkpoint" class="com.ideanest.dscribe.vcm.CheckpointMediator"/>
 		
-		<map tag="java-build" class="com.ideanest.reef.java.CodeBuilder"/>
-		<map tag="java-extract-source" class="com.ideanest.reef.java.SourceExtractor"/>
-		<map tag="java-resolve-types" class="com.ideanest.reef.java.TypeResolver"/>
-		<map tag="java-analyze-origin" class="com.ideanest.reef.java.SimpleOriginAnalyzer"/>
-		<map tag="exec-rules" class="com.ideanest.reef.java.DiagramExtractor"/>
-		<map tag="assign-diagrams" class="com.ideanest.reef.opti.AnnealingDiagramAssigner"/>
+		<map tag="java-build" class="com.ideanest.dscribe.java.CodeBuilder"/>
+		<map tag="java-extract-source" class="com.ideanest.dscribe.java.SourceExtractor"/>
+		<map tag="java-resolve-types" class="com.ideanest.dscribe.java.TypeResolver"/>
+		<map tag="java-analyze-origin" class="com.ideanest.dscribe.java.SimpleOriginAnalyzer"/>
+		<map tag="exec-rules" class="com.ideanest.dscribe.java.DiagramExtractor"/>
+		<map tag="assign-diagrams" class="com.ideanest.dscribe.opti.AnnealingDiagramAssigner"/>
 	</mapping>
 </mapping>

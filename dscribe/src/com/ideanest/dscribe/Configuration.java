@@ -3,8 +3,7 @@ package com.ideanest.dscribe;
 import java.io.File;
 
 import org.exist.fluent.*;
-import org.quartz.JobExecutionContext;
-import org.quartz.SchedulerException;
+import org.quartz.*;
 
 
 public class Configuration {
@@ -50,7 +49,8 @@ public class Configuration {
 			throws ClassNotFoundException, MappingNotFoundException {
 		String className = findTagDef(qname).query().optional("@class").value();
 		if (className == null) throw new MappingNotFoundException(qname.toString());
-		return Class.forName(className).asSubclass(clazz);
+		Class<?> foundClass = Class.forName(className);
+		return clazz.isAssignableFrom(foundClass) ? foundClass.asSubclass(clazz) : null;
 	}
 
 	public Node findJob(String name) {

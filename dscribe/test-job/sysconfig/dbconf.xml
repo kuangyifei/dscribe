@@ -36,7 +36,7 @@
     buffer settings for elements_buffers and words_buffers if you have
     some more memory to waste. -->
     <db-connection database="native" files="../data"
-        pageSize="4096" cacheSize="48M" free_mem_min="10">
+        pageSize="4096" cacheSize="48M" free_mem_min="5">
     
         <!-- Settings for the database connection pool:
             - sync-period
@@ -46,8 +46,20 @@
                 milliseconds and write all dirty pages to disk.
             - min: minimum number of connections to keep alive.
             - max: maximum number of connections allowed.
+        	- wait-before-shutdown:
+        	defines how long the database instance will wait for running
+        	operations to complete before it forces a shutdown.
         -->
-        <pool min="1" max="20" sync-period="300000"/>
+        <pool min="1" max="20" sync-period="300000" wait-before-shutdown="120000"/>
+
+    	<recovery enabled="yes" sync-on-commit="no" group-commit="no"
+    		size="100M" journal-dir="../data"/>
+
+    	<!--system-task class="org.exist.storage.DataBackup" period="120000">
+    		<parameter name="output-dir" value="backup"/>
+    		</system-task-->
+    	<!--default-permissions collection="0775" resource="0775"/-->
+    	
     </db-connection>
 	   
     <!-- Default settings for the serializer. Most of these can be changed
@@ -74,7 +86,35 @@
         indent="yes" add-exist-id="none" match-tagging-elements="yes"
         match-tagging-attributes="no"/>
   
-    <!-- 
+	<!-- During XUpdates, the database needs to do a partial reindex of the
+		document whenever the internal node-id structure has changed. Reindex
+		runs can occur quite frequently and slow down the XUpdate process.
+		
+		Frequent reindex runs can be avoided by leaving some space between the
+		numeric identifiers assigned to every node. Future insertions will first
+		fill up these spare identifiers, so no reindex is required.
+		
+		The "growth-factor" attribute determines the number of spare ids to be
+		inserted whenever the node id scheme is recomputed after an XUpdate.
+		Increase the setting to have less reindex runs. However, you have to
+		be aware that leaving spare ids also limits the maximum size of a 
+		document that can be indexed. 
+		
+		"enable-consistency-checks" is for debugging only. If the parameter
+		is set to "yes", a consistency check will be run on every modified 
+		document after every XUpdate request. It checks if the 
+		persistent DOM is complete and all pointers in the structural
+		index point to valid storage addresses containing valid nodes.
+		
+		"allowed-fragmentation" defines the maximum number of page splits allowed within a
+		document before a defragmentation run will be triggered.
+	-->
+	
+	<xupdate growth-factor="20" allowed-fragmentation="20"
+		enable-consistency-checks="no"/>
+
+
+	<!-- 
         Settings for the indexer:
         - suppress-whitespace
             should leading or trailing whitespace be removed from a text
@@ -103,57 +143,52 @@
     -->
     <indexer stemming="no" caseSensitive="no" suppress-whitespace="both" 
         index-depth="3" tokenizer="org.exist.storage.analysis.SimpleTokenizer" 
-		validation="no">
+    	track-term-freq="no" validation="no" preserve-whitespace-mixed-content="no">
         
 		<!-- where's the file containing a list of stopwords to be ignored
          by the parser. -->
 		<stopwords file="stopword"/>
         
-		<!-- index tells the parser which element-content should be
-	     fulltext-indexed. By default everything is indexed. To
-	     change this, set default="none". Additionally you may
-	     specify which elements to include, by defining one or
-	     more include statements below.
-
-	     The include statement expects to find a simple path-
-	     expression in it's attribute-tag. Only element or attribute names
-		 and the / and // operators are allowed here. Attributes start
-		 with a @.
-
-	     Every element matching the path expression will have it's
-	     textual content indexed. This is also valid for all of
-	     it's descendants.
-		 
-		 Attributes:
-		 	- doctype  the doctype for which this definition should be used.
-		 	- default  index everything by default? Set to "none" to switch
-		 			   of default indexing.
-		 	- attributes  index attribute values?
-		 	- index-depth
-	    		defines the maximum nesting depth of nodes which will be indexed
-	    		in the DOM index. Nodes below the specified nesting depth will
-	    		not be indexed in the DOM file. This has only an effect when 
-	    		retrieving queryb results or for some types of XPath subexpressions, like
-	    		equality comparisons.
-        -->
-        <index doctype="users" default="none" attributes="false">
-		</index>
-		<index doctype="PLAY" default="all">
-		</index>
-		<index doctype="dblp" attributes="true" alphanum="true" default="all">
-			<exclude path="//@mdate"/>
-			<exclude path="//ee"/>
-			<exclude path="//volume"/>
-			<exclude path="//cdrom"/>
-			<exclude path="//url"/>
-		</index>
+    	<!-- default index settings. Default settings apply if there's no collection-specific
+    		configuration for a collection.
+    	-->
+    	<index>
+    		<fulltext default="all" attributes="true">
+    			<exclude path="/auth"/>
+    		</fulltext>
+    	</index>
+    	
         
         <!-- Specify the location of one or more catalog files.
         Catalogs are used to resolve external entities in XML documents.
         -->
-		<entity-resolver>
+<!--		<entity-resolver>
 			<catalog file="webapp/WEB-INF/catalog"/>
-		</entity-resolver>
+		</entity-resolver>-->
     </indexer>
+    
+	<xquery enable-java-binding="no">
+		<builtin-modules>
+			<module class="org.exist.xquery.functions.util.UtilModule"
+				uri="http://exist-db.org/xquery/util" />
+			<module class="org.exist.xquery.functions.transform.TransformModule"
+				uri="http://exist-db.org/xquery/transform" />
+			<module class="org.exist.xquery.functions.xmldb.XMLDBModule"
+				uri="http://exist-db.org/xquery/xmldb" />
+			<module class="org.exist.xquery.functions.request.RequestModule"
+				uri="http://exist-db.org/xquery/request" />
+			<module class="org.exist.xquery.functions.response.ResponseModule"
+				uri="http://exist-db.org/xquery/response" />
+			<module class="org.exist.xquery.functions.session.SessionModule"
+				uri="http://exist-db.org/xquery/session" />
+			<module class="org.exist.xquery.functions.text.TextModule"
+				uri="http://exist-db.org/xquery/text" />
+			<module class="org.exist.xquery.functions.validation.ValidationModule"
+				uri="http://exist-db.org/xquery/validation" />
+			<module class="org.exist.xquery.functions.system.SystemModule"
+				uri="http://exist-db.org/xquery/system" />
+		</builtin-modules>
+	</xquery>
+	
    
 </exist>

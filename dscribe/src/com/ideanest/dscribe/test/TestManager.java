@@ -5,7 +5,7 @@ import java.nio.channels.FileChannel;
 import java.util.Date;
 
 import org.exist.fluent.*;
-import org.quartz.SimpleTrigger;
+import org.quartz.*;
 import org.quartz.Trigger;
 
 import com.ideanest.dscribe.TriggerMaker;
@@ -17,7 +17,7 @@ public class TestManager extends TaskBase implements TriggerMaker {
 
 	@Override
 	protected void init(Node taskDef) throws Exception {
-		baseDir = new File(cycle().workdir(), "projects/" + cycle().name());
+		baseDir = new File(cycle().workdir(), "../../../projects/" + cycle().name());
 		delete(new File(baseDir, "final-workspace"));
 	}
 	
@@ -36,7 +36,7 @@ public class TestManager extends TaskBase implements TriggerMaker {
 	
 	@Phase
 	public void verify() throws IOException {
-		dump(new File(baseDir, "final-workspace"), cycle().workspace(null));
+		cycle().workspace(null).export(new File(baseDir, "final-workspace"));
 	}
 
 	public Trigger create(Item def) {
@@ -45,16 +45,8 @@ public class TestManager extends TaskBase implements TriggerMaker {
 		return trigger;
 	}
 	
-	private void dump(File dst, Folder src) throws IOException {
-		dst.mkdirs();
-		for (Document doc : src.documents()) doc.export(new File(dst, doc.name()));
-		for (Folder child : src.children()) {
-			dump(new File(dst, child.name()), child);
-		}
-	}
-	
 	private void slurp(File srcDir, Folder dst) {
-		if (!srcDir.exists() || srcDir.getName().equals("CVS")) return;
+		if (!srcDir.exists() ||  srcDir.isHidden()) return;
 		for (String filename : srcDir.list()) {
 			File src = new File(srcDir, filename);
 			if (src.isDirectory()) {
