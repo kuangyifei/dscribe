@@ -165,6 +165,18 @@ public class CompactFormTranslator {
 			translateAndCheck();
 		}
 		
+		@Test public void namespaceDeclarationsAndRule() throws IOException, ParseException {
+			captureInput();
+			_("namespace java " + Namespace.JAVA);
+			_("namespace uml " + Namespace.UML);
+			_("rule do stuff [r1]");
+			captureOutput();
+			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "' xmlns:java='" + Namespace.JAVA + "' xmlns:uml='" + Namespace.UML + "'>");
+			_("	<rules:rule xml:id='r1' name='do stuff'/>");
+			_("</rules:rules>");
+			translateAndCheck();
+		}
+		
 		@Test public void oneRuleWithoutBlocks() throws IOException, ParseException {
 			captureInput();
 			_("rule do something or other [r1]");

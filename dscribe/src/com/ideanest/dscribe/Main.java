@@ -1,7 +1,6 @@
 package com.ideanest.dscribe;
 
-import java.io.File;
-import java.io.FilenameFilter;
+import java.io.*;
 
 import org.apache.log4j.Logger;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -19,7 +18,7 @@ import com.ideanest.dscribe.job.Job;
 public class Main implements Runnable {
 	
 	private static final Logger LOG = Logger.getLogger(Main.class);
-	static final String MAIN_INSTANCE_KEY = "Reef main instance";
+	static final String MAIN_INSTANCE_KEY = "dScribe main instance";
 	private static final String CONFIG_UPDATE_JOB_NAME = "update-config";
 
 	private String workingDirName = "";
@@ -104,7 +103,7 @@ public class Main implements Runnable {
 	
 	private Configuration createBootstrapConfig() {
 		LOG.info("Creating bootstrap configuration");
-		Folder bootstrapFolder = Database.login("admin", null).createFolder("/reef/system/bootstrap");
+		Folder bootstrapFolder = Database.login("admin", null).createFolder("/dscribe/system/bootstrap");
 		bootstrapFolder.clear();
 		// load basic config files into the bootstrap folder to create a minimal config
 		File[] configFiles = new File(workingDir, "config").listFiles(new FilenameFilter() {

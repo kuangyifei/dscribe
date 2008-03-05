@@ -14,7 +14,7 @@ rule create document foo [r1]
 		<docname xmlns=''>foo.xml</docname>
 		<mod stage='1'>
 			<affected refid='_r1.1.'/>
-			<checksum xmlns='' digest-type='*'>*</checksum>
+			<checksum xmlns='' digest-type='_'>_</checksum>
 		</mod>
 	</mod>
 </mods>

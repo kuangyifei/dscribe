@@ -27,7 +27,7 @@ rule copy fob name [r2]
 			<mod stage='2'>
 				<dependency doc='source.xml' kind='verified'/>
 				<affected refid='_r1.f.2.'/>
-				<checksum xmlns='' digest-type='*'>*</checksum>
+				<checksum xmlns='' digest-type='_'>_</checksum>
 			</mod>
 		</mod>
 	</mod>
@@ -43,7 +43,7 @@ rule copy fob name [r2]
 			<mod stage='2'>
 				<dependency doc='source.xml' kind='verified'/>
 				<affected refid='_r2.g.2.'/>
-				<checksum xmlns='' digest-type='*'>*</checksum>
+				<checksum xmlns='' digest-type='_'>_</checksum>
 			</mod>
 		</mod>
 	</mod>

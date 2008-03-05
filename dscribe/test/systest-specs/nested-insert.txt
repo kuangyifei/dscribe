@@ -29,7 +29,7 @@ numCycles = 2
 		<reference doc='source.xml' refid='f'/>
 		<mod stage='1'>
 			<affected refid='_r1.f.1.'/>
-			<checksum xmlns='' digest-type='*'>*</checksum>
+			<checksum xmlns='' digest-type='_'>_</checksum>
 		</mod>
 	</mod>
 </mods>
@@ -39,7 +39,7 @@ numCycles = 2
 		<reference doc='source.xml' refid='_r1.f.1.'/>
 		<mod stage='1'>
 			<affected refid='_r2._r1.f.1..1.'/>
-			<checksum xmlns='' digest-type='*'>*</checksum>
+			<checksum xmlns='' digest-type='_'>_</checksum>
 		</mod>
 	</mod>
 </mods>

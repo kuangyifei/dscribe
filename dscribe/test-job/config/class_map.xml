@@ -1,5 +1,5 @@
-<mapping xmlns="http://ideanest.com/reef/ns/config">
-	<mapping namespace="http://ideanest.com/reef/ns/config">
+<mapping xmlns="http://ideanest.com/dscribe/ns/config">
+	<mapping namespace="http://ideanest.com/dscribe/ns/config">
 		<map tag="job" class="com.ideanest.dscribe.job.Cycle">
 			<default type="chore" phases="execute"/>
 			<default type="project" phases="prep check agree update build extract elaborate preprules convert layout commit verify"/>

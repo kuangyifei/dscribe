@@ -1,0 +1,50 @@
+## load rules resources/java-to-uml.mxc
+
+## load file mappings.xml
+<mappings xmlns='http://ideanest.com/dscribe/ns/map'>
+	<create-diagram id='d1'/>
+	<class-to-diagram class='j1' diagram='d1'/>
+</mappings>
+
+## load file code/HelloWorld.java
+<unit xmlns="http://ideanest.com/dscribe/ns/java">
+    <file type="source">HelloWorld.java</file>
+    <class xml:id='j1' fullName="HelloWorld" implName="HelloWorld" line="1" modifiers="public" name="HelloWorld">
+        <field xml:id='j2' line="2" modifiers="private" name="msg">
+            <localType>String</localType>
+        </field>
+        <constructor xml:id='j3' line="4" modifiers="public"/>
+        <method xml:id='j4' line="6" modifiers="public" name="sayHello">
+            <returns>
+                <localType>String</localType>
+            </returns>
+        </method>
+        <method xml:id='j5' line="10" modifiers="static public" name="main">
+            <returns>
+                <type>void</type>
+            </returns>
+            <param name="args">
+                <localType arrayDim="1">String</localType>
+            </param>
+        </method>
+    </class>
+</unit>
+
+#### run 1
+
+## check file diagrams/d1.xml
+<diagram xmlns='http://ideanest.com/dscribe/ns/uml' xml:id='_' id='d1'>
+	<class depicts='j1' xml:id='_'>
+		<compartment kind='attribute' xml:id='_'>
+			<attribute depicts='j2' xml:id='_'>
+				<name xml:id='_'>msg</name>
+			</attribute>
+		</compartment>
+		<compartment kind='operation' xml:id='_'>
+			<operation depicts='j3' xml:id='_'/>
+			<operation depicts='j4' xml:id='_'><name xml:id='_'>sayHello</name></operation>
+			<operation depicts='j5' xml:id='_'><name xml:id='_'>main</name></operation>
+		</compartment>
+		<name xml:id='_'>HelloWorld</name>
+	</class>
+</diagram>
