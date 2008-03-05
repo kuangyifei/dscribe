@@ -130,7 +130,7 @@ public class Engine {
 			} else {
 				String ruleName = rule.query().single("@name").value();
 				if (oldIds.size() > 1) LOG.warn("multiple old IDs match rule '" + ruleName + "' and its aliases, generating new ID");
-				id = generateUniqueId("r" + acronymize(ruleName), workspace.database().query(rulespace, prevrulespace));
+				id = generateUniqueId("r-" + acronymize(ruleName), workspace.database().query(rulespace, prevrulespace));
 			}
 			rule.update().attr("xml:id", id).commit();
 		}
@@ -220,9 +220,12 @@ public class Engine {
 	}
 	
 	String generateUniqueId(String prefix, QueryService scope) {
+		if (!prefix.isEmpty() && !scope.exists("/id($_1)", prefix)) return prefix;
+		int range = 8;
 		String id;
 		do {
-			id = prefix + Integer.toString(random.nextInt(Integer.MAX_VALUE), Character.MAX_RADIX);
+			id = prefix + "-" + Integer.toString(random.nextInt(range), Character.MAX_RADIX);
+			if (range < Integer.MAX_VALUE / 2) range *= 2; range = Integer.MAX_VALUE;
 		} while (scope.exists("/id($_1)", id));
 		return id;
 	}

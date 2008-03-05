@@ -11,9 +11,9 @@ import org.exist.fluent.*;
 import org.junit.*;
 
 public class Transformer {
-	public static final String RULES_NS = "http://ideanest.com/reef/ns/rules";
-	public static final String MOD_NS = "http://ideanest.com/reef/ns/mod";
-	public static final String RECORD_NS = "http://ideanest.com/reef/ns/record";
+	public static final String RULES_NS = "http://ideanest.com/dscribe/ns/rules";
+	public static final String MOD_NS = "http://ideanest.com/dscribe/ns/mod";
+	public static final String RECORD_NS = "http://ideanest.com/dscribe/ns/record";
 	
 	private static final Logger LOG = Logger.getLogger(Transformer.class);
 
@@ -60,6 +60,7 @@ public class Transformer {
 		}
 		
 		final Engine engine = new Engine(rulespace, recordspace.cloneWithoutNamespaceBindings(), workspace, initModStore());
+		engine.autoGenerateIdsWithPrefix("mixt");
 		lastRunDate = engine.executeTransform(modifiedDocs);
 		
 		recordRun(lastRunDate);

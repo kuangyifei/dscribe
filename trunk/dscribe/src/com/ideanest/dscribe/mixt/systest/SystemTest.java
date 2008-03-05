@@ -54,7 +54,7 @@ public class SystemTest extends DatabaseTestCase {
 	private static final Logger LOG = Logger.getLogger(SystemTest.class);
 	
 	private static final Pattern STAGE_RE = Pattern.compile("#### run (\\d+)");
-	private static final Pattern INSTRUCTION_RE = Pattern.compile("## (load|modify|check) (file|rules|mods|stats)(.*)");
+	private static final Pattern INSTRUCTION_RE = Pattern.compile("## (load|reload|modify|check) (file|rules|mods|stats)(.*)");
 	private static final Pattern STATS_RE = Pattern.compile("(\\w+)\\s*=\\s*(\\d+)");
 	
 	private Folder workspace, rulespace;
@@ -97,13 +97,13 @@ public class SystemTest extends DatabaseTestCase {
 				if (instruction.equals("load file")) {
 					line = doLoadFile(reader, line, matcher.group(3).trim());
 				} else if (instruction.equals("load rules")) {
-						line = doLoadRules(reader);
+						line = doLoadRules(reader, matcher.group(3).trim());
 				} else if (instruction.equals("load mods")) {
 					line = doLoadMods(reader);
 				} else if (instruction.equals("modify file")) {
 					line = doModifyFile(reader, line, matcher.group(3).trim());
 				} else if (instruction.equals("modify rules")) {
-					line = doModifyRules(reader);
+					line = doReloadRules(reader);
 				} else if (instruction.equals("check file")) {
 					line = doCheckFile(reader, line, matcher.group(3).trim());
 				} else if (instruction.equals("check mods")) {
@@ -113,24 +113,33 @@ public class SystemTest extends DatabaseTestCase {
 				} else {
 					throw new IOException("bad ## instruction: " + line);
 				}
+			} else {
+				throw new IOException("unexpected non-instruction line: " + line);
 			}
 		}
 		LOG.debug("finished system test " + specFile);
 	}
 
-	private String doLoadRules(BufferedReader reader) throws IOException, ParseException {
-		StringBuilder buf = new StringBuilder();
-		String line = readUntilNextInstruction(reader, buf);
-		Reader bufReader = new StringReader(buf.toString());
+	private String doLoadRules(BufferedReader reader, String path) throws IOException, ParseException {
+		String line;
+		Reader mxcReader;
+		if (path.isEmpty()) {
+			StringBuilder buf = new StringBuilder();
+			line = readUntilNextInstruction(reader, buf);
+			mxcReader = new StringReader(buf.toString());
+		} else {
+			line = reader.readLine();
+			mxcReader = new FileReader(new File(path));
+		}
 		try {
-			rulespace.documents().load(Name.overwrite("rules"), CompactFormTranslator.compactToXml(bufReader));
+			rulespace.documents().load(Name.overwrite("rules"), CompactFormTranslator.compactToXml(mxcReader));
 		} finally {
-			bufReader.close();
+			mxcReader.close();
 		}
 		return line;
 	}
 
-	private String doModifyRules(BufferedReader reader) throws IOException, ParseException {
+	private String doReloadRules(BufferedReader reader) throws IOException, ParseException {
 		StringBuilder buf = new StringBuilder();
 		String line = readUntilNextInstruction(reader, buf);
 		Reader bufReader = new StringReader(buf.toString());
@@ -157,7 +166,7 @@ public class SystemTest extends DatabaseTestCase {
 		if (path.isEmpty()) throw new IOException("no file path: " + line);
 		StringBuilder buf = new StringBuilder();
 		line = readUntilNextInstruction(reader, buf);
-		workspace.documents().get(path).query().all(buf.toString());
+		workspace.documents().get(path).query().run(buf.toString());
 		return line;
 	}
 	
@@ -171,20 +180,36 @@ public class SystemTest extends DatabaseTestCase {
 		return line;
 	}
 
-	private String doCheckFile(BufferedReader reader, String line, String path) throws IOException {
+	private String doCheckFile(BufferedReader reader, String line, String path) throws IOException, SAXException {
 		if (path.isEmpty()) throw new IOException("no file path: " + line);
 		StringBuilder buf = new StringBuilder();
 		line = readUntilNextInstruction(reader, buf);
-		XMLDocument actual = workspace.documents().get(path).xml();
+		XMLDocument actual;
+		try {
+			actual = workspace.documents().get(path).xml();
+		} catch (DatabaseException e) {
+			fail(e.getMessage() + "\nDocuments in workspace:\n" + listWorkspaceDocuments());
+			return line;
+		}
 		XMLDocument expected = workspace.documents().load(Name.generate(), Source.xml(buf.toString()));
 		try {
-			assertTrue(
-					"Document " + path + " after run " + run + "\n--- Expected:\n" + expected.contentsAsString() + "\n\n--- Actual:\n" + actual.contentsAsString() + "\n",
-					workspace.query().single("deep-equal($_1, $_2)", actual.root(), expected.root()).booleanValue());
+			assertXMLMatches(path, expected.contentsAsString(), actual.contentsAsString());
 		} finally {
 			expected.delete();
 		}
 		return line;
+	}
+	
+	private String listWorkspaceDocuments() {
+		StringBuilder buf = new StringBuilder();
+		LinkedList<Folder> stack = new LinkedList<Folder>();
+		stack.add(workspace);
+		while(!stack.isEmpty()) {
+			Folder folder = stack.removeFirst();
+			for (Document d : folder.documents()) buf.append("  " + workspace.relativePath(d.path()) + "\n");
+			for (Folder f : folder.children()) stack.add(f);
+		}
+		return buf.toString();
 	}
 
 	private String doCheckMods(BufferedReader reader) throws IOException, SAXException {
@@ -194,14 +219,19 @@ public class SystemTest extends DatabaseTestCase {
 		buf.append("</modstore>");
 		String expected = buf.toString();
 		String actual = db.getDocument(Transformer.recordsRootPath() + workspace.path() + "/mods").contentsAsString();
+		assertXMLMatches("mods", expected, actual);
+		return line;
+	}
+
+	private void assertXMLMatches(String what, String expected, String actual) throws SAXException, IOException {
 		XMLUnit.setNormalizeWhitespace(true);
 		XMLUnit.setIgnoreAttributeOrder(true);
 		Diff diff = new Diff(expected, actual);
 		diff.overrideDifferenceListener(new DifferenceListener() {
 			public int differenceFound(Difference difference) {
-				if (difference.getId() == DifferenceEngine.ATTR_VALUE_ID && "*".equals(difference.getControlNodeDetail().getValue())) {
+				if (difference.getId() == DifferenceEngine.ATTR_VALUE_ID && "_".equals(difference.getControlNodeDetail().getValue())) {
 					return DifferenceListener.RETURN_IGNORE_DIFFERENCE_NODES_IDENTICAL;
-				} else if (difference.getId() == DifferenceEngine.TEXT_VALUE_ID && "*".equals(difference.getControlNodeDetail().getValue())) {
+				} else if (difference.getId() == DifferenceEngine.TEXT_VALUE_ID && "_".equals(difference.getControlNodeDetail().getValue())) {
 					return DifferenceListener.RETURN_IGNORE_DIFFERENCE_NODES_IDENTICAL;
 				} else {
 					return DifferenceListener.RETURN_ACCEPT_DIFFERENCE;
@@ -212,9 +242,9 @@ public class SystemTest extends DatabaseTestCase {
 		});
 		diff.overrideElementQualifier(new ElementQualifier() {
 			public boolean qualifyForComparison(Element control, Element test) {
-				if (control.hasAttribute("xml:id")) {
+				if (control.hasAttribute("xml:id") && !control.getAttribute("xml:id").equals("_")) {
 					return test.hasAttribute("xml:id") && control.getAttribute("xml:id").equals(test.getAttribute("xml:id"));
-				} else if (control.hasAttribute("stage")) {
+				} else if (control.hasAttribute("stage") && !control.getAttribute("stage").equals("_")) {
 					return test.hasAttribute("stage") && control.getAttribute("stage").equals(test.getAttribute("stage"));
 				} else {
 					return true;
@@ -222,9 +252,8 @@ public class SystemTest extends DatabaseTestCase {
 			}
 		});
 		if (!diff.similar()) {
-			fail("Mods differ after run " + run + "\n--- Expected:\n" + expected + "\n\n--- Actual: \n" + actual + "\n");
+			fail(what + " mismatch after run " + run + "\n--- Expected:\n" + expected + "\n\n--- Actual: \n" + actual + "\n");
 		}
-		return line;
 	}
 	
 	private String doCheckStats(BufferedReader reader) throws IOException, IllegalArgumentException, SecurityException, IllegalAccessException, NoSuchFieldException {

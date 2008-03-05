@@ -1,4 +1,4 @@
-<group name="Global" xmlns="http://ideanest.com/reef/ns/config">
+<group name="Global" xmlns="http://ideanest.com/dscribe/ns/config">
 	
 	<group name="Java">
 		

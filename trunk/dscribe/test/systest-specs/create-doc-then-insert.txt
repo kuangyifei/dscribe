@@ -1,0 +1,50 @@
+## load file source.xml
+<foo xml:id='f'/>
+
+## load rules
+rule create result doc [r1]
+	create-doc: result.xml
+	insert: <foos/>
+
+rule insert bar into foo [r2]
+	for each $foo: //foo
+	for each target: //foos
+	insert: <bar/>
+
+#### run 1
+
+## check file result.xml
+<foos xml:id='_r1.1.'><bar xml:id='_r2.f._r1.1..2.'/></foos>
+
+## check mods
+<mods xml:id='_r1.' rule='r1'>
+	<mod stage='0'>
+		<docname xmlns=''>result.xml</docname>
+		<mod stage='1'>
+			<affected refid='_r1.1.'/>
+			<checksum xmlns='' digest-type='_'>_</checksum>
+		</mod>
+	</mod>
+</mods>
+<mods xml:id='_r2.' rule='r2'>
+	<mod xml:id='_r2.f.' stage='0'>
+		<dependency doc='source.xml' kind='verified'/>
+		<reference doc='source.xml' refid='f'/>
+		<mod xml:id='_r2.f._r1.1..' stage='1'>
+			<dependency doc='result.xml' kind='verified'/>
+			<reference doc='result.xml' refid='_r1.1.'/>
+			<mod stage='2'>
+				<affected refid='_r2.f._r1.1..2.'/>
+				<checksum xmlns='' digest-type='_'>_</checksum>
+			</mod>
+		</mod>
+	</mod>
+</mods>
+
+## check stats
+numCycles = 2
+
+#### run 2
+
+## check stats
+numCycles = 1
