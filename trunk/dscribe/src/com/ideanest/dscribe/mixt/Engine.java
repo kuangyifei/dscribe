@@ -67,6 +67,8 @@ public class Engine {
 		prevrulespace.namespaceBindings().put("", Transformer.RULES_NS);
 		prevrulespace.namespaceBindings().put("record", Transformer.RULES_NS);
 		
+		this.sortController = new SortController(this, modifiedDocs.anchor());
+
 		invalidateIncompatibleBlocks(prevrulespace);
 		assignRuleIds(rulespace, prevrulespace);
 		parseRules(rulespace, prevrulespace);
@@ -92,6 +94,7 @@ public class Engine {
 			modStore.namespaceBindings().put("mod", Transformer.MOD_NS);
 		}
 		this.modStore = modStore;
+		sortController = new SortController(this, modifiedDocs.anchor());
 	}
 
 	private void parseRules(Resource rulespace, Resource prevrulespace) throws RuleBaseException {
@@ -206,6 +209,10 @@ public class Engine {
 	QueryService utilQuery() {return utilQuery;}
 	Node modStore() {return modStore;}
 	
+	Rule findRule(String ruleId) {
+		return ruleMap.get(ruleId);
+	}
+	
 	public void autoGenerateIdsWithPrefix(String prefix) {
 		if (!(Character.isLetter(prefix.charAt(0)) || prefix.charAt(0) == '_'))
 			throw new IllegalArgumentException("xml id prefix must start with letter or underscore, got '" + prefix + "'");
@@ -229,6 +236,10 @@ public class Engine {
 		} while (scope.exists("/id($_1)", id));
 		return id;
 	}
+	
+	void eventuallySort(Node node) {
+		sortController.eventuallySort(node);
+	}
 
 	private final Document.Listener modifiedDocListener = new Document.Listener() {
 		public void handle(org.exist.fluent.Document.Event ev) {
@@ -244,6 +255,7 @@ public class Engine {
 			}
 		}
 	};
+	private final SortController sortController;
 
 	/**
 	 * Run the transformation.
@@ -253,9 +265,10 @@ public class Engine {
 	 * @throws InterruptedException 
 	 */
 	public Date executeTransform(Collection<XMLDocument> initialModifiedDocs) throws TransformException, InterruptedException {
-		if (initialModifiedDocs != null) modifiedDocs.addAll(initialModifiedDocs);	// MUST happen after parsing rules, otherwise locators in wrong position
+		if (initialModifiedDocs != null) modifiedDocs.addAll(initialModifiedDocs);	// MUST happen after all initial locators have been anchored
 		workspace.listeners().add(	EnumSet.of(Trigger.AFTER_CREATE, Trigger.AFTER_UPDATE), modifiedDocListener);
 		if (!workspace.contains(modStore.document())) modStore.document().listeners().add(Trigger.AFTER_UPDATE, modifiedDocListener);
+		
 		Date lastRun;
 		try {
 			do {
@@ -268,8 +281,11 @@ public class Engine {
 					if (Thread.interrupted()) throw new InterruptedException();
 					rule.process(stats.numCycles.value() == 1 && initialModifiedDocs == null);
 				}
+				if (Thread.interrupted()) throw new InterruptedException();
+				sortController.executeEndOfCycle();
 				// TODO: detect livelock loops 				
 			} while (didWork || docsModified);
+			assert sortController.done();
 			LOG.info("MIXT transformation complete; "
 					+ stats.numCycles + ", " + stats.numBlocksResolved + ", "
 					+ stats.numBlocksVerified + ", " + stats.numModsCompleted + ", " + stats.numModsWithdrawn);
@@ -284,7 +300,7 @@ public class Engine {
 	
 	void withdrawMod(Node modNode) {
 		if (LOG.isDebugEnabled()) {
-			LOG.debug("withdrawing mod " + modNode.query().single("./ancestor-or-self::mod[@xml:id][1]/@xml:id").value() + " at stage " + modNode.query().single("@stage").value());
+			LOG.debug("withdrawing mod " + modNode.query().single("./ancestor-or-self::*[@xml:id][1]/@xml:id").value() + " at stage " + modNode.query().single("@stage").value());
 		}
 		withdrawMods(modNode.query().unordered("self::*"));
 	}

@@ -80,7 +80,7 @@ public class For implements BlockType {
 			return new ForSeg(mod);
 		}
 		
-		private class ForSeg extends Seg implements InsertionTarget {
+		private class ForSeg extends Seg implements InsertionTarget, NodeTarget {
 			ForSeg(Mod mod) {super(mod);}
 			
 			private void bindVariable(Object value) throws TransformException {
@@ -106,6 +106,11 @@ public class For implements BlockType {
 			public ElementBuilder<?> contentBuilder() throws TransformException {
 				if (target) return mod.references().get(0).append();
 				return mod.nearestAncestorImplementing(InsertionTarget.class).contentBuilder();
+			}
+			
+			public ItemList targets() throws TransformException {
+				if (target) return mod.references().get(0).toItemList();
+				return mod.nearestAncestorImplementing(NodeTarget.class).targets();
 			}
 		}
 
@@ -268,6 +273,27 @@ public class For implements BlockType {
 			setModNearestAncestorImplementing(InsertionTarget.class, insertionTarget);
 			assertSame(contentBuilder, ((ForBlock.ForSeg) block.createSeg(mod)).contentBuilder());
 			contentBuilder.commit();
+		}
+
+		@Test
+		public void targetNodesWithTarget() throws RuleBaseException, TransformException {
+			ForOneBlock block = define("<for one='target'> //java:class </for>");
+			final Node selectedNode = content.query().single("//java:class").node();
+			setModReferences(selectedNode);
+			assertEquals(Collections.singletonList(selectedNode), ((ForBlock.ForSeg) block.createSeg(mod)).targets().asList());
+		}
+
+		@Test
+		public void targetNodesNotTarget() throws RuleBaseException, TransformException {
+			ForOneBlock block = define("<for one='$x'> //java:class </for>");
+			final Node selectedNode = content.query().single("//java:class").node();
+			NodeTarget insertionTarget = new NodeTarget() {
+				public ItemList targets() throws TransformException {
+					return selectedNode.toItemList();
+				}
+			};
+			setModNearestAncestorImplementing(NodeTarget.class, insertionTarget);
+			assertEquals(Collections.singletonList(selectedNode), ((ForBlock.ForSeg) block.createSeg(mod)).targets().asList());
 		}
 
 	}

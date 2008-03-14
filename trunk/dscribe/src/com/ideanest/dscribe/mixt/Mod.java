@@ -105,13 +105,9 @@ public class Mod {
 		boundVariables.add(name);
 	}
 	
-	public String key() {
-		return parent.key();
-	}
-	
-	public Node node() {
-		return node;
-	}
+	Seg seg() {return seg;}
+	public String key() {return parent.key();}
+	public Node node() {return node;}
 	
 	public Folder workspace() {
 		return rule.engine.workspace().cloneWithoutNamespaceBindings();
@@ -195,9 +191,15 @@ public class Mod {
 		restored = true;
 	}
 	
+	public List<String> affectedIds() {
+		return globalScope().unordered("declare namespace mod = '" + Transformer.MOD_NS + "'; $_1/mod:affected/@refid", node).values().asList();
+	}
+	
 	void verify() throws TransformException {
 		LOG.debug("verifying " + this);
+		node.namespaceBindings().replaceWith(EMPTY_NAMESPACES);
 		seg.verify();
+		node.namespaceBindings().put("", Transformer.MOD_NS);
 	}
 	
 	void analyze() throws TransformException {
@@ -239,8 +241,8 @@ public class Mod {
 		private final QueryService scope;
 		private final boolean lastBlock;
 		
-		private Set<String>dependentDocNames, unverifiedDocNames, affectedNodeIds;
-		private List<Node> references;
+		private Set<String> dependentDocNames, unverifiedDocNames, affectedNodeIds;
+		private List<Node> references, orders;
 		private ElementBuilder<org.w3c.dom.Node> supplement;
 		
 		private List<Mod> children = new ArrayList<Mod>(1);
@@ -258,6 +260,7 @@ public class Mod {
 			unverifiedDocNames = new TreeSet<String>();
 			affectedNodeIds = new TreeSet<String>();
 			references = new ArrayList<Node>(1);
+			orders = new ArrayList<Node>(1);
 			supplement = null;
 		}
 		
@@ -324,6 +327,16 @@ public class Mod {
 					.attr("refid", node.query().single("@xml:id").value())
 					.attr("doc", parent.rule.engine.relativePath(node.document()))
 				.end("reference");
+			Set<String> orderIdsWritten = new HashSet<String>();
+			for (Node node : orders) {
+				String id = node.query().single("@xml:id").value();
+				if (orderIdsWritten.add(id)) {
+					builder.elem("order")
+						.attr("refid", id)
+						.attr("doc", parent.rule.engine.relativePath(node.document()))
+					.end("order");
+				}
+			}
 			if (supplement != null) builder.node(supplement.commit());
 			mod.node = builder.end("mod").commit();
 		}
@@ -338,6 +351,10 @@ public class Mod {
 		
 		public QueryService scope() {
 			return scope;
+		}
+		
+		public QueryService scopeWithVariablesBound(QueryService qs) {
+			return parent.prepScopeClone(qs);
 		}
 		
 		/**
@@ -427,6 +444,25 @@ public class Mod {
 				if (node.query().exists("@xml:id")) throw e;
 				throw new IllegalArgumentException("affected node doesn't have an xml:id");
 			}
+		}
+		
+		/**
+		 * Declare that the mod being built has an opinion about the ordering of the given node within its
+		 * parent.  The seg corresponding to the mod must implement OrderProvider.
+		 *
+		 * @param node the persistent node whose order relative to its siblings is affected by the mod being built
+		 */
+		public void order(Node node) {
+			if (!parent.rule.engine.ensureWorkspaceNodeHasXmlId(node)) throw new IllegalArgumentException("ordered node doesn't have an xml:id: " + node);
+			Node parentNode;
+			try {
+				parentNode = node.query().single("..").node();
+			} catch (DatabaseException e) {
+				throw new IllegalArgumentException("ordered node doesn't have a parent: " + node);
+			}
+			if (!parent.rule.engine.ensureWorkspaceNodeHasXmlId(parentNode)) throw new IllegalArgumentException("parent of ordered node doesn't have an xml:id: " + parentNode);
+			orders.add(parentNode);
+			parent.rule.engine.eventuallySort(parentNode);
 		}
 		
 		/**
@@ -521,7 +557,7 @@ public class Mod {
 		
 		@Before public void setupContext() throws IllegalArgumentException, IllegalAccessException {
 			workspace = db.createFolder("/workspace");
-			doc1 = db.getFolder("/workspace").documents().load(Name.generate(), Source.xml("<foo><e1 xml:id='e1'/></foo>"));
+			doc1 = db.getFolder("/workspace").documents().load(Name.generate(), Source.xml("<foo><e1 xml:id='e1'><e2 xml:id='e2'/></e1></foo>"));
 			doc1Name = db.getFolder("/workspace").relativePath(doc1.path());
 			workspace.namespaceBindings().put("", "http://example.com");
 			engine = mockery.mock(Engine.class);
@@ -547,6 +583,7 @@ public class Mod {
 				allowing(engine).workspace();  will(returnValue(workspace));
 				allowing(engine).globalScope();  will(returnValue(workspace.query()));
 				allowing(engine).ensureWorkspaceNodeHasXmlId(doc1.query().single("//e1").node());  will(returnValue(true));
+				allowing(engine).ensureWorkspaceNodeHasXmlId(doc1.query().single("//e2").node());  will(returnValue(true));
 				allowing(parentMod).key();  will(returnValue("_r1.e13."));
 				allowing(parentMod).variableBindings();  will(returnValue(parentModBindings));
 			}});	
@@ -703,6 +740,45 @@ public class Mod {
 			builder.reference(doc1.root());
 		}
 		
+		@Test public void order() {
+			mockery.checking(new Expectations() {{
+				one(engine).eventuallySort(doc1.query().single("//e1").node());
+			}});
+			builder.order(doc1.query().single("//e2").node());
+			assertEquals(Collections.emptySet(), builder.dependentDocNames);
+			assertEquals(Collections.emptySet(), builder.unverifiedDocNames);
+			assertEquals(Collections.emptySet(), builder.affectedNodeIds);
+			assertEquals(Collections.singletonList(doc1.query().single("//e1").node()), builder.orders);
+		}
+		
+		@Test(expected = IllegalArgumentException.class)
+		public void orderNoId() {
+			final Node e3 = doc1.query().single("//e2").node().append().elem("e3").end("e3").commit();
+			mockery.checking(new Expectations() {{
+				one(engine).ensureWorkspaceNodeHasXmlId(e3); will(returnValue(false));
+			}});
+			builder.order(e3);
+		}
+		
+		@Test(expected = IllegalArgumentException.class)
+		public void orderNoParentId() {
+			final Node e3 = doc1.query().single("//e2").node().append().elem("e3").elem("e4").attr("xml:id", "e4").end("e4").end("e3").commit();
+			final Node e4 = doc1.query().single("//e4").node();
+			mockery.checking(new Expectations() {{
+				one(engine).ensureWorkspaceNodeHasXmlId(e4); will(returnValue(true));
+				one(engine).ensureWorkspaceNodeHasXmlId(e3); will(returnValue(false));
+			}});
+			builder.order(e4);
+		}
+		
+		@Test(expected = IllegalArgumentException.class)
+		public void orderNoParent() {
+			mockery.checking(new Expectations() {{
+				one(engine).ensureWorkspaceNodeHasXmlId(doc1.root()); will(returnValue(true));
+			}});
+			builder.order(doc1.root());
+		}
+		
 		@Test public void generateId() {
 			assertEquals(builder.generateId(-1), builder.generateId(-2));
 			assertThat(builder.generateId(0), not(equalTo(builder.generateId(1))));			
@@ -722,6 +798,8 @@ public class Mod {
 			builder.unverifiedDocNames.add("d1u.xml");
 			builder.affectedNodeIds.add("e2");
 			builder.references.add(doc1.query().single("//e1").node());
+			builder.orders.add(doc1.query().single("//e1").node());
+			builder.orders.add(doc1.query().single("//e1").node());
 			builder.supplement().elem("checksum").end("checksum").elem("foobar").end("foobar");
 			
 			Node targetNode = db.getFolder("/").documents().load(Name.generate(), Source.xml(
@@ -730,6 +808,7 @@ public class Mod {
 					"	<dependency kind='verified' doc='d1v.xml'/>" +
 					"	<affected refid='e2'/>" +
 					"	<reference refid='e1' doc='" + doc1Name + "'/>" +
+					"	<order refid='e1' doc='" + doc1Name + "'/>" +
 					"	<checksum xmlns=''/><foobar xmlns=''/>" +
 					"</mod>"
 					)).root();
@@ -931,6 +1010,9 @@ public class Mod {
 		
 		@Test public void verify() throws TransformException {
 			final Mod mod = new Mod(parentMod);
+			mod.node = modStore.append()
+				.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4)
+				.end("mod").commit();
 			mod.seg = mockery.mock(Seg.class);
 			mockery.checking(new Expectations() {{
 				one(mod.seg).verify();
@@ -1133,5 +1215,15 @@ public class Mod {
 					.end("mod").commit();
 			mod.restore();
 		}
+		
+		@Test public void affected() throws TransformException {
+			final Mod mod = new Mod(parentMod);
+			mod.node = modStore.append()
+					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4)
+					  .elem("affected").attr("refid", "e1").end("affected")
+					.end("mod").commit();
+			assertEquals(Collections.singletonList("e1"), mod.affectedIds());
+		}
+
 	}
 }
