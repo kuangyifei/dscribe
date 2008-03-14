@@ -24,6 +24,10 @@ Mod = element mod {
 			attribute refid {xsd:NMTOKEN},
 			attribute doc {xsd:string}
 		} * &
+		element order {
+			attribute refid {xsd:NMTOKEN},
+			attribute doc {xsd:string}
+		} * &
 		Supplement *
 	),
 	

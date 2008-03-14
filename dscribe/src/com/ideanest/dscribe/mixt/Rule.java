@@ -29,7 +29,7 @@ public class Rule {
 	// TODO: make this an extension point
 	@SuppressWarnings("unchecked")
 	private static final Class[] BLOCK_CLASSES = {
-		For.class, With.class, CreateDoc.class, Insert.class
+		For.class, With.class, CreateDoc.class, Insert.class, Sort.class
 	};
 	
 	private static final Map<QName,BlockType> BLOCK_TYPE_DICTIONARY = new HashMap<QName,BlockType>();
@@ -125,6 +125,7 @@ public class Rule {
 
 	private interface Shim {
 		Mod rootMod();
+		Mod restoreMod(Node modNode) throws TransformException;
 		void restoreModsAtStage(Collection<Mod> mods, int stage) throws TransformException;
 		Collection<Mod> resolveModsAtStage(Collection<Mod> mods, int stage, QueryService touchedScope) throws TransformException;
 		void verifyMods(Set<XMLDocument> modifiedDocs) throws TransformException;
@@ -135,6 +136,9 @@ public class Rule {
 		this.self = new Shim() {
 			public Mod rootMod() {
 				return Rule.this.bootstrapMod();
+			}
+			public Mod restoreMod(Node modNode) throws TransformException {
+				return Rule.this.restoreMod(modNode);
 			}
 			public void restoreModsAtStage(Collection<Mod> mods, int stage) throws TransformException {
 				Rule.this.restoreModsAtStage(mods, stage);
@@ -258,6 +262,17 @@ public class Rule {
 		touched.addAll(docs);
 	}
 	
+	@SuppressWarnings("unchecked")  // each block is only fed segs that it produced; see SortController.sort(Node)
+	void sortBlock(int stage, Collection<Seg> segs, SortController.OrderGraph graph) throws TransformException {
+		SortingBlock block;
+		try {
+			 block = (SortingBlock) blocks.get(stage);
+		} catch (ClassCastException e) {
+			throw new TransformException("not a sorting block: " + this + ", block " + stage);
+		}
+		block.sort(segs, graph);
+	}
+	
 	void process(boolean doGlobalProcessing) throws TransformException {
 		LOG.debug("processing " + this);
 		if (blocks.size() == 0) return;
@@ -302,15 +317,20 @@ public class Rule {
 		for (Node node : self.rootMod().node().query().unordered(
 				".//mod[xs:integer(@stage)=$_1]" + (mustRestore ? "" : "[not(mod)]"), stage).nodes()) {
 			if (modKeys.contains(node.query().single("ancestor-or-self::*[@xml:id][last()]/@xml:id").value())) continue;
-			Mod mod = self.rootMod();
-			for (Node historyNode : engine.modStore().query().all(
-					"for $mod in ($_1/ancestor-or-self::* except (/modstore, $_2)) " +
-					"order by xs:integer($mod/@stage) return $mod", node, mod.node()).nodes()) {
-				mod = mod.restoreChild(blocks.get(mod.stage+1), historyNode);
-			}
+			Mod mod = self.restoreMod(node);
 			mods.add(mod);
 			LOG.debug("restored " + mod);
 		}
+	}
+
+	Mod restoreMod(Node node) throws TransformException {
+		Mod mod = self.rootMod();
+		for (Node historyNode : engine.modStore().query().all(
+				"for $mod in ($_1/ancestor-or-self::* except (/modstore, $_2)) " +
+				"order by xs:integer($mod/@stage) return $mod", node, mod.node()).nodes()) {
+			mod = mod.restoreChild(blocks.get(mod.stage+1), historyNode);
+		}
+		return mod;
 	}
 
 	private Collection<Mod> resolveModsAtStage(Collection<Mod> mods, int stage, QueryService touchedScope) throws TransformException {
@@ -842,35 +862,104 @@ public class Rule {
 			rule.firstDifferentStage = Integer.MAX_VALUE;
 		}
 		
-		private List<Mod> mockModRestoreSequence(int firstStage, final int lastStage) throws TransformException {
-			final List<Mod> mods = new ArrayList<Mod>(lastStage-firstStage+1);
-			final Sequence s = mockery.sequence("stages");
-			for (int i = 0; i < firstStage; i++) mods.add(null);
-			for (int i = firstStage; i <= lastStage; i++) {
+		private List<Mod> mockModRestoreSequence(final int lastStage) throws TransformException {
+			final List<Mod> mods = new ArrayList<Mod>(lastStage+2);
+			mods.add(mockMod(KeyMod.class, "_r1.", -1));
+			for (int i = 0; i <= lastStage; i++) {
 				mods.add(mockMod(blocks.get(i) instanceof KeyBlock ? KeyMod.class : Mod.class, "_r1." + i +".", i));
 			}
-			for (int i = firstStage; i < lastStage; i++) {
+			final Sequence s = mockery.sequence("stages");
+			for (int i = -1; i < lastStage; i++) {
 				final int index = i;
 				mockery.checking(new Expectations() {{
-					one(mods.get(index)).restoreChild(	
+					one(mods.get(index+1)).restoreChild(	
 							with(same(blocks.get(index+1))), with(equal(modNodeAt(index+1))));
-					inSequence(s);  will(returnValue(mods.get(index+1)));
+					inSequence(s);  will(returnValue(mods.get(index+2)));
 				}});
 			}
 			return mods;
 		}
+		
+		@Test public void restoreMod1() throws TransformException {
+			final List<Mod> mods = mockModRestoreSequence(1);
+			assertSame(mods.get(2), rule.restoreMod(modNodeAt(1)));
+		}
 
-		@Test public void restorePreKeyModsAtStage() throws TransformException {
-			final List<Mod> mods = mockModRestoreSequence(0, 2);
+		@Test public void restoreMod2() throws TransformException {
+			final List<Mod> mods = mockModRestoreSequence(2);
+			assertSame(mods.get(3), rule.restoreMod(modNodeAt(2)));
+		}
+
+		@Test public void restoreModsAtRootStageNoKeyHasMod() throws TransformException {
+			mockMod(KeyMod.class, "_r1.", -1);
+			List<Mod> nextStageMods = new ArrayList<Mod>();
+			rule.restoreModsAtStage(nextStageMods, -1);
+			assertTrue(nextStageMods.isEmpty());
+		}
+		
+		@Test public void restoreModsAtRootStageIsKeyHasMod() throws TransformException {
 			final KeyMod rootMod = mockMod(KeyMod.class, "_r1.", -1);
+			blocks.set(0, mockery.mock(KeyBlock.class, "b0k"));
+			rule.blocks.clear();  rule.blocks.addAll(blocks);
+			List<Mod> nextStageMods = new ArrayList<Mod>();
+			rule.restoreModsAtStage(nextStageMods, -1);
+			assertEquals(Collections.singletonList(rootMod), nextStageMods);
+		}
+		
+		@Test public void restoreModsAtRootStageNoKeyNoMod() throws TransformException {
+			final KeyMod rootMod = mockMod(KeyMod.class, "_r1.", -1);
+			modNodeAt(0).delete();
+			List<Mod> nextStageMods = new ArrayList<Mod>();
+			rule.restoreModsAtStage(nextStageMods, -1);
+			assertEquals(Collections.singletonList(rootMod), nextStageMods);
+		}
+		
+		@Test public void restoreModsAtRootStageIsKeyNoMod() throws TransformException {
+			final KeyMod rootMod = mockMod(KeyMod.class, "_r1.", -1);
+			blocks.set(0, mockery.mock(KeyBlock.class, "b0k"));
+			rule.blocks.clear();  rule.blocks.addAll(blocks);
+			modNodeAt(0).delete();
+			List<Mod> nextStageMods = new ArrayList<Mod>();
+			rule.restoreModsAtStage(nextStageMods, -1);
+			assertEquals(Collections.singletonList(rootMod), nextStageMods);
+		}
+		
+		@Test public void restoreModsAtPreKeyStage() throws TransformException {
+			mockMod(KeyMod.class, "_r1.", -1);
+			final Mod resultMod = mockMod(Mod.class, "_r1.2.", 2);
 			mockery.checking(new Expectations() {{
-				one(rootMod).restoreChild(with(same(blocks.get(0))), with(equal(modNodeAt(0))));
-				will(returnValue(mods.get(0)));  // should be in sequence, but this is the only way to get mods[0] anyway
+				one(rule.self).restoreMod(modNodeAt(2));  will(returnValue(resultMod));
 			}});
 			List<Mod> nextStageMods = new ArrayList<Mod>();
 			rule.restoreModsAtStage(nextStageMods, 2);
-			assertEquals(1, nextStageMods.size());
-			assertSame(mods.get(2), nextStageMods.get(0));
+			assertEquals(Collections.singletonList(resultMod), nextStageMods);
+		}
+		
+		@Test public void restoreModsAtPreKeyStageDuplicateKey() throws TransformException {
+			mockMod(KeyMod.class, "_r1.", -1);
+			List<Mod> nextStageMods = new ArrayList<Mod>();
+			nextStageMods.add(mockMod(Mod.class, "_r1.1.", 2));
+			nextStageMods = Collections.unmodifiableList(nextStageMods);
+			rule.restoreModsAtStage(nextStageMods, 2);
+		}
+		
+		@Test public void restoreModsAtPreLinearStageHasMod() throws TransformException {
+			mockMod(KeyMod.class, "_r1.", -1);
+			List<Mod> nextStageMods = new ArrayList<Mod>();
+			rule.restoreModsAtStage(nextStageMods, 1);
+			assertTrue(nextStageMods.isEmpty());
+		}
+		
+		@Test public void restoreModsAtPreLinearStageNoMod() throws TransformException {
+			mockMod(KeyMod.class, "_r1.", -1);
+			final Mod resultMod = mockMod(KeyMod.class, "_r1.1.", 1);
+			mockery.checking(new Expectations() {{
+				one(rule.self).restoreMod(modNodeAt(1));  will(returnValue(resultMod));
+			}});
+			modNodeAt(2).delete();
+			List<Mod> nextStageMods = new ArrayList<Mod>();
+			rule.restoreModsAtStage(nextStageMods, 1);
+			assertEquals(Collections.singletonList(resultMod), nextStageMods);
 		}
 		
 		@Test public void resolveModsAtStage() throws TransformException {

@@ -12,6 +12,7 @@ import org.exist.fluent.*;
 import org.junit.Test;
 
 import com.ideanest.dscribe.mixt.*;
+import com.ideanest.dscribe.mixt.SortController.OrderGraph;
 import com.ideanest.dscribe.testutil.BlockTestCase;
 
 public class Insert implements BlockType {
@@ -24,17 +25,35 @@ public class Insert implements BlockType {
 		return "1";
 	}
 
+	@AllowAttributes({"in", "priority"})
 	public Block define(Node def) throws RuleBaseException {
 		return new InsertBlock(def);
 	}
 
-	private static class InsertBlock implements LinearBlock {
+	private static class InsertBlock implements LinearBlock, SortingBlock<InsertBlock.InsertSeg> {
 		private static final String DIGEST_TYPE = "MD5";
 		
 		private final Query.Items query;
 		private Collection<String> requiredVariables;
+		private final boolean inOrder;
+		private final int priority;
 		
 		private InsertBlock(Node def) throws RuleBaseException {
+			String inAttribute = def.query().optional("@in").value();
+			if (inAttribute != null && !inAttribute.equals("order"))
+				throw new RuleBaseException("@in attribute must have value 'order' if present, found '" + inAttribute + "'");
+			inOrder = inAttribute != null;
+			Item priorityItem = def.query().optional("@priority");
+			if (priorityItem.extant()) {
+				if (!inOrder) throw new RuleBaseException("@priority must only be specified when @in='order'");
+				try {
+					priority = priorityItem.intValue();
+				} catch (DatabaseException e) {
+					throw new RuleBaseException("insert block specified bad priority '" + priorityItem.value() + "'", e);
+				}
+			} else {
+				priority = 0;
+			}
 			query = new Query.Items(def);
 		}
 
@@ -64,7 +83,9 @@ public class Insert implements BlockType {
 				modBuilder.nearestAncestorImplementing(InsertionTarget.class)
 						.contentBuilder().nodes(nodesToInsert.nodes()).commit();
 				for (String id : genIdList) {
-					modBuilder.affect(modBuilder.parent().globalScope().single("/id($_1)", id).node());
+					Node insertedNode = modBuilder.parent().globalScope().single("/id($_1)", id).node();
+					modBuilder.affect(insertedNode);
+					if (inOrder && genIdList.size() > 1) modBuilder.order(insertedNode);
 				}
 			}
 			
@@ -82,13 +103,21 @@ public class Insert implements BlockType {
 			}
 		}
 
+		public void sort(Collection<InsertSeg> segs, OrderGraph graph) {
+			assert inOrder;
+			for (InsertSeg seg : segs) {
+				graph.totalOrderNodeIds(seg.inserted, priority);
+			}
+		}
+		
 		public Seg createSeg(Mod mod) {
 			return new InsertSeg(mod);
 		}
 		
-		private class InsertSeg extends Seg {
+		private class InsertSeg extends Seg implements NodeTarget {
 			private String digestType;
 			private String checksum;
+			private List<String> inserted;
 			
 			InsertSeg(Mod mod) {super(mod);}
 			
@@ -100,6 +129,7 @@ public class Insert implements BlockType {
 				Node checksumNode = mod.node().query().optional("checksum").node();
 				digestType = checksumNode.query().optional("@digest-type").value();
 				checksum = checksumNode.value();
+				inserted = mod.affectedIds();
 			}
 			
 			@Override public void verify() throws TransformException {
@@ -111,6 +141,10 @@ public class Insert implements BlockType {
 				} catch (NoSuchAlgorithmException e) {
 					throw new TransformException("missing old digest algorithm, assuming mismatch", e);
 				}
+			}
+			
+			public ItemList targets() {
+				return mod.globalScope().all("/id($_1)", mod.affectedIds());
 			}
 		}
 	}

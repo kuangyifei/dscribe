@@ -16,9 +16,10 @@ rule copy class to diagram
 
 rule create class compartments
 	for each target:		//uml:class
-	insert:
+	insert in order:
 		(<uml:compartment kind='attribute'/>,
 		 <uml:compartment kind='operation'/>)
+	sort after sibling:		* except uml:compartment
 
 rule copy name to depiction
 	for each $source:		//java:*[@name]
@@ -29,9 +30,10 @@ rule copy fields to attributes
 	for each $source:		//java:field
 	for one target:		//uml:class[@depicts=$source/../@xml:id]/uml:compartment[@kind='attribute']
 	insert:					<uml:attribute depicts='{$source/@xml:id}'/>
+	sort as corresponding:	$source
 
 rule copy fields to attributes
 	for each $source:		//java:method | //java:constructor
 	for one target:		//uml:class[@depicts=$source/../@xml:id]/uml:compartment[@kind='operation']
 	insert:					<uml:operation depicts='{$source/@xml:id}'/>
-
+	sort as corresponding:	$source
