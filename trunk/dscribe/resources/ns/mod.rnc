@@ -1,4 +1,4 @@
-default namespace mod = "http://ideanest.com/reef/ns/mod"
+default namespace mod = "http://ideanest.com/dscribe/ns/mod"
 namespace none = ""
 
 start = element modstore {

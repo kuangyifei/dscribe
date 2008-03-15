@@ -20,7 +20,7 @@ import org.junit.runner.RunWith;
 public class Mod {
 	
 	static final Logger LOG = Logger.getLogger(Mod.class);
-	static final NamespaceMap MOD_NAMESPACE = new NamespaceMap("", Transformer.MOD_NS);
+	static final NamespaceMap MOD_NAMESPACE = new NamespaceMap("", Engine.MOD_NS);
 	static final NamespaceMap EMPTY_NAMESPACES = new NamespaceMap();
 	
 	final Rule rule;
@@ -166,7 +166,7 @@ public class Mod {
 	}
 
 	void restore() throws TransformException {
-		node.namespaceBindings().put("", Transformer.MOD_NS);
+		node.namespaceBindings().put("", Engine.MOD_NS);
 		final int storedStage = node.query().single("@stage").intValue();
 		if (this.stage != storedStage)
 			throw new IllegalArgumentException("stage mismatch on node restore, given " + stage + ", stored " + storedStage);
@@ -187,19 +187,19 @@ public class Mod {
 		
 		node.namespaceBindings().replaceWith(EMPTY_NAMESPACES);
 		seg.restore();
-		node.namespaceBindings().put("", Transformer.MOD_NS);
+		node.namespaceBindings().put("", Engine.MOD_NS);
 		restored = true;
 	}
 	
 	public List<String> affectedIds() {
-		return globalScope().unordered("declare namespace mod = '" + Transformer.MOD_NS + "'; $_1/mod:affected/@refid", node).values().asList();
+		return globalScope().unordered("declare namespace mod = '" + Engine.MOD_NS + "'; $_1/mod:affected/@refid", node).values().asList();
 	}
 	
 	void verify() throws TransformException {
 		LOG.debug("verifying " + this);
 		node.namespaceBindings().replaceWith(EMPTY_NAMESPACES);
 		seg.verify();
-		node.namespaceBindings().put("", Transformer.MOD_NS);
+		node.namespaceBindings().put("", Engine.MOD_NS);
 	}
 	
 	void analyze() throws TransformException {
@@ -305,7 +305,7 @@ public class Mod {
 				mod.node.namespaceBindings().replaceWith(EMPTY_NAMESPACES);
 				mod.seg = block.createSeg(mod);
 				mod.seg.restore();
-				mod.node.namespaceBindings().put("", Transformer.MOD_NS);
+				mod.node.namespaceBindings().put("", Engine.MOD_NS);
 				children.add(mod);
 			} finally {
 				reset();
@@ -313,7 +313,7 @@ public class Mod {
 		}
 
 		private void writeData(Mod mod) {
-			ElementBuilder<Node> builder = parent.node().append().namespace("", Transformer.MOD_NS);
+			ElementBuilder<Node> builder = parent.node().append().namespace("", Engine.MOD_NS);
 			builder.elem("mod").attrIf(mod instanceof KeyMod, "xml:id", mod.key()).attr("stage", mod.stage);
 			for (String docName : dependentDocNames) {
 				builder.elem("dependency")
@@ -563,8 +563,8 @@ public class Mod {
 			engine = mockery.mock(Engine.class);
 			
 			modStore = db.getFolder("/").documents().load(
-					Name.generate(), Source.xml("<modstore xmlns='" + Transformer.MOD_NS + "'/>")).root();
-			modStore.namespaceBindings().put("", Transformer.MOD_NS);
+					Name.generate(), Source.xml("<modstore xmlns='" + Engine.MOD_NS + "'/>")).root();
+			modStore.namespaceBindings().put("", Engine.MOD_NS);
 			
 			rule = mockery.mock(Rule.class);
 			rule_engine.set(rule, engine);
@@ -648,13 +648,13 @@ public class Mod {
 			mod_rule.set(ancestor, rule);
 			mod_stage.set(ancestor, 2);
 			final Node ancestorData = db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<modstore xmlns='" + Engine.MOD_NS + "'>" +
 					"  <mod>" + 
 					"    <dependency kind='verified' doc='d" + n + "v.xml'/>" + 
 					"    <dependency kind='unverified' doc='d" + n + "u.xml'/>" + 
 					"  </mod>" +
 					"</modstore>"
-			)).query().namespace("", Transformer.MOD_NS).single("//mod").node();
+			)).query().namespace("", Engine.MOD_NS).single("//mod").node();
 			mockery.checking(new Expectations() {{
 				allowing(ancestor).node();  will(returnValue(ancestorData));
 			}});
@@ -803,7 +803,7 @@ public class Mod {
 			builder.supplement().elem("checksum").end("checksum").elem("foobar").end("foobar");
 			
 			Node targetNode = db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<mod xmlns='" + Transformer.MOD_NS + "' stage='3'>" +
+					"<mod xmlns='" + Engine.MOD_NS + "' stage='3'>" +
 					"	<dependency kind='unverified' doc='d1u.xml'/>" +
 					"	<dependency kind='verified' doc='d1v.xml'/>" +
 					"	<affected refid='e2'/>" +
@@ -1178,7 +1178,7 @@ public class Mod {
 			mod.restore();
 			assertTrue(mod.restored);
 			assertTrue(mod.references().isEmpty());
-			assertEquals(Transformer.MOD_NS, mod.node.namespaceBindings().get(""));
+			assertEquals(Engine.MOD_NS, mod.node.namespaceBindings().get(""));
 		}
 
 		@Test(expected = IllegalArgumentException.class)
@@ -1203,7 +1203,7 @@ public class Mod {
 			mod.restore();
 			assertTrue(mod.restored);
 			assertEquals(Collections.singletonList(doc1.root().query().single("e1").node()), mod.references());
-			assertEquals(Transformer.MOD_NS, mod.node.namespaceBindings().get(""));
+			assertEquals(Engine.MOD_NS, mod.node.namespaceBindings().get(""));
 		}
 
 		@Test(expected = TransformException.class)

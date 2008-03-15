@@ -15,7 +15,7 @@ import com.ideanest.dscribe.testutil.BlockTestCase;
 public class For implements BlockType {
 	
 	public QName xmlName() {
-		return new QName(Transformer.RULES_NS, "for", null);
+		return new QName(Engine.RULES_NS, "for", null);
 	}
 
 	public String version() {

@@ -70,7 +70,7 @@ public class SystemTest extends DatabaseTestCase {
 	@Before public void setUp() {
 		workspace = db.createFolder("/workspace");
 		rulespace = db.createFolder("/rulespace");
-		rulespace.namespaceBindings().put("", Transformer.RULES_NS);
+		rulespace.namespaceBindings().put("", Engine.RULES_NS);
 		transformer = new Transformer(workspace, rulespace);
 	}
 	
@@ -172,7 +172,7 @@ public class SystemTest extends DatabaseTestCase {
 	
 	private String doLoadMods(BufferedReader reader) throws IOException {
 		StringBuilder buf = new StringBuilder();
-		buf.append("<modstore xmlns='" + Transformer.MOD_NS + "'>\n");
+		buf.append("<modstore xmlns='" + Engine.MOD_NS + "'>\n");
 		String line = readUntilNextInstruction(reader, buf);
 		buf.append("</modstore>");
 		db.createFolder(Transformer.recordsRootPath() + workspace.path())
@@ -214,7 +214,7 @@ public class SystemTest extends DatabaseTestCase {
 
 	private String doCheckMods(BufferedReader reader) throws IOException, SAXException {
 		StringBuilder buf = new StringBuilder();
-		buf.append("<modstore xmlns='" + Transformer.MOD_NS + "'>\n");
+		buf.append("<modstore xmlns='" + Engine.MOD_NS + "'>\n");
 		String line = readUntilNextInstruction(reader, buf);
 		buf.append("</modstore>");
 		String expected = buf.toString();

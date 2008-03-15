@@ -1,0 +1,16 @@
+default namespace mapping = "http://ideanest.com/dscribe/ns/mapping"
+
+start = element mappings {
+	CreateDiagram* &
+	JavaToDiagram*
+}
+
+CreateDiagram = element create-diagram {
+	attribute id {xsd:NMTOKEN},
+	attribute kind {"class"}
+}
+
+JavaToDiagram = element java-element-to-diagram {
+	attribute java-element {xsd:NMTOKEN},
+	attribute diagram {xsd:NMTOKEN}
+}

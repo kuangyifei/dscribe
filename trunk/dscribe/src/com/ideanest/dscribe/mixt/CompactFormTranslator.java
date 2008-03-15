@@ -21,7 +21,7 @@ public class CompactFormTranslator {
 	
 	public static Source.XML compactToXml(Reader compactFormTextReader) throws IOException, ParseException {
 		StringBuilder buf = new StringBuilder();
-		buf.append("<rules:rules xmlns:rules='" + Transformer.RULES_NS + "'");
+		buf.append("<rules:rules xmlns:rules='" + Engine.RULES_NS + "'");
 		BufferedReader in = new BufferedReader(compactFormTextReader);
 		Deque<String> indents = new LinkedList<String>();
 		Deque<String> tags = new LinkedList<String>();
@@ -152,7 +152,7 @@ public class CompactFormTranslator {
 		
 		@Test public void empty() throws IOException, ParseException {
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'/>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'/>");
 			translateAndCheck();
 		}
 		
@@ -161,7 +161,7 @@ public class CompactFormTranslator {
 			_("namespace java " + Namespace.JAVA);
 			_("namespace uml " + Namespace.UML);
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "' xmlns:java='" + Namespace.JAVA + "' xmlns:uml='" + Namespace.UML + "'/>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "' xmlns:java='" + Namespace.JAVA + "' xmlns:uml='" + Namespace.UML + "'/>");
 			translateAndCheck();
 		}
 		
@@ -171,7 +171,7 @@ public class CompactFormTranslator {
 			_("namespace uml " + Namespace.UML);
 			_("rule do stuff [r1]");
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "' xmlns:java='" + Namespace.JAVA + "' xmlns:uml='" + Namespace.UML + "'>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "' xmlns:java='" + Namespace.JAVA + "' xmlns:uml='" + Namespace.UML + "'>");
 			_("	<rules:rule xml:id='r1' name='do stuff'/>");
 			_("</rules:rules>");
 			translateAndCheck();
@@ -181,7 +181,7 @@ public class CompactFormTranslator {
 			captureInput();
 			_("rule do something or other [r1]");
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something or other'/>");
 			_("</rules:rules>");
 			translateAndCheck();
@@ -191,7 +191,7 @@ public class CompactFormTranslator {
 			captureInput();
 			_("rule do something or other");
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
 			_("	<rules:rule name='do something or other'/>");
 			_("</rules:rules>");
 			translateAndCheck();
@@ -202,7 +202,7 @@ public class CompactFormTranslator {
 			_("rule do something [r1]");
 			_("rule do other [r2]");
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something'/>");
 			_("	<rules:rule xml:id='r2' name='do other'/>");
 			_("</rules:rules>");
@@ -216,7 +216,7 @@ public class CompactFormTranslator {
 			_("rule do other [r2]");
 			_("");
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something'/>");
 			_("	<rules:rule xml:id='r2' name='do other'/>");
 			_("</rules:rules>");
@@ -229,7 +229,7 @@ public class CompactFormTranslator {
 			_("	for");
 			_("	insert");
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something or other'>");
 			_("		<rules:for/><rules:insert/>");
 			_("	</rules:rule>");
@@ -242,7 +242,7 @@ public class CompactFormTranslator {
 			_("rule do something or other [r1]");
 			_("	for some $x and $y");
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something or other'>");
 			_("		<rules:for some='$x' and='$y'/>");
 			_("	</rules:rule>");
@@ -255,7 +255,7 @@ public class CompactFormTranslator {
 			_("rule do something or other [r1]");
 			_("	for: foo bar bar : is blah");
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something or other'>");
 			_("		<rules:for>foo bar bar : is blah</rules:for>");
 			_("	</rules:rule>");
@@ -268,7 +268,7 @@ public class CompactFormTranslator {
 			_("rule do something or other [r1]");
 			_("	insert: <bar/>");
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something or other'>");
 			_("		<rules:insert><bar/></rules:insert>");
 			_("	</rules:rule>");
@@ -281,7 +281,7 @@ public class CompactFormTranslator {
 			_("rule do something or other [r1]");
 			_("	for any $x: foo bar bar : is blah");
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something or other'>");
 			_("		<rules:for any='$x'>foo bar bar : is blah</rules:for>");
 			_("	</rules:rule>");
@@ -296,7 +296,7 @@ public class CompactFormTranslator {
 			_("	for: foo bar bar : is blah");
 			_("	with that $y");
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something or other'>");
 			_("		<rules:with this='$x'/>");
 			_("		<rules:for>foo bar bar : is blah</rules:for>");
@@ -315,7 +315,7 @@ public class CompactFormTranslator {
 			_("		then back to normal");
 			_("	with that $y");
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something or other'>");
 			_("		<rules:for>something like: this and");
 			_("	this more indented stuff too");
@@ -335,7 +335,7 @@ public class CompactFormTranslator {
 			_("		with this $x");
 			_("	insert");
 			captureOutput();
-			_("<rules:rules xmlns:rules='"+ Transformer.RULES_NS + "'>");
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something or other'>");
 			_("		<rules:for>");
 			_("			<rules:with that='$y'/>");

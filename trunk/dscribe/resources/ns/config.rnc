@@ -1,4 +1,4 @@
-default namespace config = "http://ideanest.com/reef/ns/config"
+default namespace config = "http://ideanest.com/dscribe/ns/config"
 
 start = Group | Job
 

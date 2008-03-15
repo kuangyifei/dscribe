@@ -15,7 +15,7 @@ import com.ideanest.dscribe.testutil.BlockTestCase;
 public class CreateDoc implements BlockType {
 
 	public QName xmlName() {
-		return new QName(Transformer.RULES_NS, "create-doc", null);
+		return new QName(Engine.RULES_NS, "create-doc", null);
 	}
 	
 	public String version() {

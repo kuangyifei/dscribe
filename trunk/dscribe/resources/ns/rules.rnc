@@ -1,4 +1,4 @@
-default namespace rules = "http://ideanest.com/reef/ns/rules"
+default namespace rules = "http://ideanest.com/dscribe/ns/rules"
 
 start = Ruleset
 

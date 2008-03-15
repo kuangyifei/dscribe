@@ -18,7 +18,7 @@ import com.ideanest.dscribe.testutil.BlockTestCase;
 public class Insert implements BlockType {
 
 	public QName xmlName() {
-		return new QName(Transformer.RULES_NS, "insert", null);
+		return new QName(Engine.RULES_NS, "insert", null);
 	}
 	
 	public String version() {

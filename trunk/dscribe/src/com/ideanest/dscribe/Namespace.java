@@ -14,5 +14,6 @@ public interface Namespace {
 	public static final String VCM_CVS = "http://ideanest.com/dscribe/ns/vcm/CVS";	
 	public static final String JAVA = "http://ideanest.com/dscribe/ns/java";
 	public static final String UML = "http://ideanest.com/dscribe/ns/uml";
-
+	public static final String MAPPING = "http://ideanest.com/dscribe/ns/mapping";
+	
 }

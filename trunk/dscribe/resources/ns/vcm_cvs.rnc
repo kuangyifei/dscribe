@@ -1,4 +1,4 @@
-namespace cvs = "http://ideanest.com/reef/ns/vcm/cvs"
+namespace cvs = "http://ideanest.com/dscribe/ns/vcm/cvs"
 include "vcm.rnc"
 
 start = element cvs:record {

@@ -1,6 +1,4 @@
-default namespace vcm = "http://ideanest.com/reef/ns/vcm"
-
-start = Modification* & Checkpoint-proposal* & Checkpoint?
+default namespace vcm = "http://ideanest.com/dscribe/ns/vcm"
 
 Modification = element modification {
 
