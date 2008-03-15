@@ -11,10 +11,6 @@ import org.exist.fluent.*;
 import org.junit.*;
 
 public class Transformer {
-	public static final String RULES_NS = "http://ideanest.com/dscribe/ns/rules";
-	public static final String MOD_NS = "http://ideanest.com/dscribe/ns/mod";
-	public static final String RECORD_NS = "http://ideanest.com/dscribe/ns/record";
-	
 	private static final Logger LOG = Logger.getLogger(Transformer.class);
 
 	private static String recordsRootPath = "/mixt-records";
@@ -30,7 +26,7 @@ public class Transformer {
 		if (workspace.contains(recordsRoot)) throw new IllegalArgumentException("workspace must not contain records root");
 		this.workspace = workspace.cloneWithoutNamespaceBindings();
 		this.rulespace = ruleRepository.cloneWithoutNamespaceBindings();
-		this.rulespace.namespaceBindings().put("", RULES_NS);
+		this.rulespace.namespaceBindings().put("", Engine.RULES_NS);
 		createRecordspace();
 	}
 	
@@ -43,9 +39,9 @@ public class Transformer {
 	
 	private void createRecordspace() {
 		recordspace = workspace.database().createFolder(recordsRootPath + workspace.path());
-		recordspace.namespaceBindings().put("", RECORD_NS);
-		recordspace.namespaceBindings().put("record", RECORD_NS);
-		recordspace.namespaceBindings().put("mod", MOD_NS);
+		recordspace.namespaceBindings().put("", Engine.RECORD_NS);
+		recordspace.namespaceBindings().put("record", Engine.RECORD_NS);
+		recordspace.namespaceBindings().put("mod", Engine.MOD_NS);
 	}
 	
 	public Engine.Stats executeOnce() throws RuleBaseException, TransformException, InterruptedException {
@@ -94,11 +90,11 @@ public class Transformer {
 	private Node initModStore() {
 		Node modStore = recordspace.query().optional("/mod:modstore").node();
 		if (!modStore.extant()) {
-			modStore = recordspace.documents().load(Name.overwrite("mods"), Source.xml("<modstore xmlns='" + MOD_NS + "'/>")).root();
+			modStore = recordspace.documents().load(Name.overwrite("mods"), Source.xml("<modstore xmlns='" + Engine.MOD_NS + "'/>")).root();
 		}
 		modStore.namespaceBindings().sever();
 		modStore.namespaceBindings().clear();
-		modStore.namespaceBindings().put("", MOD_NS);
+		modStore.namespaceBindings().put("", Engine.MOD_NS);
 		return modStore;
 	}
 	
@@ -113,7 +109,7 @@ public class Transformer {
 		}
 		for (Document doc : rulespace.query().unordered("//rule").nodes().documents()) {
 			doc.copy(recordspace, Name.keepOverwrite())
-					.query().namespace("record", RECORD_NS).unordered("//record:* union //@record:*").deleteAllNodes();
+					.query().namespace("record", Engine.RECORD_NS).unordered("//record:* union //@record:*").deleteAllNodes();
 		}
 	}
 	
@@ -126,11 +122,11 @@ public class Transformer {
 		@Before public void setupTransformer() {
 			workspace = db.createFolder("/workspace");
 			rulespace = db.createFolder("/rulespace");
-			rulespace.namespaceBindings().put("", RULES_NS);
+			rulespace.namespaceBindings().put("", Engine.RULES_NS);
 			recordspace = db.createFolder(Transformer.recordsRootPath() + workspace.path());
-			recordspace.namespaceBindings().put("", RECORD_NS);
-			recordspace.namespaceBindings().put("record", RECORD_NS);
-			recordspace.namespaceBindings().put("mod", MOD_NS);
+			recordspace.namespaceBindings().put("", Engine.RECORD_NS);
+			recordspace.namespaceBindings().put("record", Engine.RECORD_NS);
+			recordspace.namespaceBindings().put("mod", Engine.MOD_NS);
 			transformer = new Transformer(workspace, rulespace, recordspace);
 		}
 		
@@ -170,15 +166,15 @@ public class Transformer {
 		
 		@Test public void initModStoreFresh() {
 			Node modsRoot = transformer.initModStore();
-			assertEquals(MOD_NS, modsRoot.namespaceBindings().get(""));
+			assertEquals(Engine.MOD_NS, modsRoot.namespaceBindings().get(""));
 			assertTrue(modsRoot.query().optional("self::modstore").extant());
 			assertEquals(recordspace.query().optional("/mod:modstore").node(), modsRoot);
 		}
 
 		@Test public void initModStoreExisting() {
-			recordspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + MOD_NS + "'><mod xml:id='_foo.'/></modstore>"));
+			recordspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + Engine.MOD_NS + "'><mod xml:id='_foo.'/></modstore>"));
 			Node modsRoot = transformer.initModStore();
-			assertEquals(MOD_NS, modsRoot.namespaceBindings().get(""));
+			assertEquals(Engine.MOD_NS, modsRoot.namespaceBindings().get(""));
 			assertTrue(modsRoot.query().optional("self::modstore").extant());
 			assertEquals(recordspace.query().optional("/mod:modstore").node(), modsRoot);
 			assertTrue(modsRoot.query().optional("mod").extant());
@@ -187,12 +183,12 @@ public class Transformer {
 		@Test public void recordRun() {
 			Date date = new Date();
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns='" + RULES_NS + "'>" +
+					"<rules xmlns='" + Engine.RULES_NS + "'>" +
 					"  <rule xml:id='r1'/>" +
-					"  <foo xmlns='" + RECORD_NS + "'/>" +
+					"  <foo xmlns='" + Engine.RECORD_NS + "'/>" +
 					"</rules>"));
 			rulespace.children().create("subrules").documents().load(Name.generate(), Source.xml(
-					"<rules xmlns='" + RULES_NS + "' xmlns:rec='" + RECORD_NS + "'>" +
+					"<rules xmlns='" + Engine.RULES_NS + "' xmlns:rec='" + Engine.RECORD_NS + "'>" +
 					"  <rule xml:id='r2' rec:bar='x'/>" +
 					"</rules>"));
 			transformer.recordRun(date);
@@ -203,13 +199,13 @@ public class Transformer {
 			assertTrue(lastRun.query().all("//block-type").size() >= 4);
 			assertTrue(lastRun.query().single("every $c in block-type satisfies $c[@class][@version]").booleanValue());
 			
-			assertEquals(2, recordspace.query().namespace("", RULES_NS).unordered("//rule").size());
-			assertTrue(recordspace.query().namespace("", RULES_NS).exists("//rule[@xml:id='r1']"));
+			assertEquals(2, recordspace.query().namespace("", Engine.RULES_NS).unordered("//rule").size());
+			assertTrue(recordspace.query().namespace("", Engine.RULES_NS).exists("//rule[@xml:id='r1']"));
 			assertTrue(recordspace.query().single("in-scope-prefixes($_1/id('r1')) = in-scope-prefixes($_2/id('r1'))", rulespace, recordspace).booleanValue());
-			assertFalse(recordspace.query().namespace("", RECORD_NS).exists("//foo"));
-			assertTrue(recordspace.query().namespace("", RULES_NS).exists("//rule[@xml:id='r2']"));
+			assertFalse(recordspace.query().namespace("", Engine.RECORD_NS).exists("//foo"));
+			assertTrue(recordspace.query().namespace("", Engine.RULES_NS).exists("//rule[@xml:id='r2']"));
 			assertTrue(recordspace.query().single("in-scope-prefixes($_1/id('r2')) = in-scope-prefixes($_2/id('r2'))", rulespace, recordspace).booleanValue());
-			assertFalse(recordspace.query().namespace("r", RECORD_NS).exists("/id('r2')/@r:bar"));
+			assertFalse(recordspace.query().namespace("r", Engine.RECORD_NS).exists("/id('r2')/@r:bar"));
 		}
 		
 		@Test public void findDocsModifiedSince() throws InterruptedException {
@@ -232,7 +228,7 @@ public class Transformer {
 			workspace.documents().load(Name.create("dead2"), Source.xml("<foo xml:id='bad5'><bar xml:id='bad6'/></foo>"));
 			workspace.children().create("nested").documents().load(Name.generate(), Source.xml("<foo xml:id='ok5'><bar xml:id='bad7'/></foo>"));
 			recordspace.documents().load(Name.generate(), Source.xml(
-					"<modstore xmlns='" + Transformer.MOD_NS + "'><mods>" +
+					"<modstore xmlns='" + Engine.MOD_NS + "'><mods>" +
 					"  <mod><affected refid='bad1'/><affected refid='bad2'/></mod>" +
 					"  <mod><affected refid='bad3'/><affected refid='bad4'/></mod>" +
 					"  <mod><affected refid='bad5'/><affected refid='bad6'/><affected refid='bad7'/></mod>" +

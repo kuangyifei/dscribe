@@ -3,7 +3,7 @@
 ## load file mappings.xml
 <mappings xmlns='http://ideanest.com/dscribe/ns/map'>
 	<create-diagram id='d1'/>
-	<class-to-diagram class='j1' diagram='d1'/>
+	<java-element-to-diagram java-element='j1' diagram='d1'/>
 </mappings>
 
 ## load file code/HelloWorld.java

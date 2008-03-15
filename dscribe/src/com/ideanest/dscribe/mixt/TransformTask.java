@@ -16,8 +16,8 @@ public class TransformTask extends TaskBase {
 	
 	private static final Logger LOG = Logger.getLogger(TransformTask.class);
 	private static final NamespaceMap NAMESPACE_MAPPINGS = new NamespaceMap(
-			"", Transformer.RULES_NS,
-			"mod", Transformer.MOD_NS,
+			"", Engine.RULES_NS,
+			"mod", Engine.MOD_NS,
 			"notes", Namespace.NOTES
 	);
 	

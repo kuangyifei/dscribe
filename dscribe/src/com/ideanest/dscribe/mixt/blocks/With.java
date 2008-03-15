@@ -13,7 +13,7 @@ import com.ideanest.dscribe.testutil.BlockTestCase;
 public class With implements BlockType {
 
 	public QName xmlName() {
-		return new QName(Transformer.RULES_NS, "with", null);
+		return new QName(Engine.RULES_NS, "with", null);
 	}
 
 	public String version() {

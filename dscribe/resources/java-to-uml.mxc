@@ -5,11 +5,11 @@ namespace map	http://ideanest.com/dscribe/ns/map
 rule create diagram
 	for each $mapping:	//map:create-diagram
 	create-doc:				diagrams/{$mapping/@id}.xml
-	insert:					<uml:diagram id='{$mapping/@id}'/>
+	insert:					element uml:diagram {$mapping/@id, $mapping/@kind}
 
 rule copy class to diagram
-	for each $map:		//map:class-to-diagram
-	for one $jclass:		/id($map/@class)/self::java:class
+	for each $map:		//map:java-element-to-diagram
+	for one $jclass:		/id($map/@java-element)/self::java:class
 	for one target:		//uml:diagram[@id=$map/@diagram]
 	insert:
 		<uml:class depicts='{$jclass/@xml:id}'/>

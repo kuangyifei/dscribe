@@ -8,10 +8,8 @@ import org.apache.log4j.Logger;
 import org.exist.fluent.*;
 import org.junit.Test;
 
-import com.ideanest.dscribe.InvalidConfigurationException;
-import com.ideanest.dscribe.job.Cycle;
-import com.ideanest.dscribe.job.TaskBase;
-import com.ideanest.dscribe.mixt.Transformer;
+import com.ideanest.dscribe.*;
+import com.ideanest.dscribe.job.*;
 
 /**
  * Encapsulates the assignment of orphan Java elements to diagrams.
@@ -146,7 +144,7 @@ public class AnnealingDiagramAssigner extends TaskBase {
 			this.plugin = plugin;
 			this.job = job;
 			this.workspace = job.workspace(plugin.getNamespaceBindings());
-			this.workspace.namespaceBindings().put("rules", Transformer.RULES_NS);
+			this.workspace.namespaceBindings().put("mapping", Namespace.MAPPING);
 		}
 		
 		public void run() {
@@ -166,8 +164,8 @@ public class AnnealingDiagramAssigner extends TaskBase {
 		
 		private void initOrphans() {
 			ItemList elements = workspace.query().presub().unordered(
-					"let $ruleTargets := //rules:rule[@type='assignJavaElementToDiagram']/@target " +
-					"return $1[not(@xml:id = $ruleTargets)]", plugin.getElementQueryFragment());
+					"let $targets := //mapping:java-element-to-diagram/@java-element " +
+					"return $1[not(@xml:id = $targets)]", plugin.getElementQueryFragment());
 			orphanClashes = new SymmetricTable(elements.size());
 			int i=-1;
 			for (Node node : elements.nodes()) {
@@ -181,15 +179,15 @@ public class AnnealingDiagramAssigner extends TaskBase {
 			// find all diagrams that have at least one element of the desired kind already assigned
 			ItemList elements = workspace.query().let("workspace", workspace).presub().unordered(
 					"let " +
-					"	$rules := //rules:rule[@type='assignJavaElementToDiagram'] " +
+					"	$mappings := //mapping:java-element-to-diagram " +
 					"return " +
-					"	for $diagramId in distinct-values($rules/@diagram) " +
-					"	where exists($1[@xml:id = $rules[@diagram = $diagramId]/@target]) " +
+					"	for $diagramId in distinct-values($mappings/@diagram) " +
+					"	where exists($1[@xml:id = $mappings[@diagram = $diagramId]/@java-element]) " +
 					"	return $diagramId", plugin.getElementQueryFragment());
 			for (String diagramId : elements.values()) {
 				double[] orphanCosts = new double[orphans.size()];
 				ItemList elementsInDiagram = workspace.query().unordered(
-						"//*[@xml:id = //rules:rule[@type='assignJavaElementToDiagram' and @diagram=$_1]/@target]", diagramId);
+						"//*[@xml:id = //mapping:java-element-to-diagram[@diagram=$_1]/@java-element]", diagramId);
 				// a diagram is useless if no orphan could possibly be placed in it
 				boolean uselessDiagram = true;
 				for (Orphan orphan : orphans) {
@@ -204,24 +202,22 @@ public class AnnealingDiagramAssigner extends TaskBase {
 		}
 		
 		private void emitRules(Assignment ass) {
-			ElementBuilder<Node> builder = workspace.query().unordered("//rules:ruleset[@stage='global']").get(0).node().append();
+			ElementBuilder<Node> builder = workspace.query().unordered("//mapping:mappings").get(0).node().append();
 			for (Orphan orphan : orphans) {
 				Diagram diagram = ass.get(orphan);
 				if (diagram.id == null) {
 					diagram.id = job.generateUid("d");
-					builder.elem("rules:rule")
-						.attr("xml:id", job.generateUid("r"))
-						.attr("type", "createDiagram")
+					builder.elem("mapping:create-diagram")
+						.attr("xml:id", job.generateUid("m"))
 						.attr("diagram", diagram.id)
 						.attr("kind", "class")
-						.end("rules:rule");
+						.end("mapping:create-diagram");
 				}
-				builder.elem("rules:rule")
-					.attr("xml:id", job.generateUid("r"))
-					.attr("type", "assignJavaElementToDiagram")
+				builder.elem("mapping:java-element-to-diagram")
+					.attr("xml:id", job.generateUid("m"))
 					.attr("diagram", diagram.id)
-					.attr("target", orphan.id)
-					.end("rules:rule");
+					.attr("java-element", orphan.id)
+					.end("mapping:java-element-to-diagram");
 			}
 			builder.commit();
 		}
@@ -310,7 +306,7 @@ public class AnnealingDiagramAssigner extends TaskBase {
 				this.id = id;
 				this.numFixedElements = id == null ? 0
 						: workspace.query().single(
-								"count(//rules:rule[@type='assignJavaElementToDiagram' and @diagram=$_1])", id).intValue();
+								"count(//mapping:java-element-to-diagram[@diagram=$_1])", id).intValue();
 				this.orphanCosts = orphanCosts;
 			}
 			

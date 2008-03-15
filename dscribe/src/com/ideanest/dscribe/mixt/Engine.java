@@ -19,7 +19,10 @@ import com.ideanest.dscribe.mixt.blocks.*;
 
 
 public class Engine {
-	
+	public static final String RECORD_NS = "http://ideanest.com/dscribe/ns/record";
+	public static final String MOD_NS = "http://ideanest.com/dscribe/ns/mod";
+	public static final String RULES_NS = "http://ideanest.com/dscribe/ns/rules";
+
 	static final Logger LOG = Logger.getLogger(Engine.class);
 	private static final String VERSION = "1";
 	
@@ -44,7 +47,8 @@ public class Engine {
 	private boolean didWork, docsModified;
 	final Stats stats = new Stats();
 	private final Accumulator<XMLDocument> modifiedDocs = new Accumulator<XMLDocument>(); 
-	
+	private final SortController sortController;
+
 	private final Random random = new Random();
 	private final Counter
 		modCountFormatter = Counter.english("mod", "mods", null),
@@ -54,18 +58,18 @@ public class Engine {
 		LOG.debug("initializing engine");
 		
 		this.workspace = workspace;
-		this.workspace.namespaceBindings().put("mod", Transformer.MOD_NS);
+		this.workspace.namespaceBindings().put("mod", Engine.MOD_NS);
 		utilQuery = workspace.database().query();
 		// Need to clone the workspace to avoid wiping out namespace bindings of the folder's shared query service.
 		globalScope = workspace.cloneWithoutNamespaceBindings().query();
 		
 		this.modStore = modStore;
-		modStore.namespaceBindings().put("", Transformer.MOD_NS);
-		modStore.namespaceBindings().put("mod", Transformer.MOD_NS);
+		modStore.namespaceBindings().put("", Engine.MOD_NS);
+		modStore.namespaceBindings().put("mod", Engine.MOD_NS);
 		
-		rulespace.namespaceBindings().put("", Transformer.RULES_NS);
-		prevrulespace.namespaceBindings().put("", Transformer.RULES_NS);
-		prevrulespace.namespaceBindings().put("record", Transformer.RULES_NS);
+		rulespace.namespaceBindings().put("", Engine.RULES_NS);
+		prevrulespace.namespaceBindings().put("", Engine.RULES_NS);
+		prevrulespace.namespaceBindings().put("record", Engine.RULES_NS);
 		
 		this.sortController = new SortController(this, modifiedDocs.anchor());
 
@@ -90,8 +94,8 @@ public class Engine {
 		globalScope = workspace.cloneWithoutNamespaceBindings().query();
 		if (modStore != null) {
 			modStore.namespaceBindings().clear();
-			modStore.namespaceBindings().put("", Transformer.MOD_NS);
-			modStore.namespaceBindings().put("mod", Transformer.MOD_NS);
+			modStore.namespaceBindings().put("", Engine.MOD_NS);
+			modStore.namespaceBindings().put("mod", Engine.MOD_NS);
 		}
 		this.modStore = modStore;
 		sortController = new SortController(this, modifiedDocs.anchor());
@@ -117,7 +121,7 @@ public class Engine {
 					.all("//$1", badBlockName.getLocalPart()).nodes()) {
 				// Adding a spurious attribute to the block will cause it to mismatch when
 				// the rule compares it to the current one later.
-				badBlock.update().namespace("record", Transformer.RECORD_NS)
+				badBlock.update().namespace("record", Engine.RECORD_NS)
 						.attr("record:version-mismatch", "true").commit();
 			}
 		}		
@@ -185,7 +189,7 @@ public class Engine {
 	 * @return <code>true</code> if the engine version matches, <code>false</code> otherwise
 	 */
 	public static boolean isSameVersionAs(Resource prevrulespace) {
-		return VERSION.equals(prevrulespace.query().namespace("record", Transformer.RECORD_NS)
+		return VERSION.equals(prevrulespace.query().namespace("record", Engine.RECORD_NS)
 				.optional("//record:engine/@version").value());
 	}
 	
@@ -195,7 +199,7 @@ public class Engine {
 	 * @param builder a builder on the resource to write to
 	 */
 	public static void recordVersions(ElementBuilder<?> builder) {
-		builder.namespace("record", Transformer.RECORD_NS)
+		builder.namespace("record", Engine.RECORD_NS)
 			.elem("record:engine").attr("version", VERSION).end("record:engine");
 		Rule.writeBlockTypeVersions(builder);
 	}
@@ -255,7 +259,6 @@ public class Engine {
 			}
 		}
 	};
-	private final SortController sortController;
 
 	/**
 	 * Run the transformation.
@@ -325,7 +328,7 @@ public class Engine {
 		}
 		
 		// Touch only the dependencies of the highest withdrawn mods, since any children will be resolved in global scope anyway.
-		mods = mods.query().namespace("", Transformer.MOD_NS).unordered("$_1 except $_1/descendant::*", mods);
+		mods = mods.query().namespace("", Engine.MOD_NS).unordered("$_1 except $_1/descendant::*", mods);
 		
 		for (String ruleId : utilQuery.unordered("distinct-values($_1/ancestor-or-self::*/@rule)", mods).values()) {
 			Rule rule = ruleMap.get(ruleId);
@@ -341,7 +344,7 @@ public class Engine {
 		LOG.debug("deleting " + modCountFormatter.format(mods.size()) + " and " + affectedCountFormatter.format(affected.size()));
 		
 		stats.numModsWithdrawn.increment(
-				mods.query().namespace("", Transformer.MOD_NS).single("count(descendant-or-self::mod)").intValue());
+				mods.query().namespace("", Engine.MOD_NS).single("count(descendant-or-self::mod)").intValue());
 		affected.deleteAllNodes();
 		mods.deleteAllNodes();
 	}
@@ -361,21 +364,21 @@ public class Engine {
 		
 		@Before public void createSpaces() {
 			workspace = db.createFolder("/workspace");
-			workspace.namespaceBindings().put("mod", Transformer.MOD_NS);
+			workspace.namespaceBindings().put("mod", Engine.MOD_NS);
 			rulespace = db.createFolder("/rulespace");
-			rulespace.namespaceBindings().put("", Transformer.RULES_NS);
+			rulespace.namespaceBindings().put("", Engine.RULES_NS);
 			prevrulespace = db.createFolder("/prevrulespace");
-			prevrulespace.namespaceBindings().put("", Transformer.RULES_NS);
+			prevrulespace.namespaceBindings().put("", Engine.RULES_NS);
 		}
 		
 		@Test public void invalidateIncompatibleBlocks() {
 			db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<root xmlns='" + Transformer.RECORD_NS + "'>" +
+					"<root xmlns='" + Engine.RECORD_NS + "'>" +
 					"  <block-type class='com.ideanest.dscribe.mixt.blocks.For' version='" + new For().version() + "'/>" +
 					"  <block-type class='com.ideanest.dscribe.mixt.blocks.With' version='" + new With().version() + "foo'/>" +
 					"</root>"));
 			db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<rules xmlns='" + Transformer.RULES_NS + "'>" +
+					"<rules xmlns='" + Engine.RULES_NS + "'>" +
 					"  <rule xml:id='r1'>" +
 					"    <for each='$x'>/foo</for>" +
 					"    <with some='$y'>$x/bar</with>" +
@@ -385,8 +388,8 @@ public class Engine {
 			Engine engine = new Engine(workspace, null);
 			engine.invalidateIncompatibleBlocks(db.getFolder("/"));
 			Node rule = db.getFolder("/").query()
-					.namespace("", Transformer.RULES_NS)
-					.namespace("record", Transformer.RECORD_NS)
+					.namespace("", Engine.RULES_NS)
+					.namespace("record", Engine.RECORD_NS)
 					.single("/id('r1')").node();
 			assertFalse(rule.query().exists("for[@record:version-mismatch]"));
 			assertTrue(rule.query().exists("with[@record:version-mismatch]"));
@@ -398,12 +401,12 @@ public class Engine {
 			Engine.recordVersions(builder);
 			builder.end("root").commit();
 			assertTrue(Engine.isSameVersionAs(db.getFolder("/")));
-			assertTrue(db.getFolder("/").query().namespace("", Transformer.RECORD_NS).exists("//block-type"));
+			assertTrue(db.getFolder("/").query().namespace("", Engine.RECORD_NS).exists("//block-type"));
 		}
 		
 		@Test public void verifyBadVersion() {
 			db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<root xmlns='" + Transformer.RECORD_NS + "'>" +
+					"<root xmlns='" + Engine.RECORD_NS + "'>" +
 					"  <engine version='" + Engine.VERSION + "foo'/>" +
 					"</root>"));
 			assertFalse(Engine.isSameVersionAs(db.getFolder("/")));
@@ -411,11 +414,11 @@ public class Engine {
 		
 		@Test public void parseRules() throws RuleBaseException, IllegalArgumentException, IllegalAccessException {
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
 					"  <rule xml:id='r1' name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
-			Node modStore = workspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + Transformer.MOD_NS + "'/>")).root();
+			Node modStore = workspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + Engine.MOD_NS + "'/>")).root();
 			Engine engine = new Engine(workspace, modStore);
 			engine.parseRules(rulespace, prevrulespace);
 			assertEquals(1, engine.rules.size());
@@ -425,7 +428,7 @@ public class Engine {
 		
 		@Test public void assignRuleIDs_generateFreshID() {
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
 					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"	<rule xml:id='r2' name='mysecondrule'/>" +
 					"</rules>"
@@ -439,13 +442,13 @@ public class Engine {
 		
 		@Test public void assignRuleIDs_copyPrevID() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
 					"  <rule xml:id='r1' name='myrule'/>" +
 					"  <rule xml:id='r2' name='some other rule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
 					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
@@ -456,13 +459,13 @@ public class Engine {
 		
 		@Test public void assignRuleIDs_matchAliasToName() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
 					"  <rule xml:id='r1' name='myrule'/>" +
 					"  <rule xml:id='r2' name='some other rule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
 					"  <rule name='foo'><alias name='myrule'/><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
@@ -473,13 +476,13 @@ public class Engine {
 		
 		@Test public void assignRuleIDs_matchNameToAlias() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
 					"  <rule xml:id='r1' name='foo'><alias name='myrule'/></rule>" +
 					"  <rule xml:id='r2' name='some other rule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
 					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
@@ -490,13 +493,13 @@ public class Engine {
 		
 		@Test public void assignRuleIDs_matchAliasToAlias() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
 					"  <rule xml:id='r1' name='foo'><alias name='myrule'/></rule>" +
 					"  <rule xml:id='r2' name='some other rule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
 					"  <rule name='bar'><alias name='myrule'/><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
@@ -507,13 +510,13 @@ public class Engine {
 		
 		@Test public void assignRuleIDs_multipleMatch() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
 					"  <rule xml:id='r1' name='foo'><alias name='myrule'/></rule>" +
 					"  <rule xml:id='r2' name='myrule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
 					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
@@ -526,12 +529,12 @@ public class Engine {
 		
 		@Test public void create() throws RuleBaseException, IllegalArgumentException {
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Transformer.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
 					"  <rule xml:id='r1' name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<modstore xmlns='" + Engine.MOD_NS + "'>" +
 					"<mods rule='r1'>" +
 					"	<mod xml:id='_r1.1'/>" +
 					"	<mod xml:id='_r1.2'><dependency doc='foo'/></mod>" +
@@ -542,8 +545,8 @@ public class Engine {
 					"	<mod xml:id='_r2.1'/>" +
 					"</mods>" +
 					"</modstore>")).root();
-			modStore.namespaceBindings().put("", Transformer.MOD_NS);
-			modStore.namespaceBindings().put("mod", Transformer.MOD_NS);
+			modStore.namespaceBindings().put("", Engine.MOD_NS);
+			modStore.namespaceBindings().put("mod", Engine.MOD_NS);
 			workspace.documents().load(Name.create("foo"), Source.xml("<foo/>"));
 			workspace.children().create("bar").documents().load(Name.create("foo"), Source.xml("<foo/>"));
 			Engine engine = new Engine(rulespace, prevrulespace, workspace, modStore);
@@ -576,7 +579,7 @@ public class Engine {
 		@Test public void executeTransform() throws TransformException, InterruptedException {
 			final XMLDocument olddoc1 = workspace.documents().load(Name.create("olddoc1"), Source.xml("<bar/>"));
 			final XMLDocument olddoc2 = workspace.documents().load(Name.create("olddoc2"), Source.xml("<bar/>"));
-			final Node modStore = workspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + Transformer.MOD_NS + "'/>")).root();
+			final Node modStore = workspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + Engine.MOD_NS + "'/>")).root();
 			final Rule rule = mockery.mock(Rule.class);
 			Engine engine = new Engine(workspace, modStore);
 			final Accumulator.Locator<XMLDocument> locator = engine.modifiedDocs.anchor();
@@ -603,7 +606,7 @@ public class Engine {
 		
 		@Test(expected = InterruptedException.class)
 		public void executeTransformCanBeInterrupted() throws TransformException, InterruptedException {
-			final Node modStore = workspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + Transformer.MOD_NS + "'/>")).root();
+			final Node modStore = workspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + Engine.MOD_NS + "'/>")).root();
 			final Rule rule = mockery.mock(Rule.class);
 			Engine engine = new Engine(workspace, modStore);
 			mockery.checking(new Expectations() {{
@@ -625,7 +628,7 @@ public class Engine {
 		
 		@Test public void withdrawModsSimple() {
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<modstore xmlns='" + Engine.MOD_NS + "'>" +
 					"<mods rule='r1'>" +
 					"  <mod xml:id='m1'/>" +
 					"  <mod xml:id='m2'/>" +
@@ -645,7 +648,7 @@ public class Engine {
 
 		@Test public void withdrawModsWithDescendants() {
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<modstore xmlns='" + Engine.MOD_NS + "'>" +
 					"<mods rule='r1'>" +
 					"  <mod xml:id='m1'>" +
 					"  	<mod xml:id='m1.1'/>" +
@@ -670,7 +673,7 @@ public class Engine {
 			final Document doc = workspace.documents().load(Name.generate(), Source.xml(
 					"<foo><bar xml:id='b1'/><bar xml:id='b2'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<modstore xmlns='" + Engine.MOD_NS + "'>" +
 					"<mods rule='r1'>" +
 					"  <mod xml:id='m1'><affected refid='b1'/></mod>" +
 					"  <mod xml:id='m2'/>" +
@@ -699,7 +702,7 @@ public class Engine {
 			workspace.documents().load(Name.create("c"), Source.xml(
 					"<foo><baz xml:id='c1'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<modstore xmlns='" + Engine.MOD_NS + "'>" +
 					"<mods rule='r1'>" +
 					"  <mod xml:id='m1'><affected refid='b1'/><dependency doc='a'/>" +
 					"  	<mod xml:id='m1.1'><dependency doc='c'/></mod>" +
@@ -727,7 +730,7 @@ public class Engine {
 			final Document doc = workspace.documents().load(Name.generate(), Source.xml(
 					"<foo><bar xml:id='b1'><baz xml:id='b1a'/></bar><bar xml:id='b2'/><xyz xml:id='b3'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<modstore xmlns='" + Engine.MOD_NS + "'>" +
 					"<mods rule='r1'>" +
 					"  <mod xml:id='m1'><affected refid='b1'/></mod>" +
 					"  <mod xml:id='m2'/>" +
@@ -757,7 +760,7 @@ public class Engine {
 
 		@Test public void withdrawRule() {
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<modstore xmlns='" + Engine.MOD_NS + "'>" +
 					"<mods rule='r1'>" +
 					"  <mod xml:id='m1'/>" +
 					"</mods>" +
@@ -779,7 +782,7 @@ public class Engine {
 
 		@Test public void withdrawMod() {
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
-					"<modstore xmlns='" + Transformer.MOD_NS + "'>" +
+					"<modstore xmlns='" + Engine.MOD_NS + "'>" +
 					"<mods rule='r1'>" +
 					"  <mod xml:id='m1'/>" +
 					"  <mod xml:id='m2'/>" +

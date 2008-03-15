@@ -54,7 +54,7 @@ public class Rule {
 	 * @param builder an element builder on the desired target resource
 	 */
 	static void writeBlockTypeVersions(ElementBuilder<?> builder) {
-		builder.namespace("record", Transformer.RECORD_NS);
+		builder.namespace("record", Engine.RECORD_NS);
 		for (BlockType blockType : BLOCK_TYPE_DICTIONARY.values()) {
 			builder.elem("record:block-type")
 				.attr("class", blockType.getClass().getName())
@@ -66,7 +66,7 @@ public class Rule {
 	static Collection<QName> verifyBlockTypeVersions(Resource record) {
 		Collection<QName> badBlockNames = new ArrayList<QName>();
 		for (BlockType blockType : BLOCK_TYPE_DICTIONARY.values()) {
-			final String lastVersion = record.query().namespace("record", Transformer.RECORD_NS).optional(
+			final String lastVersion = record.query().namespace("record", Engine.RECORD_NS).optional(
 					"//record:block-type[@class=$_1]/@version", blockType.getClass().getName()).value();
 			if (!blockType.version().equals(lastVersion)) {
 				LOG.info("block " + blockType.xmlName() + " changed from version " + lastVersion + " to " + blockType.version());
@@ -104,7 +104,7 @@ public class Rule {
 		LOG.debug("reading in " + this);
 		
 		rootMod = Mod.bootstrap(this);
-		rootMod.node().namespaceBindings().put("", Transformer.MOD_NS);
+		rootMod.node().namespaceBindings().put("", Engine.MOD_NS);
 		firstDifferentStage = parseBlocks(def, prevDef);
 		
 		if (firstDifferentStage < Integer.MAX_VALUE) {
@@ -448,7 +448,7 @@ public class Rule {
 		
 		@Before public void setUp() {
 			modStore = db.getFolder("/").documents().load(Name.create("mods"), Source.xml(
-					"<modstore xmlns='" + Transformer.MOD_NS + "'>" + 
+					"<modstore xmlns='" + Engine.MOD_NS + "'>" + 
 					"<mods rule='r1'>" +
 					"	<mod xml:id='_r1.j-230.' stage='0'>" + 
 					"		<dependency doc='model/something.java'/>" + 
@@ -469,7 +469,7 @@ public class Rule {
 					"	</mod>" +
 					"</mods>" + 
 					"</modstore>")).root();
-			modStore.namespaceBindings().put("", Transformer.MOD_NS);
+			modStore.namespaceBindings().put("", Engine.MOD_NS);
 			engine = mockery.mock(Engine.class);
 			mockery.checking(new Expectations() {{
 				allowing(engine).workspace(); will(returnValue(db.getFolder("/")));
@@ -481,7 +481,7 @@ public class Rule {
 		
 		private Node makeRule(String attributes, String xml) {
 			return db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<rule " + attributes + " xmlns='" + Transformer.RULES_NS + "'>" + xml + "</rule>")).root();
+					"<rule " + attributes + " xmlns='" + Engine.RULES_NS + "'>" + xml + "</rule>")).root();
 		}
 		
 		@Test public void sameDefsWithName() throws RuleBaseException {
@@ -553,8 +553,8 @@ public class Rule {
 		
 		protected void initLiteralModStore(String xml) {
 			modStore = db.getFolder("/").documents().load(Name.create("mods"), Source.xml(
-					"<modstore xmlns='" + Transformer.MOD_NS + "'><mods xml:id='_r1.' rule='r1'>" + xml + "</mods></modstore>")).root();
-			modStore.namespaceBindings().put("", Transformer.MOD_NS);
+					"<modstore xmlns='" + Engine.MOD_NS + "'><mods xml:id='_r1.' rule='r1'>" + xml + "</mods></modstore>")).root();
+			modStore.namespaceBindings().put("", Engine.MOD_NS);
 			mockery.checking(new Expectations() {{
 				allowing(rule.engine).modStore(); will(returnValue(modStore));
 			}});
@@ -626,7 +626,7 @@ public class Rule {
 	public static class _UtilityTest extends _RuleTest {
 		private Node makeBlock(String xml) {
 			return db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<blocks xmlns='" + Transformer.RULES_NS + "'>" + xml + "</blocks>")).root().query().single("*").node();
+					"<blocks xmlns='" + Engine.RULES_NS + "'>" + xml + "</blocks>")).root().query().single("*").node();
 		}
 		
 		@Test public void defineBlockWorks() throws RuleBaseException {
@@ -708,7 +708,7 @@ public class Rule {
 			ElementBuilder<XMLDocument> builder = db.getFolder("/").documents().build(Name.generate()).elem("root");
 			Rule.writeBlockTypeVersions(builder);
 			XMLDocument doc = builder.end("root").commit();
-			doc.namespaceBindings().put("", Transformer.RECORD_NS);
+			doc.namespaceBindings().put("", Engine.RECORD_NS);
 			assertEquals(BLOCK_CLASSES.length, doc.query().all("//block-type").size());
 			for (BlockType blockType : BLOCK_TYPE_DICTIONARY.values()) {
 				assertTrue(doc.query().exists("//block-type[@class=$_1][@version=$_2]", blockType.getClass().getName(), blockType.version()));
@@ -717,12 +717,12 @@ public class Rule {
 		
 		@Test public void verifyBlockTypeVersions() {
 			XMLDocument doc = db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<root xmlns='" + Transformer.RECORD_NS + "'>" +
+					"<root xmlns='" + Engine.RECORD_NS + "'>" +
 					"  <block-type class='com.ideanest.dscribe.mixt.blocks.For' version='" + new For().version() + "'/>" +
 					"  <block-type class='com.ideanest.dscribe.mixt.blocks.With' version='" + new With().version() + "foo'/>" +
 					"</root>"));
 			Collection<QName> badBlockNames = Rule.verifyBlockTypeVersions(doc);
-			NamespaceMap ns = new NamespaceMap("", Transformer.RULES_NS);
+			NamespaceMap ns = new NamespaceMap("", Engine.RULES_NS);
 			assertFalse("good version", badBlockNames.contains(QName.parse("for", ns)));
 			assertTrue("bad version", badBlockNames.contains(QName.parse("with", ns)));
 			assertTrue("missing record", badBlockNames.contains(QName.parse("insert", ns)));
@@ -733,7 +733,7 @@ public class Rule {
 	public static class _ParseBlocksTest extends _RuleTest {
 		private Node makeRule(String xml) {
 			return db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<rule xmlns='" + Transformer.RULES_NS + "'>" + xml + "</rule>")).root();
+					"<rule xmlns='" + Engine.RULES_NS + "'>" + xml + "</rule>")).root();
 		}
 		
 		@Before public void overrideMockShim() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
