@@ -636,16 +636,16 @@ public class Rule {
 		
 		@Test(expected = RuleBaseException.class)
 		public void defineBlockFailsOnUnknownBlockType() throws RuleBaseException {
-			rule.defineBlock(makeBlock("<foobar/>"));
+			rule.defineBlock(makeBlock("<foobar>foo</foobar>"));
 		}
 		
 		@Test(expected = RuleBaseException.class)
 		public void defineBlockFailsOnIllegalAttribute() throws RuleBaseException {
-			rule.defineBlock(makeBlock("<for into='$x'/>"));
+			rule.defineBlock(makeBlock("<for into='$x'>foo</for>"));
 		}
 		
 		@Test public void defineBlockAcceptsNamespacedAttribute() throws RuleBaseException {
-			rule.defineBlock(makeBlock("<for xmlns:x='foo' x:into='$x' each='$y'/>"));
+			rule.defineBlock(makeBlock("<for xmlns:x='foo' x:into='$x' each='$y'>foo</for>"));
 		}
 		
 		@Test public void compareBlocksEqual() {
