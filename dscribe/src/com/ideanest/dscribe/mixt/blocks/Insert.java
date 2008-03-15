@@ -9,6 +9,7 @@ import java.security.*;
 import java.util.*;
 
 import org.exist.fluent.*;
+import org.jmock.Expectations;
 import org.junit.Test;
 
 import com.ideanest.dscribe.mixt.*;
@@ -150,8 +151,36 @@ public class Insert implements BlockType {
 	}
 	
 	@Deprecated public static class _Test extends BlockTestCase {
-		@Test public void parse() throws RuleBaseException {
+		@Test public void parse1() throws RuleBaseException {
 			define("<insert><foo/></insert>");
+		}
+		
+		@Test public void parse2() throws RuleBaseException {
+			define("<insert in='order'><foo/></insert>");
+		}
+		
+		@Test public void parse3() throws RuleBaseException {
+			define("<insert in='order' priority='5'><foo/></insert>");
+		}
+		
+		@Test(expected = RuleBaseException.class)
+		public void parse4() throws RuleBaseException {
+			define("<insert in='foobar'><foo/></insert>");
+		}
+		
+		@Test(expected = RuleBaseException.class)
+		public void parse5() throws RuleBaseException {
+			define("<insert priority='5'><foo/></insert>");
+		}
+		
+		@Test(expected = RuleBaseException.class)
+		public void parse6() throws RuleBaseException {
+			define("<insert in='order' priority='xx'><foo/></insert>");
+		}
+		
+		@Test(expected = RuleBaseException.class)
+		public void parse7() throws RuleBaseException {
+			define("<insert>  </insert>");
 		}
 		
 		@Test public void calculateDigestMD5() throws RuleBaseException, NoSuchAlgorithmException {
@@ -180,7 +209,7 @@ public class Insert implements BlockType {
 			block.resolve(modBuilder);
 		}
 		
-		private void testResolve(String rule, int count, String result, String checksum) throws TransformException, RuleBaseException {
+		private void testResolve(String rule, int count, boolean inOrder, String result, String checksum) throws TransformException, RuleBaseException {
 			InsertBlock block = define(rule);
 			block.requiredVariables = Collections.emptyList();
 			
@@ -196,7 +225,7 @@ public class Insert implements BlockType {
 			setModGlobalScope(content.query());
 			
 			supplement();
-			generateIdsAndAffect("r1", count);
+			generateIdsAndAffect("r1", count, inOrder);
 			thenCommit();
 			
 			block.resolve(modBuilder);
@@ -208,26 +237,64 @@ public class Insert implements BlockType {
 		@Test public void resolveOneNode() throws RuleBaseException, TransformException {
 			testResolve(
 					"<insert><foo/></insert>",
-					1, "<foo xml:id='_r1.'/>",
+					1, false, "<foo xml:id='_r1.'/>",
+					"5KZSM2zZkiS5PyrDhT/IlQ==");
+		}
+		
+		@Test public void resolveOneOrderedNode() throws RuleBaseException, TransformException {
+			testResolve(
+					"<insert in='order'><foo/></insert>",
+					1, false, "<foo xml:id='_r1.'/>",
 					"5KZSM2zZkiS5PyrDhT/IlQ==");
 		}
 		
 		@Test public void resolveTwoNodes() throws TransformException, RuleBaseException {
 			testResolve(
 					"<insert>(<node1/>, <node2/>)</insert>",
-					2, "(<node1 xml:id='_r1-0'/>, <node2 xml:id='_r1-1'/>)",
+					2, false, "(<node1 xml:id='_r1-0'/>, <node2 xml:id='_r1-1'/>)",
+					"/UBBH4crvHJQiCQxRye4TQ==");
+		}
+		
+		@Test public void resolveTwoOrderedNodes() throws TransformException, RuleBaseException {
+			testResolve(
+					"<insert in='order'>(<node1/>, <node2/>)</insert>",
+					2, true, "(<node1 xml:id='_r1-0'/>, <node2 xml:id='_r1-1'/>)",
 					"/UBBH4crvHJQiCQxRye4TQ==");
 		}
 		
 		@Test public void resolveComplexNodes() throws TransformException, RuleBaseException {
 			testResolve(
 					"<insert>(<n1 xmlns:k='foo' name='bar'><k:n11 foo='bar'>la la <b>bla</b></k:n11><n12/></n1>, <n2 xmlns='bar'/>)</insert>",
-					2, "(<n1 xml:id='_r1-1.' xmlns:k='foo' name='bar'><k:n11 foo='bar'>la la <b>bla</b></k:n11><n12/></n1>, <n2 xml:id='_r1-2.' xmlns='bar'/>)",
+					2, false, "(<n1 xml:id='_r1-1.' xmlns:k='foo' name='bar'><k:n11 foo='bar'>la la <b>bla</b></k:n11><n12/></n1>, <n2 xml:id='_r1-2.' xmlns='bar'/>)",
 					"Sl+F6eU9sYgaSTCX6eKvFg==");
 		}
+		
+		@Test public void sortOneSegNoPriority() throws RuleBaseException {
+			InsertBlock block = define("<insert in='order'><foo/></insert>");
+			InsertBlock.InsertSeg seg = (InsertBlock.InsertSeg) block.createSeg(mod);
+			seg.inserted = Arrays.asList("m1", "m2");
+			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+			mockery.checking(new Expectations() {{
+				one(graph).totalOrderNodeIds(Arrays.asList("m1", "m2"), 0);
+			}});
+			block.sort(Collections.singletonList(seg), graph);
+		}
 
-		@Test
-		public void analyze() throws RuleBaseException, TransformException {
+		@Test public void sortTwoSegsWithPriority() throws RuleBaseException {
+			InsertBlock block = define("<insert in='order' priority='5'><foo/></insert>");
+			InsertBlock.InsertSeg seg1 = (InsertBlock.InsertSeg) block.createSeg(mod);
+			seg1.inserted = Arrays.asList("m1", "m2");
+			InsertBlock.InsertSeg seg2 = (InsertBlock.InsertSeg) block.createSeg(mod);
+			seg2.inserted = Arrays.asList("c1", "c2");
+			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+			mockery.checking(new Expectations() {{
+				one(graph).totalOrderNodeIds(Arrays.asList("m1", "m2"), 5);
+				one(graph).totalOrderNodeIds(Arrays.asList("c1", "c2"), 5);
+			}});
+			block.sort(Arrays.asList(seg1, seg2), graph);
+		}
+
+		@Test public void analyze() throws RuleBaseException, TransformException {
 			InsertBlock block = define("<insert><uml:name xmlns:uml='xxx'>{$src/text()}</uml:name></insert>");
 			setModGlobalScope(content.query());
 			Seg seg = block.createSeg(mod);
@@ -235,29 +302,22 @@ public class Insert implements BlockType {
 			assertThat(block.requiredVariables, is(collection("$src")));
 		}
 		
-		@Test
-		public void restore() throws RuleBaseException, TransformException {
+		@Test public void restore() throws RuleBaseException, TransformException {
 			InsertBlock block = define("<insert><foo/></insert>");
 			setModData("<block><checksum digest-type='MD5'>5KZSM2zZkiS5PyrDhT/IlQ==</checksum></block>");
+			setModAffectedIds("m1", "m2");
 			InsertBlock.InsertSeg seg = (InsertBlock.InsertSeg) block.createSeg(mod);
 			seg.restore();
 			assertEquals("MD5", seg.digestType);
 			assertEquals("5KZSM2zZkiS5PyrDhT/IlQ==", seg.checksum);
+			assertEquals(Arrays.asList("m1", "m2"), seg.inserted);
 		}
 		
-		@Test
-		public void verifyWorks() throws RuleBaseException, TransformException {
+		@Test public void verifyWorks() throws RuleBaseException, TransformException {
 			InsertBlock block = define("<insert><foo/></insert>");
 			InsertBlock.InsertSeg seg = (InsertBlock.InsertSeg) block.createSeg(mod);
 			seg.digestType = "MD5";
 			seg.checksum = "5KZSM2zZkiS5PyrDhT/IlQ==";
-			setModScope(content.query());
-			seg.verify();
-		}
-
-		public void verifyWorksEmpty() throws RuleBaseException, TransformException {
-			InsertBlock block = define("<insert></insert>");
-			InsertBlock.InsertSeg seg = (InsertBlock.InsertSeg) block.createSeg(mod);
 			setModScope(content.query());
 			seg.verify();
 		}

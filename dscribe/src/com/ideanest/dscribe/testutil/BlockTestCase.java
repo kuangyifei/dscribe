@@ -115,6 +115,12 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		}});
 	}
 	
+	public void setModAffectedIds(final String... ids) {
+		mockery.checking(new Expectations() {{
+			allowing(mod).affectedIds(); will(returnValue(Arrays.asList(ids)));
+		}});
+	}
+	
 	public <T> void setModNearestAncestorImplementing(final Class<? super T> clazz, final T implementor) throws TransformException {
 		mockery.checking(new Expectations() {{
 			allowing(mod).nearestAncestorImplementing(clazz); will(returnValue(implementor));
@@ -181,13 +187,20 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 				db.query().presub().single("$_1 eq $2", supplementNode, expected).booleanValue());
 	}
 	
-	public void generateIdsAndAffect(final String base, final int count) {
+	public void generateIdsAndAffect(final String base, final int count, final boolean inOrder) {
 		mockery.checking(new Expectations() {{
 			for (int i=1; i<=count; i++) {
+				Sequence seq1 = mockery.sequence("modBuilder pre-commit affect");
+				Sequence seq2 = mockery.sequence("modBuilder pre-commit order");
 				final String genid = "_" + base + (count == 1 ? "" : "-" + i) + ".";
 				one(modBuilder).generateId(count == 1 ? -1 : i);
-				will(returnValue(genid));
-				one(modBuilder).affect(with(new NodeIdMatcher(genid)));
+				will(returnValue(genid)); inSequences(seq1, seq2);
+				one(modBuilder).affect(with(new NodeIdMatcher(genid))); inSequence(seq1);
+				modBuilderPriors.add(seq1);
+				if (inOrder) {
+					one(modBuilder).order(with(new NodeIdMatcher(genid))); inSequence(seq2);
+					modBuilderPriors.add(seq2);
+				}
 			}
 		}});
 	}

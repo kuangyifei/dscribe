@@ -12,7 +12,8 @@ public abstract class Query {
 	private final String query;
 	private final NamespaceMap namespaceMap = new NamespaceMap();
 	
-	private Query(Node def, String query) {
+	private Query(Node def, String query) throws RuleBaseException {
+		if (query.trim().isEmpty()) throw new RuleBaseException("query string is empty");
 		this.query = query;
 		for (Iterator<String> it = def.query().all(
 				"for $prefix in in-scope-prefixes($_1) return ($prefix, namespace-uri-for-prefix($prefix, $_1))", def).values().iterator(); it.hasNext(); ) {
@@ -55,7 +56,7 @@ public abstract class Query {
 	}
 
 	public static class Items extends Query {
-		public Items(Node def) {
+		public Items(Node def) throws RuleBaseException {
 			super(def, serializeContents(def));
 		}
 		
@@ -69,7 +70,7 @@ public abstract class Query {
 	}
 
 	public static class Text extends Query {
-		public Text(Node def) {
+		public Text(Node def) throws RuleBaseException {
 			super(def, "<text value='" + serializeContents(def).replace("'", "''") + "'/>");
 		}
 		
@@ -90,12 +91,12 @@ public abstract class Query {
 			assertEquals("before<child>test<deepchild/>\n</child>after",
 					serializeContents(db.getFolder("/").query().single("<root>before<child>test<deepchild/></child>after</root>").node()));
 		}
-		@Test public void defineItemsQuery() {
+		@Test public void defineItemsQuery() throws RuleBaseException {
 			Query query = new Query.Items(db.getFolder("/").documents().build(Name.create("foo"))
 					.elem("root").text("//foo/bar[@baz]").end("root").commit().root());
 			assertEquals("//foo/bar[@baz]", query.query);
 		}
-		@Test public void defineItemsQueryWithNamespaces() {
+		@Test public void defineItemsQueryWithNamespaces() throws RuleBaseException {
 			Query query = new Query.Items(db.getFolder("/").documents().build(Name.create("foo"))
 					.elem("root")
 						.attr("xmlns:ns1", "http://example.com/ns1")

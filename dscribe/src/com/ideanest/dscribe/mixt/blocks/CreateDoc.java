@@ -30,7 +30,7 @@ public class CreateDoc implements BlockType {
 		private final Query.Text query;
 		private Collection<String> requiredVariables;
 		
-		CreateDocBlock(Node def) {
+		CreateDocBlock(Node def) throws RuleBaseException {
 			query = def.query().exists("node()") ? new Query.Text(def) : null;
 		}
 		
