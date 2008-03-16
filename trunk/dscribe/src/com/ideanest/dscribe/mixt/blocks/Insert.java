@@ -127,7 +127,7 @@ public class Insert implements BlockType {
 			}
 			
 			@Override public void restore() throws TransformException {
-				Node checksumNode = mod.node().query().optional("checksum").node();
+				Node checksumNode = mod.supplementQuery().optional("checksum").node();
 				digestType = checksumNode.query().optional("@digest-type").value();
 				checksum = checksumNode.value();
 				inserted = mod.affectedIds();

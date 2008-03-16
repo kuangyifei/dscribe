@@ -32,6 +32,7 @@ public class Mod {
 	private List<Node> references;
 	private Seg seg;
 	private Node node;
+	private QueryService supplementQuery;
 	
 	private Shim self;  // for testing only
 
@@ -106,8 +107,9 @@ public class Mod {
 	}
 	
 	Seg seg() {return seg;}
+	Node node() {return node;}
 	public String key() {return parent.key();}
-	public Node node() {return node;}
+	public QueryService supplementQuery() {return supplementQuery;}
 	
 	public Folder workspace() {
 		return rule.engine.workspace().cloneWithoutNamespaceBindings();
@@ -160,13 +162,12 @@ public class Mod {
 	
 	Mod restoreChild(Block block, Node modNode) throws TransformException {
 		Mod mod = self.deriveChild(block, modNode.query().optional("@xml:id").value());
-		mod.node = modNode;
+		mod.setNode(modNode);
 		mod.restore();
 		return mod;
 	}
 
 	void restore() throws TransformException {
-		node.namespaceBindings().put("", Engine.MOD_NS);
 		final int storedStage = node.query().single("@stage").intValue();
 		if (this.stage != storedStage)
 			throw new IllegalArgumentException("stage mismatch on node restore, given " + stage + ", stored " + storedStage);
@@ -185,10 +186,15 @@ public class Mod {
 			}
 		}
 		
-		node.namespaceBindings().replaceWith(EMPTY_NAMESPACES);
 		seg.restore();
-		node.namespaceBindings().put("", Engine.MOD_NS);
 		restored = true;
+	}
+	
+	private void setNode(Node myNode) {
+		node = myNode;
+		node.namespaceBindings().put("", Engine.MOD_NS);
+		supplementQuery = myNode.query();
+		supplementQuery.namespaceBindings().replaceWith(EMPTY_NAMESPACES);
 	}
 	
 	public List<String> affectedIds() {
@@ -302,10 +308,8 @@ public class Mod {
 				if (parent.node().query().exists("mod[@xml:id=$_1]", mod.key())) return;
 				
 				writeData(mod);
-				mod.node.namespaceBindings().replaceWith(EMPTY_NAMESPACES);
 				mod.seg = block.createSeg(mod);
 				mod.seg.restore();
-				mod.node.namespaceBindings().put("", Engine.MOD_NS);
 				children.add(mod);
 			} finally {
 				reset();
@@ -338,7 +342,7 @@ public class Mod {
 				}
 			}
 			if (supplement != null) builder.node(supplement.commit());
-			mod.node = builder.end("mod").commit();
+			mod.setNode(builder.end("mod").commit());
 		}
 		
 		void checkChildrenSize() throws TransformException {
@@ -1168,12 +1172,12 @@ public class Mod {
 		
 		@Test public void restoreNoReferences() throws TransformException {
 			final Mod mod = new Mod(parentMod);
-			mod.node = modStore.append()
+			mod.setNode(modStore.append()
 					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4)
-					.end("mod").commit();
+					.end("mod").commit());
 			mod.seg = mockery.mock(Seg.class);
 			mockery.checking(new Expectations() {{
-				one(mod.seg).restore();  will(checkThatNamespaceBindingsAreEmpty(mod.node.namespaceBindings()));
+				one(mod.seg).restore();  will(checkThatNamespaceBindingsAreEmpty(mod.supplementQuery().namespaceBindings()));
 			}});
 			mod.restore();
 			assertTrue(mod.restored);
@@ -1184,21 +1188,21 @@ public class Mod {
 		@Test(expected = IllegalArgumentException.class)
 		public void restoreWrongStage() throws TransformException {
 			final Mod mod = new Mod(parentMod);
-			mod.node = modStore.append()
+			mod.setNode(modStore.append()
 					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 5)
-					.end("mod").commit();
+					.end("mod").commit());
 			mod.restore();
 		}
 		
 		@Test public void restoreWithReferences() throws TransformException {
 			final Mod mod = new Mod(parentMod);
-			mod.node = modStore.append()
+			mod.setNode(modStore.append()
 					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4)
 					  .elem("reference").attr("refid", "e1").attr("doc", doc1Name).end("reference")
-					.end("mod").commit();
+					.end("mod").commit());
 			mod.seg = mockery.mock(Seg.class);
 			mockery.checking(new Expectations() {{
-				one(mod.seg).restore();  will(checkThatNamespaceBindingsAreEmpty(mod.node.namespaceBindings()));
+				one(mod.seg).restore();  will(checkThatNamespaceBindingsAreEmpty(mod.supplementQuery().namespaceBindings()));
 			}});
 			mod.restore();
 			assertTrue(mod.restored);
@@ -1209,19 +1213,19 @@ public class Mod {
 		@Test(expected = TransformException.class)
 		public void restoreWithBadReferencePath() throws TransformException {
 			final Mod mod = new Mod(parentMod);
-			mod.node = modStore.append()
+			mod.setNode(modStore.append()
 					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4)
 					  .elem("reference").attr("refid", "e1").attr("doc", "foo/doc").end("reference")
-					.end("mod").commit();
+					.end("mod").commit());
 			mod.restore();
 		}
 		
 		@Test public void affected() throws TransformException {
 			final Mod mod = new Mod(parentMod);
-			mod.node = modStore.append()
+			mod.setNode(modStore.append()
 					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4)
 					  .elem("affected").attr("refid", "e1").end("affected")
-					.end("mod").commit();
+					.end("mod").commit());
 			assertEquals(Collections.singletonList("e1"), mod.affectedIds());
 		}
 

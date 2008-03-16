@@ -42,7 +42,7 @@ public class Sort implements BlockType {
 			query = new Query.Items(def);
 		}
 		
-		@Override public void resolve(Mod.Builder modBuilder) throws TransformException {
+		public void resolve(Mod.Builder modBuilder) throws TransformException {
 			for (Node node : modBuilder.nearestAncestorImplementing(NodeTarget.class).targets().nodes()) {
 				modBuilder.order(node);
 				resolveOrder(modBuilder, node);
@@ -101,7 +101,7 @@ public class Sort implements BlockType {
 			graph.totalOrderPairs(entryList, priority);
 		}
 		
-		@Override public Seg createSeg(Mod mod) {
+		public Seg createSeg(Mod mod) {
 			return new SortByValueSeg(mod);
 		}
 		
@@ -121,7 +121,7 @@ public class Sort implements BlockType {
 			
 			@Override public void verify() throws TransformException {
 				for (Pair<String, Item> entry : values) {
-					String storedValue = mod.node().query().optional("sort-value[@refid=$_1]", entry.first).value();
+					String storedValue = mod.supplementQuery().optional("sort-value[@refid=$_1]", entry.first).value();
 					if (!entry.second.value().equals(storedValue))
 						throw new TransformException("value mismatch: " + storedValue + " vs " + entry.second.value());
 				}
@@ -177,7 +177,7 @@ public class Sort implements BlockType {
 			}
 		}
 
-		@Override public Seg createSeg(Mod mod) {
+		public Seg createSeg(Mod mod) {
 			return new SortByProxySeg(mod);
 		}
 		
@@ -186,7 +186,7 @@ public class Sort implements BlockType {
 			SortByProxySeg(Mod mod) {super(mod);}
 			
 			@Override public void restore() throws TransformException {
-				List<String> refids = mod.node().query().all("sort-proxy/@refid").values().asList();
+				List<String> refids = mod.supplementQuery().all("sort-proxy/@refid").values().asList();
 				proxies = new ArrayList<Pair<String, Node>>(refids.size());
 				int i=0;
 				for (Node proxy : mod.references()) proxies.add(Pair.of(refids.get(i++), proxy));
@@ -194,7 +194,7 @@ public class Sort implements BlockType {
 			
 			@Override public void verify() throws TransformException {
 				for (Node node : mod.nearestAncestorImplementing(NodeTarget.class).targets().nodes()) {
-					if (!mod.node().query().single(
+					if (!mod.supplementQuery().single(
 							"let $record := sort-proxy[@proxyid=$_1/@xml:id] " +
 							"return xs:integer($record/@position) eq count($_1/preceding-sibling::*) " +
 							"	and $record/@proxyparentid eq $_1/../@xml:id", node).booleanValue())
@@ -204,7 +204,7 @@ public class Sort implements BlockType {
 		}
 	}
 	
-	private static class SortBySiblingBlock extends SortBlock {
+	private static class SortBySiblingBlock extends SortBlock implements SortingBlock<SortBySiblingBlock.SortBySiblingSeg> {
 		private final boolean before;
 		SortBySiblingBlock(Node def) throws RuleBaseException {
 			super(def);
@@ -215,22 +215,44 @@ public class Sort implements BlockType {
 		}
 		
 		@Override void resolveOrder(Mod.Builder modBuilder, Node node) {
-			
+			ItemList siblings = query.runOn(modBuilder.scopeWithVariablesBound(node.query()));
+			ElementBuilder<?> builder = modBuilder.supplement();
+			builder.elem("sibling-list").attr("refid", node.query().single("@xml:id").value());
+			for (String siblingId : siblings.query().all("@xml:id").values()) {
+				builder.elem("sibling").attr("refid", siblingId).end("sibling");
+			}
+			builder.end("sibling-list");
 		}
 		
-		@Override public Seg createSeg(Mod mod) {
+		public void sort(Collection<SortBySiblingSeg> segs, OrderGraph graph) {
+			for (SortBySiblingSeg seg : segs) {
+				for (Node siblingList : seg.mod.supplementQuery().all("sibling-list").nodes()) {
+					String targetId = siblingList.query().single("@refid").value();
+					for (String siblingId : siblingList.query().all("sibling/@refid").values()) {
+						if (before) {
+							graph.order(targetId, siblingId, priority);
+						} else {
+							graph.order(siblingId, targetId, priority);
+						}
+					}
+				}
+			}
+		}
+		
+		public Seg createSeg(Mod mod) {
 			return new SortBySiblingSeg(mod);
 		}
 		
 		private class SortBySiblingSeg extends SortBlock.SortSeg {
 			SortBySiblingSeg(Mod mod) {super(mod);}
-
-			@Override public void restore() throws TransformException {
-				
-			}
 			
 			@Override public void verify() throws TransformException {
-				
+				for (Node target : mod.nearestAncestorImplementing(NodeTarget.class).targets().nodes()) {
+					List<String> actualSiblingIds = query.runOn(mod.scope(target.query())).query().all("@xml:id").values().asList();
+					List<String> storedSiblingIds = mod.supplementQuery().all("sibling-list[@refid=$_1/@xml:id]/sibling/@refid", target).values().asList();
+					if (!actualSiblingIds.equals(storedSiblingIds))
+						throw new TransformException("sibling list changed for target " + target.query().single("@xml:id").value());
+				}
 			}
 		}
 	}
