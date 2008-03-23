@@ -8,6 +8,7 @@ import java.util.*;
 import org.exist.fluent.*;
 import org.hamcrest.*;
 import org.jmock.*;
+import org.jmock.api.Action;
 import org.jmock.integration.junit4.*;
 import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
@@ -28,7 +29,7 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 	protected Mod.Builder modBuilder;
 	protected KeyMod.Builder keyModBuilder;
 	
-	private List<Sequence> modBuilderPriors = new LinkedList<Sequence>();
+	protected List<Sequence> modBuilderPriors = new LinkedList<Sequence>();
 	private ElementBuilder<XMLDocument> supplementBuilder;
 	
 	@Before
@@ -71,6 +72,13 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		}});
 	}
 	
+	public void setModBuilderScopeWithVariablesBound(final QueryService qs) {
+		mockery.checking(new Expectations() {{
+			allowing(modBuilder).scopeWithVariablesBound(with(any(QueryService.class)));
+			will(returnValue(qs));
+		}});
+	}
+	
 	public void setModBuilderParent(final Mod mod) {
 		mockery.checking(new Expectations() {{
 			allowing(modBuilder).parent(); will(returnValue(mod));
@@ -84,16 +92,23 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 	}
 	
 	public void setModData(String xml) {
-		final Node data = db.createFolder("/supplement").documents().build(Name.generate()).node(
-				db.query().single(xml).node()).commit().root();
+		final Node data = db.createFolder("/supplement").documents().build(Name.generate()).elem("root").nodes(
+				db.query().all(xml).nodes()).end("root").commit().root();
 		mockery.checking(new Expectations() {{
 			allowing(mod).supplementQuery(); will(returnValue(data.query()));
 		}});
 	}
 	
-	public void setModScope(final QueryService qs) {
+	public void setModScope(final QueryService... qs) {
 		mockery.checking(new Expectations() {{
-			allowing(mod).scope(with(any(QueryService.class))); will(returnValue(qs));
+			allowing(mod).scope(with(any(QueryService.class)));
+			if (qs.length == 1) {
+				will(returnValue(qs[0]));
+			} else {
+				Action[] actions = new Action[qs.length];
+				for (int i=0; i<qs.length; i++) actions[i] = returnValue(qs[i]);
+				will(onConsecutiveCalls(actions));
+			}
 		}});
 	}
 	
@@ -145,6 +160,15 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		mockery.checking(new Expectations() {{
 			Sequence seq = mockery.sequence("modBuilder pre-commit referenceKey");
 			one(keyModBuilder).referenceKey(node); inSequence(seq);
+			modBuilderPriors.add(seq);
+		}});
+	}
+	
+	public void dependOnDocument(final XMLDocument doc) {
+		mockery.checking(new Expectations() {{
+			Sequence seq = mockery.sequence("modBuilder pre-commit dependOn document");
+			DependencyModifier dependecyModifier = mockery.mock(Mod.Builder.DependencyModifier.class);
+			one(modBuilder).dependOn(doc); will(returnValue(dependecyModifier)); inSequence(seq);
 			modBuilderPriors.add(seq);
 		}});
 	}
@@ -205,6 +229,14 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		}});
 	}
 	
+	public void order(final String nodeId) {
+		mockery.checking(new Expectations() {{
+			Sequence seq = mockery.sequence("modBuilder pre-commit order");
+			one(modBuilder).order(with(new NodeIdMatcher(nodeId))); inSequence(seq);
+			modBuilderPriors.add(seq);
+		}});
+	}
+	
 	public void thenCommit() throws TransformException {
 		mockery.checking(new Expectations() {{
 			one(modBuilder).commit();
@@ -212,7 +244,7 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		}});
 	}
 	
-	public void bindVariable(final String name, final Object value) throws TransformException {
+	public void bindVariable(final String name, final Resource value) throws TransformException {
 		mockery.checking(new Expectations() {{
 			one(mod).bindVariable(name,value);
 		}});

@@ -4,14 +4,11 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.*;
 
-import org.apache.log4j.Logger;
 import org.exist.fluent.*;
 import org.junit.*;
 
 
 public class SortController {
-	private static final Logger LOG = Logger.getLogger(SortController.class);
-	
 	private final Engine engine;
 	private final Accumulator.Locator<XMLDocument> modifiedDocsLocator;
 	private Set<XMLDocument> docsPending = new HashSet<XMLDocument>();
@@ -112,24 +109,6 @@ public class SortController {
 			if (edge(fromIndex, toIndex) < priority) setEdge(fromIndex, toIndex, priority);
 		}
 		
-		public <T> void totalOrderPairs(List<Pair<String, T>> list, int priority) {
-			if (!(list instanceof RandomAccess)) LOG.warn("OrderGraph.totalOrderPairs() received a list that doesn't support random access, slowness ahead");
-			for (int i=0; i<list.size()-1; i++) {
-				for (int j=i+1; j<list.size(); j++) {
-					order(list.get(i).first, list.get(j).first, priority);
-				}
-			}
-		}
-		
-		public void totalOrderNodeIds(List<String> list, int priority) {
-			if (!(list instanceof RandomAccess)) LOG.warn("OrderGraph.totalOrderNodeIds() received a list that doesn't support random access, slowness ahead");
-			for (int i=0; i<list.size()-1; i++) {
-				for (int j=i+1; j<list.size(); j++) {
-					order(list.get(i), list.get(j), priority);
-				}
-			}
-		}
-		
 		int applyOrder() {
 			calculateMaxes();
 			Arrays.fill(placed, false);
@@ -141,6 +120,7 @@ public class SortController {
 				if (maxes[i] > min) {
 					for (int j = 0; j < numNodes; j++) {
 						if (!placed[j] && maxes[j] <= min) {
+							// TODO: if multiple mins, select based on id to get stability
 							selected = j;
 							break;
 						}

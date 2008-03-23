@@ -107,7 +107,11 @@ public class Insert implements BlockType {
 		public void sort(Collection<InsertSeg> segs, OrderGraph graph) {
 			assert inOrder;
 			for (InsertSeg seg : segs) {
-				graph.totalOrderNodeIds(seg.inserted, priority);
+				for (int i = 0; i < seg.inserted.size() - 1; i++) {
+					for (int j = i + 1; j < seg.inserted.size(); j++) {
+						graph.order(seg.inserted.get(i), seg.inserted.get(j), priority);
+					}
+				}
 			}
 		}
 		
@@ -272,10 +276,12 @@ public class Insert implements BlockType {
 		@Test public void sortOneSegNoPriority() throws RuleBaseException {
 			InsertBlock block = define("<insert in='order'><foo/></insert>");
 			InsertBlock.InsertSeg seg = (InsertBlock.InsertSeg) block.createSeg(mod);
-			seg.inserted = Arrays.asList("m1", "m2");
+			seg.inserted = Arrays.asList("m1", "m2", "m3");
 			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
 			mockery.checking(new Expectations() {{
-				one(graph).totalOrderNodeIds(Arrays.asList("m1", "m2"), 0);
+				one(graph).order("m1", "m2", 0);
+				one(graph).order("m1", "m3", 0);
+				one(graph).order("m2", "m3", 0);
 			}});
 			block.sort(Collections.singletonList(seg), graph);
 		}
@@ -288,8 +294,8 @@ public class Insert implements BlockType {
 			seg2.inserted = Arrays.asList("c1", "c2");
 			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
 			mockery.checking(new Expectations() {{
-				one(graph).totalOrderNodeIds(Arrays.asList("m1", "m2"), 5);
-				one(graph).totalOrderNodeIds(Arrays.asList("c1", "c2"), 5);
+				one(graph).order("m1", "m2", 5);
+				one(graph).order("c1", "c2", 5);
 			}});
 			block.sort(Arrays.asList(seg1, seg2), graph);
 		}
@@ -304,7 +310,7 @@ public class Insert implements BlockType {
 		
 		@Test public void restore() throws RuleBaseException, TransformException {
 			InsertBlock block = define("<insert><foo/></insert>");
-			setModData("<block><checksum digest-type='MD5'>5KZSM2zZkiS5PyrDhT/IlQ==</checksum></block>");
+			setModData("<checksum digest-type='MD5'>5KZSM2zZkiS5PyrDhT/IlQ==</checksum>");
 			setModAffectedIds("m1", "m2");
 			InsertBlock.InsertSeg seg = (InsertBlock.InsertSeg) block.createSeg(mod);
 			seg.restore();
