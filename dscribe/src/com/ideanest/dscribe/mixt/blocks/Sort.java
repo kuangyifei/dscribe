@@ -1,11 +1,18 @@
 package com.ideanest.dscribe.mixt.blocks;
+import static com.ideanest.dscribe.testutil.Matchers.collection;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
 import org.exist.fluent.*;
+import org.jmock.*;
+import org.junit.Test;
 
 import com.ideanest.dscribe.mixt.*;
+import com.ideanest.dscribe.mixt.Mod.Builder;
 import com.ideanest.dscribe.mixt.SortController.OrderGraph;
+import com.ideanest.dscribe.testutil.BlockTestCase;
 
 public class Sort implements BlockType {
 
@@ -53,6 +60,20 @@ public class Sort implements BlockType {
 		
 		abstract void resolveOrder(Mod.Builder modBuilder, Node node) throws TransformException;
 		
+		protected <T> void totalOrder(List<Pair<String, T>> items, Comparator<Pair<String, T>> comparator, SortController.OrderGraph graph) {
+			Collections.sort(items, comparator);
+			int size = items.size();
+			for (int i = 0; i < size - 1; i++) {
+				Pair<String, T> item1 = items.get(i);
+				for (int j = i + 1; j < size; j++) {
+					Pair<String, T> item2 = items.get(j);
+					int pairOrder = comparator.compare(item1, item2);
+					assert pairOrder <= 0;
+					if (pairOrder != 0) graph.order(item1.first, item2.first, priority);
+				}
+			}
+		}
+		
 		private class SortSeg extends Seg {
 			SortSeg(Mod mod) {super(mod);}
 			@Override public void analyze() throws TransformException {
@@ -66,6 +87,7 @@ public class Sort implements BlockType {
 		
 		SortByValueBlock(Node def) throws RuleBaseException {
 			super(def);
+			// TODO: support collations
 			String direction = def.query().single("@by").value();
 			if ("ascending".equals(direction)) ascending = true;
 			else if ("descending".equals(direction)) ascending = false;
@@ -82,13 +104,13 @@ public class Sort implements BlockType {
 				.end("sort-value");
 		}
 		
-		private static final Comparator<Pair<String, Item>> VALUE_COMPARATOR = new Comparator<Pair<String, Item>>() {
+		private static final Comparator<Pair<String, Item>> ASCENDING_VALUE_COMPARATOR = new Comparator<Pair<String, Item>>() {
 			@Override public int compare(Pair<String, Item> o1, Pair<String, Item> o2) {
 				return o1.second.comparableValue().compareTo(o2.second.comparableValue());
 			}
 		};
 		
-		private static final Comparator<Pair<String, Item>> REVERSE_VALUE_COMPARATOR = new Comparator<Pair<String, Item>>() {
+		private static final Comparator<Pair<String, Item>> DESCENDING_VALUE_COMPARATOR = new Comparator<Pair<String, Item>>() {
 			@Override public int compare(Pair<String, Item> o1, Pair<String, Item> o2) {
 				return -o1.second.comparableValue().compareTo(o2.second.comparableValue());
 			}
@@ -97,8 +119,7 @@ public class Sort implements BlockType {
 		public void sort(Collection<SortByValueSeg> segs, OrderGraph graph) {
 			List<Pair<String, Item>> entryList = new ArrayList<Pair<String, Item>>();
 			for (SortByValueSeg seg : segs) entryList.addAll(seg.values);
-			Collections.sort(entryList, ascending ? VALUE_COMPARATOR : REVERSE_VALUE_COMPARATOR);
-			graph.totalOrderPairs(entryList, priority);
+			totalOrder(entryList, ascending ? ASCENDING_VALUE_COMPARATOR : DESCENDING_VALUE_COMPARATOR, graph);
 		}
 		
 		public Seg createSeg(Mod mod) {
@@ -115,7 +136,7 @@ public class Sort implements BlockType {
 				for (Node node : targets.nodes()) {
 					ItemList items = query.runOn(mod.scope(node.query()));
 					if (items.size() != 1) throw new TransformException("sort by value query did not select exactly one item: " + items);
-					values.add(Pair.of(node.query().single("@xml:id").value(), items.get(0)));
+					values.add(Pair.of(node.query().single("@xml:id").value(), items.get(0).toAtomicItem()));
 				}
 			}
 			
@@ -172,8 +193,7 @@ public class Sort implements BlockType {
 				}
 			}
 			for (List<Pair<String, Node>> list : docMap.values()) {
-				Collections.sort(list, NODE_ORDER_COMPARATOR);
-				graph.totalOrderPairs(list, priority);
+				totalOrder(list, NODE_ORDER_COMPARATOR, graph);
 			}
 		}
 
@@ -257,4 +277,214 @@ public class Sort implements BlockType {
 		}
 	}
 
+	@Deprecated public static class _SortBlockTest extends BlockTestCase {
+		@Test(expected = RuleBaseException.class)
+		public void parse1() throws RuleBaseException {
+			define("<sort>@foo</sort>");
+		}
+
+		@Test(expected = RuleBaseException.class)
+		public void parse2() throws RuleBaseException {
+			define("<sort by='ascending' as='corresponding'>@foo</sort>");
+		}
+		
+		@Test public void parse3() throws RuleBaseException {
+			SortBlock block = define("<sort by='ascending' priority='5'>@foo</sort>");
+			assertEquals(5, block.priority);
+		}
+
+		@Test public void parse4() throws RuleBaseException {
+			SortBlock block = define("<sort by='ascending' priority='-100'>@foo</sort>");
+			assertEquals(-100, block.priority);
+		}
+
+		@Test public void totalOrder() throws RuleBaseException {
+			SortBlock block = define("<sort by='ascending' priority='5'>@foo</sort>");
+			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+			mockery.checking(new Expectations() {{
+				one(graph).order("x2", "x1", 5);
+				one(graph).order("x2", "x3", 5);
+				one(graph).order("x2", "x4", 5);
+				one(graph).order("x1", "x4", 5);
+				one(graph).order("x3", "x4", 5);
+			}});
+			List<Pair<String, Integer>> list = new ArrayList<Pair<String, Integer>>();
+			list.add(Pair.of("x1", 23));
+			list.add(Pair.of("x2", 18));
+			list.add(Pair.of("x3", 23));
+			list.add(Pair.of("x4", 35));
+			Comparator<Pair<String, Integer>> comparator = new Comparator<Pair<String, Integer>>() {
+				public int compare(Pair<String, Integer> o1, Pair<String, Integer> o2) {
+					return o1.second.compareTo(o2.second);
+				}
+			};
+			block.totalOrder(list, comparator, graph);
+		}
+		
+		@Test public void resolve() throws RuleBaseException, TransformException {
+			final Node m1 = content.query().single("/id('m1')").node();
+			final Node m2 = content.query().single("/id('m2')").node();
+			final SortBlock mockBlock = mockery.mock(SortBlock.class);
+			SortBlock block = new SortBlock(db.getFolder("/").documents().load(Name.create("rule"), Source.xml(
+					"<rule><sort by='ascending'>@foo</sort></rule>")).root().query().single("*").node()) {
+				@Override void resolveOrder(Builder aModBuilder, Node node) throws TransformException {
+					mockBlock.resolveOrder(aModBuilder, node);
+				}
+				@Override public Seg createSeg(Mod unused) {
+					fail();
+					return null;
+				}
+			};
+			modBuilder = mockery.mock(Mod.Builder.class);
+			mockery.checking(new Expectations() {{
+				Sequence seq1 = mockery.sequence("pre-commit resolveOrder 1");
+				Sequence seq2 = mockery.sequence("pre-commit resolveOrder 2");
+				one(mockBlock).resolveOrder(modBuilder, m1); inSequence(seq1);
+				one(mockBlock).resolveOrder(modBuilder, m2); inSequence(seq2);
+				modBuilderPriors.add(seq1);  modBuilderPriors.add(seq2);
+			}});
+			block.requiredVariables = Arrays.asList(new String[] {"$a", "$b"});
+			setModBuilderNearestAncestorImplementing(NodeTarget.class, new NodeTarget() {
+				public ItemList targets() throws TransformException {
+					return content.query().all("/id('m1 m2')");
+				}
+			});
+			order("m1");
+			order("m2");
+			dependOnVariables("$a", "$b");
+			thenCommit();
+			block.resolve(modBuilder);
+		}
+		
+		@Test public void analyze() throws RuleBaseException, TransformException {
+			SortBlock block = define("<sort as='corresponding'>$src</sort>");
+			setModGlobalScope(content.query());
+			Seg seg = block.createSeg(mod);
+			seg.analyze();
+			assertThat(block.requiredVariables, is(collection("$src")));
+		}
+	}
+	
+	@Deprecated public static class _SortByValueTest extends BlockTestCase {
+		@Test public void parse1() throws RuleBaseException {
+			SortByValueBlock block = define("<sort by='ascending'>@foo</sort>");
+			assertTrue(block.ascending);
+			assertEquals(0, block.priority);
+		}
+
+		@Test public void parse2() throws RuleBaseException {
+			SortByValueBlock block = define("<sort by='descending'>@foo</sort>");
+			assertFalse(block.ascending);
+			assertEquals(0, block.priority);
+		}
+
+		@Test(expected = RuleBaseException.class)
+		public void parse5() throws RuleBaseException {
+			define("<sort by='foo'>@foo</sort>");
+		}
+
+		@Test(expected = RuleBaseException.class)
+		public void parse6() throws RuleBaseException {
+			define("<sort by='ascending' priority='x'>@foo</sort>");
+		}
+		
+		@Test public void resolveOrder() throws RuleBaseException, TransformException {
+			SortBlock block = define("<sort by='ascending'>@name</sort>");
+			Node m1 = content.query().single("/id('m1')").node();
+			setModBuilderScopeWithVariablesBound(m1.query());
+			dependOnDocument(m1.document());
+			supplement();
+			block.resolveOrder(modBuilder, m1);
+			checkSupplement("<sort-value refid='m1'>start</sort-value>");
+		}
+		
+		@Test(expected = TransformException.class)
+		public void resolveOrderBadQuery() throws RuleBaseException, TransformException {
+			SortBlock block = define("<sort by='ascending'>*</sort>");
+			Node c1 = content.query().single("/id('c1')").node();
+			setModBuilderScopeWithVariablesBound(c1.query());
+			block.resolveOrder(modBuilder, c1);
+		}
+		
+		@Test public void restore() throws RuleBaseException, TransformException {
+			setModNearestAncestorImplementing(NodeTarget.class, new NodeTarget() {
+				public ItemList targets() throws TransformException {
+					return content.query().all("/id('m1 m2')");
+				}
+			});
+			setModScope(content.query().single("/id('m1')").node().query(), content.query().single("/id('m2')").node().query());
+			SortByValueBlock block = define("<sort by='ascending'>@name</sort>");
+			SortByValueBlock.SortByValueSeg seg = (SortByValueBlock.SortByValueSeg) block.createSeg(mod);
+			seg.restore();
+			assertEquals(
+					Arrays.asList(new Pair[] {
+							Pair.of("m1", content.query().single("/id('m1')/@name").toAtomicItem()),
+							Pair.of("m2", content.query().single("/id('m2')/@name").toAtomicItem())}),
+					seg.values);
+		}
+		
+		@Test(expected = TransformException.class)
+		public void restoreBadQuery() throws RuleBaseException, TransformException {
+			setModNearestAncestorImplementing(NodeTarget.class, new NodeTarget() {
+				public ItemList targets() throws TransformException {
+					return content.query().all("/id('c1')");
+				}
+			});
+			setModScope(content.query().single("/id('c1')").node().query());
+			SortByValueBlock block = define("<sort by='ascending'>*</sort>");
+			SortByValueBlock.SortByValueSeg seg = (SortByValueBlock.SortByValueSeg) block.createSeg(mod);
+			seg.restore();
+		}
+		
+		@Test public void verify() throws RuleBaseException, TransformException {
+			SortByValueBlock block = define("<sort by='ascending'>@name</sort>");
+			SortByValueBlock.SortByValueSeg seg = (SortByValueBlock.SortByValueSeg) block.createSeg(mod);
+			setModData("(<sort-value refid='m1'>start</sort-value>, <sort-value refid='m2'>end</sort-value>)");
+			seg.values = new ArrayList<Pair<String, Item>>();
+			seg.values.add(Pair.of("m1", content.query().single("/id('m1')/@name").toAtomicItem()));
+			seg.values.add(Pair.of("m2", content.query().single("/id('m2')/@name").toAtomicItem()));
+			seg.verify();
+		}
+
+		@Test(expected = TransformException.class)
+		public void verifyBad() throws RuleBaseException, TransformException {
+			SortByValueBlock block = define("<sort by='ascending'>@name</sort>");
+			SortByValueBlock.SortByValueSeg seg = (SortByValueBlock.SortByValueSeg) block.createSeg(mod);
+			setModData("(<sort-value refid='m1'>start</sort-value>, <sort-value refid='m2'>foo</sort-value>)");
+			seg.values = new ArrayList<Pair<String, Item>>();
+			seg.values.add(Pair.of("m1", content.query().single("/id('m1')/@name").toAtomicItem()));
+			seg.values.add(Pair.of("m2", content.query().single("/id('m2')/@name").toAtomicItem()));
+			seg.verify();
+		}
+		
+		@Test public void sortAscending() throws RuleBaseException {
+			SortByValueBlock block = define("<sort by='ascending'>@name</sort>");
+			SortByValueBlock.SortByValueSeg seg1 = (SortByValueBlock.SortByValueSeg) block.createSeg(mod);
+			SortByValueBlock.SortByValueSeg seg2 = (SortByValueBlock.SortByValueSeg) block.createSeg(mod);
+			seg1.values = new ArrayList<Pair<String, Item>>();
+			seg1.values.add(Pair.of("m1", content.query().single("/id('m1')/@name").toAtomicItem()));
+			seg2.values = new ArrayList<Pair<String, Item>>();
+			seg2.values.add(Pair.of("m2", content.query().single("/id('m2')/@name").toAtomicItem()));
+			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+			mockery.checking(new Expectations() {{
+				one(graph).order("m2", "m1", 0);
+			}});
+			block.sort(Arrays.asList(seg1, seg2), graph);
+		}
+
+		@Test public void sortDescending() throws RuleBaseException {
+			SortByValueBlock block = define("<sort by='descending'>@name</sort>");
+			SortByValueBlock.SortByValueSeg seg1 = (SortByValueBlock.SortByValueSeg) block.createSeg(mod);
+			SortByValueBlock.SortByValueSeg seg2 = (SortByValueBlock.SortByValueSeg) block.createSeg(mod);
+			seg1.values = new ArrayList<Pair<String, Item>>();
+			seg1.values.add(Pair.of("m1", content.query().single("/id('m1')/@name").toAtomicItem()));
+			seg2.values = new ArrayList<Pair<String, Item>>();
+			seg2.values.add(Pair.of("m2", content.query().single("/id('m2')/@name").toAtomicItem()));
+			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+			mockery.checking(new Expectations() {{
+				one(graph).order("m1", "m2", 0);
+			}});
+			block.sort(Arrays.asList(seg1, seg2), graph);
+		}
+	}
 }

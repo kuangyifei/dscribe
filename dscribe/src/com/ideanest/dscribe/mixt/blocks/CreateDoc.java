@@ -146,7 +146,7 @@ public class CreateDoc implements BlockType {
 		
 		@Test public void restore() throws RuleBaseException, TransformException {
 			CreateDocBlock block = define("<create-doc>constant</create-doc>");
-			setModData("<block><docname>hellothere</docname></block>");
+			setModData("<docname>hellothere</docname>");
 			CreateDocBlock.CreateDocSeg seg = (CreateDocBlock.CreateDocSeg) block.createSeg(mod);
 			seg.restore();
 			assertEquals("hellothere", seg.name);

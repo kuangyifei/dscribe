@@ -83,7 +83,7 @@ public class For implements BlockType {
 		private class ForSeg extends Seg implements InsertionTarget, NodeTarget {
 			ForSeg(Mod mod) {super(mod);}
 			
-			private void bindVariable(Object value) throws TransformException {
+			private void bindVariable(Resource value) throws TransformException {
 				if (variableName != null) mod.bindVariable(variableName, value);
 			}
 			
