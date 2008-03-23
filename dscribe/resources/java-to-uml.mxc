@@ -32,7 +32,7 @@ rule copy fields to attributes
 	insert:					<uml:attribute depicts='{$source/@xml:id}'/>
 	sort as corresponding:	$source
 
-rule copy fields to attributes
+rule copy method to operations
 	for each $source:		//java:method | //java:constructor
 	for one target:		//uml:class[@depicts=$source/../@xml:id]/uml:compartment[@kind='operation']
 	insert:					<uml:operation depicts='{$source/@xml:id}'/>
