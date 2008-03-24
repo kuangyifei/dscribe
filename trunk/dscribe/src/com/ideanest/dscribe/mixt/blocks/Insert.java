@@ -81,7 +81,7 @@ public class Insert implements BlockType {
 					genIdList.add(id);
 					node.update().attr("xml:id", id).commit();
 				}
-				modBuilder.nearestAncestorImplementing(InsertionTarget.class)
+				modBuilder.dependOnNearest(InsertionTarget.class).unverified().get()
 						.contentBuilder().nodes(nodesToInsert.nodes()).commit();
 				for (String id : genIdList) {
 					Node insertedNode = modBuilder.parent().globalScope().single("/id($_1)", id).node();
@@ -221,13 +221,13 @@ public class Insert implements BlockType {
 			
 			setModBuilderScope(content.query());
 			setModBuilderParent(mod);
-			setModBuilderNearestAncestorImplementing(InsertionTarget.class, new InsertionTarget() {
+			setModGlobalScope(content.query());
+			
+			dependOnNearest(InsertionTarget.class, false, new InsertionTarget() {
 				public ElementBuilder<?> contentBuilder() throws TransformException {
 					return outputNode.append(); 
 				}
 			});
-			setModGlobalScope(content.query());
-			
 			supplement();
 			generateIdsAndAffect("r1", count, inOrder);
 			thenCommit();

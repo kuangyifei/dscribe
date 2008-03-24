@@ -16,7 +16,7 @@ import org.junit.runner.RunWith;
 
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.*;
-import com.ideanest.dscribe.mixt.Mod.Builder.DependencyModifier;
+import com.ideanest.dscribe.mixt.Mod.Builder.*;
 
 @RunWith(JMock.class) @DatabaseTestCase.ConfigFile("test/conf.xml")
 public abstract class BlockTestCase extends DatabaseTestCase {
@@ -138,13 +138,20 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 	
 	public <T> void setModNearestAncestorImplementing(final Class<? super T> clazz, final T implementor) throws TransformException {
 		mockery.checking(new Expectations() {{
-			allowing(mod).nearestAncestorImplementing(clazz); will(returnValue(implementor));
+			allowing(mod).nearest(clazz); will(returnValue(implementor));
 		}});
 	}
 	
-	public <T> void setModBuilderNearestAncestorImplementing(final Class<? super T> clazz, final T implementor) throws TransformException {
+	public <T> void dependOnNearest(final Class<? super T> clazz, final boolean verified, final T implementor) throws TransformException {
 		mockery.checking(new Expectations() {{
-			allowing(modBuilder).nearestAncestorImplementing(clazz); will(returnValue(implementor));
+			Sequence seq = mockery.sequence("modBuilder pre-commit dependOnNearest");
+			AncestorDependencyModifier<?> modifier = mockery.mock(AncestorDependencyModifier.class);
+			one(modBuilder).dependOnNearest(clazz); will(returnValue(modifier)); inSequence(seq);
+			if (!verified) {
+				one(modifier).unverified(); will(returnValue(modifier)); inSequence(seq);
+			}
+			allowing(modifier).get(); will(returnValue(implementor));
+			modBuilderPriors.add(seq);
 		}});
 	}
 	

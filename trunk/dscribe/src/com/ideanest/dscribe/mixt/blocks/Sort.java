@@ -50,7 +50,7 @@ public class Sort implements BlockType {
 		}
 		
 		public void resolve(Mod.Builder modBuilder) throws TransformException {
-			for (Node node : modBuilder.nearestAncestorImplementing(NodeTarget.class).targets().nodes()) {
+			for (Node node : modBuilder.dependOnNearest(NodeTarget.class).unverified().get().targets().nodes()) {
 				modBuilder.order(node);
 				resolveOrder(modBuilder, node);
 			}
@@ -131,7 +131,7 @@ public class Sort implements BlockType {
 			SortByValueSeg(Mod mod) {super(mod);}
 			
 			@Override public void restore() throws TransformException {
-				ItemList targets = mod.nearestAncestorImplementing(NodeTarget.class).targets();
+				ItemList targets = mod.nearest(NodeTarget.class).targets();
 				values = new ArrayList<Pair<String, Item>>(targets.size());
 				for (Node node : targets.nodes()) {
 					ItemList items = query.runOn(mod.scope(node.query()));
@@ -213,7 +213,7 @@ public class Sort implements BlockType {
 			}
 			
 			@Override public void verify() throws TransformException {
-				for (Node node : mod.nearestAncestorImplementing(NodeTarget.class).targets().nodes()) {
+				for (Node node : mod.nearest(NodeTarget.class).targets().nodes()) {
 					if (!mod.supplementQuery().single(
 							"let $record := sort-proxy[@proxyid=$_1/@xml:id] " +
 							"return xs:integer($record/@position) eq count($_1/preceding-sibling::*) " +
@@ -267,7 +267,7 @@ public class Sort implements BlockType {
 			SortBySiblingSeg(Mod mod) {super(mod);}
 			
 			@Override public void verify() throws TransformException {
-				for (Node target : mod.nearestAncestorImplementing(NodeTarget.class).targets().nodes()) {
+				for (Node target : mod.nearest(NodeTarget.class).targets().nodes()) {
 					List<String> actualSiblingIds = query.runOn(mod.scope(target.query())).query().all("@xml:id").values().asList();
 					List<String> storedSiblingIds = mod.supplementQuery().all("sibling-list[@refid=$_1/@xml:id]/sibling/@refid", target).values().asList();
 					if (!actualSiblingIds.equals(storedSiblingIds))
@@ -344,7 +344,7 @@ public class Sort implements BlockType {
 				modBuilderPriors.add(seq1);  modBuilderPriors.add(seq2);
 			}});
 			block.requiredVariables = Arrays.asList(new String[] {"$a", "$b"});
-			setModBuilderNearestAncestorImplementing(NodeTarget.class, new NodeTarget() {
+			dependOnNearest(NodeTarget.class, false, new NodeTarget() {
 				public ItemList targets() throws TransformException {
 					return content.query().all("/id('m1 m2')");
 				}
