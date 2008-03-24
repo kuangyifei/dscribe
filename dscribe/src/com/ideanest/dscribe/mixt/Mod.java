@@ -121,20 +121,20 @@ public class Mod {
 	}
 	
 	/**
-	 * Return the nearest segment implementing the given type by traversing through this mod's ancestor mods.
-	 * This mod is not itself included in the search.
-	 *
-	 * @param <T> the type of the segment to look for
-	 * @param clazz the type of the segment to look for
+	 * Return the nearest segment implementing the given type by traversing through
+	 * this mod's ancestor mods. This mod is not itself included in the search.
+	 * 
+	 * @param <T> the type of segment to look for
+	 * @param clazz the type of segment to look for
 	 * @return the nearest segment implementing the desired type
 	 * @throws TransformException if a segment implementing the desired type cannot be found
 	 */
-	public <T> T nearestAncestorImplementing(Class<T> clazz) throws TransformException {
-		return parent.nearestAncestorOrSelfImplementing(clazz);
+	public <T> T nearest(Class<T> clazz) throws TransformException {
+		return clazz.cast(parent.nearestAncestorOrSelfImplementing(clazz).seg);
 	}
 	
-	<T> T nearestAncestorOrSelfImplementing(Class<T> clazz) throws TransformException {
-		if (clazz.isInstance(seg)) return clazz.cast(seg);
+	Mod nearestAncestorOrSelfImplementing(Class<?> clazz) throws TransformException {
+		if (clazz.isInstance(seg)) return this;
 		return parent.nearestAncestorOrSelfImplementing(clazz);
 	}
 	
@@ -221,7 +221,7 @@ public class Mod {
 	static Mod bootstrap(Rule rule) {
 		Mod root = new KeyMod(rule) {
 			@Override public String toString() {return "rootmod[" +rule + "]";} 
-			@Override <T> T nearestAncestorOrSelfImplementing(Class<T> clazz) throws TransformException {
+			@Override Mod nearestAncestorOrSelfImplementing(Class<?> clazz) throws TransformException {
 				throw new TransformException("no ancestor found that implements " + clazz);
 			}
 		};
@@ -283,11 +283,12 @@ public class Mod {
 		 *
 		 * @param <T> the type of the segment to look for
 		 * @param clazz the type of the segment to look for
-		 * @return the nearest segment implementing the desired type
+		 * @return a dependency modifier that can be used to declare the dependency as unverified; call <code>get()</code> to retrieve the actual segment
 		 * @throws TransformException if a segment implementing the desired type cannot be found
 		 */
-		public <T> T nearestAncestorImplementing(Class<T> clazz) throws TransformException {
-			return parent().nearestAncestorOrSelfImplementing(clazz);
+		public <T> AncestorDependencyModifier<T> dependOnNearest(Class<T> clazz) throws TransformException {
+			Mod implementor = parent().nearestAncestorOrSelfImplementing(clazz);
+			return dependOn(implementor, new AncestorDependencyModifier<T>(clazz.cast(implementor.seg)));
 		}
 		
 		/**
@@ -401,7 +402,7 @@ public class Mod {
 			return dependOn(ancestor, new DependencyModifier());
 		}
 		
-		private DependencyModifier dependOn(Mod ancestor, DependencyModifier depMod) {
+		private <T extends DependencyModifier> T dependOn(Mod ancestor, T depMod) {
 			if (!(ancestor.rule == parent.rule && ancestor.stage <= parent.stage)) throw new IllegalArgumentException("given mod is not an ancestor: " + ancestor);
 			// TODO: catch more non-ancestor mods?
 			Map<String,Object> varMap = Collections.emptyMap();
@@ -524,12 +525,29 @@ public class Mod {
 			 * Mark the previous dependency as unverified.  Unverified dependencies can never cause
 			 * a seg's verification to fail, and so cannot be used to validate stored mods.  All dependencies
 			 * must be verified by the time the last block of a rule is reached.
-			 *
+			 * 
+			 * @return this dependency modifier, for chaining calls 
 			 * @throws TransformException if called while building the last mod of a rule
 			 */
-			public void unverified() throws TransformException {
-				if (lastBlock) throw new TransformException("cannot have unverified dependencies in a rule's last block");
+			public DependencyModifier unverified() throws TransformException {
+				if (lastBlock && !docNames.isEmpty())
+					throw new TransformException("cannot have unverified dependencies in a rule's last block");
 				unverifiedDocNames.addAll(docNames);
+				return this;
+			}
+		}
+		
+		public class AncestorDependencyModifier<T> extends DependencyModifier {
+			private final T seg;
+			public AncestorDependencyModifier(T seg) {
+				this.seg = seg;
+			}
+			public T get() {
+				return seg;
+			}
+			@Override public AncestorDependencyModifier<T> unverified() throws TransformException {
+				super.unverified();
+				return this;
 			}
 		}
 
@@ -1025,7 +1043,7 @@ public class Mod {
 				one(parentMod).nearestAncestorOrSelfImplementing(Cloneable.class);
 					will(throwException(new TransformException()));
 			}});
-			assertSame(foo, mod.nearestAncestorImplementing(Cloneable.class));
+			assertSame(foo, mod.nearest(Cloneable.class));
 		}
 
 		@Test public void hasNearestAncestorImplementing() throws TransformException {
@@ -1033,16 +1051,12 @@ public class Mod {
 			class Foo extends Seg implements Cloneable {
 				Foo(Mod mod) {super(mod);}
 			}
-			class Bar extends Seg {
-				Bar(Mod mod) {super(mod);}
-			}
-			final Foo foo = new Foo(mod);
-			mod.seg = new Bar(mod);
+			parentMod.seg = new Foo(mod);
 			mockery.checking(new Expectations() {{
 				one(parentMod).nearestAncestorOrSelfImplementing(Cloneable.class);
-					will(returnValue(foo));
+					will(returnValue(parentMod));
 			}});
-			assertSame(foo, mod.nearestAncestorImplementing(Cloneable.class));
+			assertSame(parentMod.seg, mod.nearest(Cloneable.class));
 		}
 		
 		@Test public void verify() throws TransformException {

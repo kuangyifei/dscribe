@@ -105,12 +105,12 @@ public class For implements BlockType {
 				
 			public ElementBuilder<?> contentBuilder() throws TransformException {
 				if (target) return mod.references().get(0).append();
-				return mod.nearestAncestorImplementing(InsertionTarget.class).contentBuilder();
+				return mod.nearest(InsertionTarget.class).contentBuilder();
 			}
 			
 			public ItemList targets() throws TransformException {
 				if (target) return mod.references().get(0).toItemList();
-				return mod.nearestAncestorImplementing(NodeTarget.class).targets();
+				return mod.nearest(NodeTarget.class).targets();
 			}
 		}
 
