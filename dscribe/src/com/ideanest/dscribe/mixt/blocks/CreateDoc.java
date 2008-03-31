@@ -72,7 +72,7 @@ public class CreateDoc implements BlockType {
 					throw new TransformException("stored document name '" + name + "' doesn't match recalculated document name '" + resolvedName + "'");
 			}
 			
-			public ElementBuilder<?> contentBuilder() throws TransformException {
+			public Node insert(Node node) throws TransformException {
 				String docName = name;
 				Folder folder;
 				int k = docName.lastIndexOf('/');
@@ -82,7 +82,11 @@ public class CreateDoc implements BlockType {
 					folder = mod.workspace().children().create(docName.substring(0, k));
 					docName = docName.substring(k+1);
 				}
-				return folder.documents().build(Name.adjust(docName));
+				return folder.documents().build(Name.adjust(docName)).node(node).commit().root();
+			}
+			
+			public boolean canInsertMultiple() {
+				return false;
 			}
 		}
 		
@@ -176,33 +180,36 @@ public class CreateDoc implements BlockType {
 			seg.verify();
 		}
 		
-		@Test public void contentBuilder1() throws RuleBaseException, TransformException {
+		@Test public void insert1() throws RuleBaseException, TransformException {
 			CreateDocBlock block = define("<create-doc>hello</create-doc>");
 			setModWorkspace(content);
 			CreateDocBlock.CreateDocSeg seg = (CreateDocBlock.CreateDocSeg) block.createSeg(mod);
 			seg.name = "hello";
-			XMLDocument doc = (XMLDocument) seg.contentBuilder().elem("root").end("root").commit();
-			assertEquals("/content/hello", doc.path());
+			Node root = seg.insert(db.query().single("<root/>").node());
+			assertEquals("/content/hello", root.document().path());
+			assertEquals("<root/>", root.toString());
 		}
 
-		@Test public void contentBuilder2() throws RuleBaseException, TransformException {
+		@Test public void insert2() throws RuleBaseException, TransformException {
 			CreateDocBlock block = define("<create-doc>hello</create-doc>");
 			setModWorkspace(content);
 			CreateDocBlock.CreateDocSeg seg = (CreateDocBlock.CreateDocSeg) block.createSeg(mod);
 			seg.name = "foo/bar/hello";
-			XMLDocument doc = (XMLDocument) seg.contentBuilder().elem("root").end("root").commit();
-			assertEquals("/content/foo/bar/hello", doc.path());
+			Node root = seg.insert(db.query().single("<root/>").node());
+			assertEquals("/content/foo/bar/hello", root.document().path());
+			assertEquals("<root/>", root.toString());
 		}
 
-		@Test public void contentBuilder3() throws RuleBaseException, TransformException {
+		@Test public void insert3() throws RuleBaseException, TransformException {
 			CreateDocBlock block = define("<create-doc>hello</create-doc>");
 			setModWorkspace(content);
 			content.documents().load(Name.create("hello"), Source.xml("<foo/>"));
 			CreateDocBlock.CreateDocSeg seg = (CreateDocBlock.CreateDocSeg) block.createSeg(mod);
 			seg.name = "hello";
-			XMLDocument doc = (XMLDocument) seg.contentBuilder().elem("root").end("root").commit();
-			assertTrue(doc.path().startsWith("/content/hello"));
-			assertFalse(doc.path().equals("/content/hello"));
+			Node root = seg.insert(db.query().single("<root/>").node());
+			assertTrue(root.document().path().startsWith("/content/hello"));
+			assertFalse(root.document().path().equals("/content/hello"));
+			assertEquals("<root/>", root.toString());
 		}
 
 	}

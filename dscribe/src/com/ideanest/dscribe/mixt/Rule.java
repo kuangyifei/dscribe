@@ -316,7 +316,7 @@ public class Rule {
 		for (Mod mod : mods) modKeys.add(mod.key());
 		for (Node node : self.rootMod().node().query().unordered(
 				".//mod[xs:integer(@stage)=$_1]" + (mustRestore ? "" : "[not(mod)]"), stage).nodes()) {
-			if (modKeys.contains(node.query().single("ancestor-or-self::*[@xml:id][last()]/@xml:id").value())) continue;
+			if (modKeys.contains(node.query().single("ancestor-or-self::*[@xml:id][1]/@xml:id").value())) continue;
 			Mod mod = self.restoreMod(node);
 			mods.add(mod);
 			LOG.debug("restored " + mod);
