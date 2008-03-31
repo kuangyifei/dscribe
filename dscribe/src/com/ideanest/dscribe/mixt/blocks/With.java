@@ -8,7 +8,7 @@ import org.exist.fluent.*;
 import org.junit.Test;
 
 import com.ideanest.dscribe.mixt.*;
-import com.ideanest.dscribe.testutil.BlockTestCase;
+import com.ideanest.dscribe.mixt.test.BlockTestCase;
 
 public class With implements BlockType {
 
