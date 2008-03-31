@@ -16,7 +16,6 @@ import org.junit.runner.RunWith;
 
 import com.ideanest.dscribe.mixt.*;
 import com.ideanest.dscribe.mixt.Mod.Builder.*;
-import com.ideanest.dscribe.mixt.test.Matchers.CollectionMatcher;
 
 @RunWith(JMock.class) @DatabaseTestCase.ConfigFile("test/conf.xml")
 public abstract class BlockTestCase extends DatabaseTestCase {
