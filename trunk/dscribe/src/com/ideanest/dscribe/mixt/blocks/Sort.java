@@ -1,5 +1,5 @@
 package com.ideanest.dscribe.mixt.blocks;
-import static com.ideanest.dscribe.testutil.Matchers.collection;
+import static com.ideanest.dscribe.mixt.test.Matchers.collection;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.*;
 
@@ -12,7 +12,7 @@ import org.junit.Test;
 import com.ideanest.dscribe.mixt.*;
 import com.ideanest.dscribe.mixt.Mod.Builder;
 import com.ideanest.dscribe.mixt.SortController.OrderGraph;
-import com.ideanest.dscribe.testutil.BlockTestCase;
+import com.ideanest.dscribe.mixt.test.BlockTestCase;
 
 public class Sort implements BlockType {
 
