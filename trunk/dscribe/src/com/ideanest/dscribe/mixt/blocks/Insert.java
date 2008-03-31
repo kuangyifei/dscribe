@@ -59,8 +59,7 @@ public class Insert implements BlockType {
 		}
 
 		public void resolve(Mod.Builder modBuilder) throws TransformException {
-			// requery with self::* to force in-memory nodes to be materialized for further processing
-			ItemList nodesToInsert = query.runOn(modBuilder.scope()).query().all("self::*");
+			ItemList nodesToInsert = query.runOn(modBuilder.scope());
 			
 			if (nodesToInsert.size() > 0) {
 				try {
@@ -72,22 +71,21 @@ public class Insert implements BlockType {
 					throw new TransformException("missing digest algorithm", e);
 				}
 				
-				// TODO: error if xml:id attributes detected in nodes to insert, or maybe just wipe them?
+				// TODO: error if (duplicate) xml:id attributes detected in nodes to insert, or maybe just wipe them?
 				
-				int serial = nodesToInsert.size() == 1 ? -1 : 1;
-				List<String> genIdList = new ArrayList<String>(nodesToInsert.size());
+				InsertionTarget target = modBuilder.dependOnNearest(InsertionTarget.class).unverified().get();
+				boolean insertMultiple = nodesToInsert.size() > 1;
+				if (!target.canInsertMultiple() && insertMultiple)
+					throw new TransformException("inserting multiple nodes not allowed in this context");
+				int serial = insertMultiple ? 1 : -1;
 				for (Node node : nodesToInsert.nodes()) {
+					Node insertedNode = target.insert(node);
 					String id = modBuilder.generateId(serial++);
-					genIdList.add(id);
-					node.update().attr("xml:id", id).commit();
-				}
-				modBuilder.dependOnNearest(InsertionTarget.class).unverified().get()
-						.contentBuilder().nodes(nodesToInsert.nodes()).commit();
-				for (String id : genIdList) {
-					Node insertedNode = modBuilder.parent().globalScope().single("/id($_1)", id).node();
+					insertedNode.update().attr("xml:id", id).commit();
 					modBuilder.affect(insertedNode);
-					if (inOrder && genIdList.size() > 1) modBuilder.order(insertedNode);
+					if (inOrder && insertMultiple) modBuilder.order(insertedNode);
 				}
+
 			}
 			
 			modBuilder.dependOn(requiredVariables);
@@ -213,7 +211,7 @@ public class Insert implements BlockType {
 			block.resolve(modBuilder);
 		}
 		
-		private void testResolve(String rule, int count, boolean inOrder, String result, String checksum) throws TransformException, RuleBaseException {
+		private void testResolve(String rule, int count, boolean inOrder, final boolean multipleOK, String result, String checksum) throws TransformException, RuleBaseException {
 			InsertBlock block = define(rule);
 			block.requiredVariables = Collections.emptyList();
 			
@@ -224,8 +222,11 @@ public class Insert implements BlockType {
 			setModGlobalScope(content.query());
 			
 			dependOnNearest(InsertionTarget.class, false, new InsertionTarget() {
-				public ElementBuilder<?> contentBuilder() throws TransformException {
-					return outputNode.append(); 
+				public Node insert(Node node) throws TransformException {
+					return outputNode.append().node(node).commit(); 
+				}
+				public boolean canInsertMultiple() {
+					return multipleOK;
 				}
 			});
 			supplement();
@@ -241,35 +242,43 @@ public class Insert implements BlockType {
 		@Test public void resolveOneNode() throws RuleBaseException, TransformException {
 			testResolve(
 					"<insert><foo/></insert>",
-					1, false, "<foo xml:id='_r1.'/>",
+					1, false, false, "<foo xml:id='_r1.'/>",
 					"5KZSM2zZkiS5PyrDhT/IlQ==");
 		}
 		
 		@Test public void resolveOneOrderedNode() throws RuleBaseException, TransformException {
 			testResolve(
 					"<insert in='order'><foo/></insert>",
-					1, false, "<foo xml:id='_r1.'/>",
+					1, false, false, "<foo xml:id='_r1.'/>",
 					"5KZSM2zZkiS5PyrDhT/IlQ==");
 		}
 		
 		@Test public void resolveTwoNodes() throws TransformException, RuleBaseException {
 			testResolve(
 					"<insert>(<node1/>, <node2/>)</insert>",
-					2, false, "(<node1 xml:id='_r1-0'/>, <node2 xml:id='_r1-1'/>)",
+					2, false, true, "(<node1 xml:id='_r1-0'/>, <node2 xml:id='_r1-1'/>)",
+					"/UBBH4crvHJQiCQxRye4TQ==");
+		}
+		
+		@Test(expected = TransformException.class)
+		public void resolveTwoNodesNotAllowed() throws TransformException, RuleBaseException {
+			testResolve(
+					"<insert>(<node1/>, <node2/>)</insert>",
+					2, false, false, "(<node1 xml:id='_r1-0'/>, <node2 xml:id='_r1-1'/>)",
 					"/UBBH4crvHJQiCQxRye4TQ==");
 		}
 		
 		@Test public void resolveTwoOrderedNodes() throws TransformException, RuleBaseException {
 			testResolve(
 					"<insert in='order'>(<node1/>, <node2/>)</insert>",
-					2, true, "(<node1 xml:id='_r1-0'/>, <node2 xml:id='_r1-1'/>)",
+					2, true, true, "(<node1 xml:id='_r1-0'/>, <node2 xml:id='_r1-1'/>)",
 					"/UBBH4crvHJQiCQxRye4TQ==");
 		}
 		
 		@Test public void resolveComplexNodes() throws TransformException, RuleBaseException {
 			testResolve(
 					"<insert>(<n1 xmlns:k='foo' name='bar'><k:n11 foo='bar'>la la <b>bla</b></k:n11><n12/></n1>, <n2 xmlns='bar'/>)</insert>",
-					2, false, "(<n1 xml:id='_r1-1.' xmlns:k='foo' name='bar'><k:n11 foo='bar'>la la <b>bla</b></k:n11><n12/></n1>, <n2 xml:id='_r1-2.' xmlns='bar'/>)",
+					2, false, true, "(<n1 xml:id='_r1-1.' xmlns:k='foo' name='bar'><k:n11 foo='bar'>la la <b>bla</b></k:n11><n12/></n1>, <n2 xml:id='_r1-2.' xmlns='bar'/>)",
 					"Sl+F6eU9sYgaSTCX6eKvFg==");
 		}
 		

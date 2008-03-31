@@ -213,11 +213,11 @@ public class Sort implements BlockType {
 			}
 			
 			@Override public void verify() throws TransformException {
-				for (Node node : mod.nearest(NodeTarget.class).targets().nodes()) {
+				for (Node proxy : mod.nearest(NodeTarget.class).targets().nodes()) {
 					if (!mod.supplementQuery().single(
 							"let $record := sort-proxy[@proxyid=$_1/@xml:id] " +
 							"return xs:integer($record/@position) eq count($_1/preceding-sibling::*) " +
-							"	and $record/@proxyparentid eq $_1/../@xml:id", node).booleanValue())
+							"	and $record/@proxyparentid eq $_1/../@xml:id", proxy).booleanValue())
 						throw new TransformException("proxy node moved");
 				}
 			}
@@ -379,12 +379,12 @@ public class Sort implements BlockType {
 		}
 
 		@Test(expected = RuleBaseException.class)
-		public void parse5() throws RuleBaseException {
+		public void parse3() throws RuleBaseException {
 			define("<sort by='foo'>@foo</sort>");
 		}
 
 		@Test(expected = RuleBaseException.class)
-		public void parse6() throws RuleBaseException {
+		public void parse4() throws RuleBaseException {
 			define("<sort by='ascending' priority='x'>@foo</sort>");
 		}
 		
@@ -486,5 +486,109 @@ public class Sort implements BlockType {
 			}});
 			block.sort(Arrays.asList(seg1, seg2), graph);
 		}
+	}
+	
+	@Deprecated public static class _SortByProxyTest extends BlockTestCase {
+		@Test public void parse1() throws RuleBaseException {
+			SortByProxyBlock block = define("<sort as='corresponding'>$source</sort>");
+			assertEquals(0, block.priority);
+		}
+
+		@Test(expected = RuleBaseException.class)
+		public void parse2() throws RuleBaseException {
+			define("<sort as='foo'>@foo</sort>");
+		}
+		
+		@Test public void resolveOrder() throws RuleBaseException, TransformException {
+			SortBlock block = define("<sort as='corresponding'>$source</sort>");
+			Node um1 = content.query().single("/id('um1')").node();
+			Node m1 = content.query().single("/id('m1')").node();
+			setModBuilderScopeWithVariablesBound(um1.query().let("$source", m1));
+			reference(m1);
+			dependOnDocument(um1.document());
+			supplement();
+			block.resolveOrder(modBuilder, um1);
+			checkSupplement("<sort-proxy refid='um1' proxyid='m1' proxyparentid='c1' position='0'/>");
+		}
+		
+		@Test(expected = TransformException.class)
+		public void resolveOrderBadQuery() throws RuleBaseException, TransformException {
+			SortBlock block = define("<sort by='ascending'>*</sort>");
+			Node uc1 = content.query().single("/id('uc1')").node();
+			setModBuilderScopeWithVariablesBound(uc1.query());
+			block.resolveOrder(modBuilder, uc1);
+		}
+		
+		@Test public void restore() throws RuleBaseException, TransformException {
+			setModData("(<sort-proxy refid='um1' proxyid='m1' proxyparentid='c1' position='0'/>, <sort-proxy refid='um2' proxyid='m2' proxyparentid='c1' position='1'/>)");
+			setModReferences(content.query().single("/id('m1')").node(), content.query().single("/id('m2')").node());
+			SortByProxyBlock block = define("<sort as='corresponding'>$source</sort>");
+			SortByProxyBlock.SortByProxySeg seg = (SortByProxyBlock.SortByProxySeg) block.createSeg(mod);
+			seg.restore();
+			assertEquals(
+					Arrays.asList(new Pair[] {
+							Pair.of("um1", content.query().single("/id('m1')").node()),
+							Pair.of("um2", content.query().single("/id('m2')").node())}),
+					seg.proxies);
+		}
+		
+		private void runVerifyScenario(String modData) throws TransformException, RuleBaseException {
+			setModNearestAncestorImplementing(NodeTarget.class, new NodeTarget() {
+				public ItemList targets() throws TransformException {
+					return content.query().all("/id('um1 um2')");
+				}
+			});
+			setModData(modData);
+			SortByProxyBlock block = define("<sort as='corresponding'>$source</sort>");
+			SortByProxyBlock.SortByProxySeg seg = (SortByProxyBlock.SortByProxySeg) block.createSeg(mod);
+			seg.proxies = new ArrayList<Pair<String, Node>>();
+			seg.proxies.add(Pair.of("um1", content.query().single("/id('m1')").node()));
+			seg.proxies.add(Pair.of("um2", content.query().single("/id('m2')").node()));
+			seg.verify();
+		}
+		
+		@Test public void verify() throws RuleBaseException, TransformException {
+			runVerifyScenario("(<sort-proxy refid='um1' proxyid='m1' proxyparentid='c1' position='0'/>, <sort-proxy refid='um2' proxyid='m2' proxyparentid='c1' position='1'/>)");
+		}
+
+		@Test(expected = TransformException.class)
+		public void verifyBadPosition() throws RuleBaseException, TransformException {
+			runVerifyScenario("(<sort-proxy refid='um1' proxyid='m1' proxyparentid='c1' position='1'/>, <sort-proxy refid='um2' proxyid='m2' proxyparentid='c1' position='1'/>)");
+		}
+		
+		@Test(expected = TransformException.class)
+		public void verifyBadParent() throws RuleBaseException, TransformException {
+			runVerifyScenario("(<sort-proxy refid='um1' proxyid='m1' proxyparentid='c1' position='0'/>, <sort-proxy refid='um2' proxyid='m2' proxyparentid='m1' position='1'/>)");
+		}
+		
+//		@Test public void sortAscending() throws RuleBaseException {
+//			SortByValueBlock block = define("<sort by='ascending'>@name</sort>");
+//			SortByValueBlock.SortByValueSeg seg1 = (SortByValueBlock.SortByValueSeg) block.createSeg(mod);
+//			SortByValueBlock.SortByValueSeg seg2 = (SortByValueBlock.SortByValueSeg) block.createSeg(mod);
+//			seg1.values = new ArrayList<Pair<String, Item>>();
+//			seg1.values.add(Pair.of("m1", content.query().single("/id('m1')/@name").toAtomicItem()));
+//			seg2.values = new ArrayList<Pair<String, Item>>();
+//			seg2.values.add(Pair.of("m2", content.query().single("/id('m2')/@name").toAtomicItem()));
+//			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+//			mockery.checking(new Expectations() {{
+//				one(graph).order("m2", "m1", 0);
+//			}});
+//			block.sort(Arrays.asList(seg1, seg2), graph);
+//		}
+//
+//		@Test public void sortDescending() throws RuleBaseException {
+//			SortByValueBlock block = define("<sort by='descending'>@name</sort>");
+//			SortByValueBlock.SortByValueSeg seg1 = (SortByValueBlock.SortByValueSeg) block.createSeg(mod);
+//			SortByValueBlock.SortByValueSeg seg2 = (SortByValueBlock.SortByValueSeg) block.createSeg(mod);
+//			seg1.values = new ArrayList<Pair<String, Item>>();
+//			seg1.values.add(Pair.of("m1", content.query().single("/id('m1')/@name").toAtomicItem()));
+//			seg2.values = new ArrayList<Pair<String, Item>>();
+//			seg2.values.add(Pair.of("m2", content.query().single("/id('m2')/@name").toAtomicItem()));
+//			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+//			mockery.checking(new Expectations() {{
+//				one(graph).order("m1", "m2", 0);
+//			}});
+//			block.sort(Arrays.asList(seg1, seg2), graph);
+//		}
 	}
 }

@@ -212,7 +212,8 @@ public class Engine {
 	QueryService globalScope() {return globalScope;}
 	QueryService utilQuery() {return utilQuery;}
 	Node modStore() {return modStore;}
-	
+	public Stats stats() {return stats;}
+		
 	Rule findRule(String ruleId) {
 		return ruleMap.get(ruleId);
 	}
@@ -299,8 +300,6 @@ public class Engine {
 		}
 	}
 	
-	public Stats stats() {return stats;}
-	
 	void withdrawMod(Node modNode) {
 		if (LOG.isDebugEnabled()) {
 			LOG.debug("withdrawing mod " + modNode.query().single("./ancestor-or-self::*[@xml:id][1]/@xml:id").value() + " at stage " + modNode.query().single("@stage").value());
@@ -318,7 +317,7 @@ public class Engine {
 		ItemList affected = workspace.query().all("()");
 		
 		while (newMods.size() > 0) {
-			ItemList newAffected = workspace.query().unordered("/id($_1//mod:affected/@refid)", newMods);
+			ItemList newAffected = workspace.query().unordered("/id(distinct-values($_1//mod:affected/@refid))", newMods);
 			affected = utilQuery.unordered("$_1 union $_2", affected, newAffected);
 			mods = utilQuery.unordered("$_1 union $_2", mods, newMods);
 			// TODO: refactor query to use idref() once we can declare @refid as type IDREF
@@ -339,6 +338,10 @@ public class Engine {
 				if (workspace.documents().contains(docPath)) docs.add(workspace.documents().get(docPath));
 			}
 			rule.addTouched(docs);
+		}
+		
+		for (Node sortedNode : workspace.query().unordered("/id(distinct-values($_1//mod:order/@refid))", mods).nodes()) {
+			eventuallySort(sortedNode);
 		}
 		
 		LOG.debug("deleting " + modCountFormatter.format(mods.size()) + " and " + affectedCountFormatter.format(affected.size()));
@@ -670,7 +673,7 @@ public class Engine {
 		}
 		
 		@Test public void withdrawModsWithAffectedDocs() {
-			final Document doc = workspace.documents().load(Name.generate(), Source.xml(
+			workspace.documents().load(Name.generate(), Source.xml(
 					"<foo><bar xml:id='b1'/><bar xml:id='b2'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
 					"<modstore xmlns='" + Engine.MOD_NS + "'>" +
@@ -690,7 +693,6 @@ public class Engine {
 			assertEquals(1, modStore.query().all("//mod").size());
 			assertFalse(workspace.query().exists("/id('b1')"));
 			assertTrue(workspace.query().exists("/id('b2')"));
-			assertEquals(1, doc.query().all("*").size());
 			assertEquals(1, engine.stats.numModsWithdrawn.value());
 		}
 
@@ -722,12 +724,11 @@ public class Engine {
 			assertEquals(1, modStore.query().all("//mod").size());
 			assertFalse(workspace.query().exists("/id('b1')"));
 			assertTrue(workspace.query().exists("/id('b2')"));
-			assertEquals(1, doc.query().all("*").size());
 			assertEquals(2, engine.stats.numModsWithdrawn.value());
 		}
 		
 		@Test public void withdrawModsWithAffectedDocsAndKnockOnReferences() {
-			final Document doc = workspace.documents().load(Name.generate(), Source.xml(
+			workspace.documents().load(Name.generate(), Source.xml(
 					"<foo><bar xml:id='b1'><baz xml:id='b1a'/></bar><bar xml:id='b2'/><xyz xml:id='b3'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
 					"<modstore xmlns='" + Engine.MOD_NS + "'>" +
@@ -754,8 +755,35 @@ public class Engine {
 			assertFalse(workspace.query().exists("/id('b1')"));
 			assertTrue(workspace.query().exists("/id('b2')"));
 			assertFalse(workspace.query().exists("/id('b3')"));
-			assertEquals(1, doc.query().all("*").size());
 			assertEquals(3, engine.stats.numModsWithdrawn.value());
+		}
+
+		@Test public void withdrawModsWithOrderedNodes() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+			final Document doc = workspace.documents().load(Name.create("b"), Source.xml(
+					"<foo><bar xml:id='b1'/><bar xml:id='b2'/></foo>"));
+			final Node modStore = workspace.documents().load(Name.generate(), Source.xml(
+					"<modstore xmlns='" + Engine.MOD_NS + "'>" +
+					"<mods rule='r1'>" +
+					"  <mod xml:id='m1'><order refid='b1' doc='b'/></mod>" +
+					"  <mod xml:id='m2'/>" +
+					"</mods>" +
+					"</modstore>")).root();
+			final Engine engine = new Engine(workspace, modStore);
+			Field sortControllerField = Engine.class.getDeclaredField("sortController");
+			sortControllerField.setAccessible(true);
+			sortControllerField.set(engine, mockery.mock(SortController.class));
+			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
+			mockery.checking(new Expectations() {{
+				allowing(r1).addTouched(with(anEmptyCollection(Document.class)));
+				one(engine.sortController).eventuallySort(doc.query().single("/id('b1')").node());
+			}});
+			engine.withdrawMods(modStore.query().all("/id('m1')"));
+			assertFalse(modStore.query().exists("/id('m1')"));
+			assertTrue(modStore.query().exists("/id('m2')"));
+			assertEquals(1, modStore.query().all("//mod").size());
+			assertTrue(workspace.query().exists("/id('b1')"));
+			assertTrue(workspace.query().exists("/id('b2')"));
+			assertEquals(1, engine.stats.numModsWithdrawn.value());
 		}
 
 		@Test public void withdrawRule() {

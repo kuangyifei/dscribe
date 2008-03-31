@@ -14,7 +14,6 @@ import org.jmock.lib.legacy.ClassImposteriser;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
-import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.mixt.*;
 import com.ideanest.dscribe.mixt.Mod.Builder.*;
 
@@ -34,13 +33,22 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 	
 	@Before
 	public void prepareDatabase() {
-		db.namespaceBindings().put("java", Namespace.JAVA);
+		db.namespaceBindings().put("java", "http://example.com/java");
+		db.namespaceBindings().put("uml", "http://example.com/uml");
 		content = db.createFolder("/content");
 		content.documents().build(Name.create("stuff"))
 			.elem("java:class").attr("xml:id", "c1").attr("name", "Job")
 				.elem("java:method").attr("xml:id", "m1").attr("name", "start").end("java:method")
 				.elem("java:method").attr("xml:id", "m2").attr("name", "end").end("java:method")
 			.end("java:class").commit();
+		content.documents().build(Name.create("uml-stuff"))
+		.elem("uml:class").attr("xml:id", "uc1").attr("deptict", "c1")
+			.elem("uml:name").text("Job").end("uml:name")
+			.elem("uml:compartment").attr("kind", "operation")
+				.elem("uml:operation").attr("xml:id", "um1").attr("depict", "m1").end("uml:operation")
+				.elem("uml:operation").attr("xml:id", "um2").attr("depict", "m2").end("uml:operation")
+			.end("uml:compartment")
+		.end("uml:class").commit();
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -48,7 +56,8 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		try {
 			T block = (T) getClass().getEnclosingClass().asSubclass(BlockType.class).newInstance().define(
 					db.getFolder("/").documents().load(Name.create("rule"), Source.xml(
-							"<rule xmlns:java='" + Namespace.JAVA + "'>" + xml + "</rule>")).root().query().single("*").node());
+							"<rule xmlns:java='http://example.com/java' xmlns:uml='http://example.com/uml'>"
+							+ xml + "</rule>")).root().query().single("*").node());
 			
 			if (block instanceof LinearBlock) modBuilder = mockery.mock(Mod.Builder.class);
 			else if (block instanceof KeyBlock) modBuilder = keyModBuilder = mockery.mock(KeyMod.Builder.class);

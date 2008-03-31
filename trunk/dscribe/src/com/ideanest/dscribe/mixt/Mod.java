@@ -203,9 +203,7 @@ public class Mod {
 	
 	void verify() throws TransformException {
 		LOG.debug("verifying " + this);
-		node.namespaceBindings().replaceWith(EMPTY_NAMESPACES);
 		seg.verify();
-		node.namespaceBindings().put("", Engine.MOD_NS);
 	}
 	
 	void analyze() throws TransformException {

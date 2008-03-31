@@ -58,7 +58,6 @@ public class Transformer {
 		final Engine engine = new Engine(rulespace, recordspace.cloneWithoutNamespaceBindings(), workspace, initModStore());
 		engine.autoGenerateIdsWithPrefix("mixt");
 		lastRunDate = engine.executeTransform(modifiedDocs);
-		
 		recordRun(lastRunDate);
 		return engine.stats();
 	}

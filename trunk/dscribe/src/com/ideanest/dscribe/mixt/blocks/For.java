@@ -103,9 +103,13 @@ public class For implements BlockType {
 					throw new TransformException("query didn't select node with id " + node.query().single("@xml:id").value());
 			}
 				
-			public ElementBuilder<?> contentBuilder() throws TransformException {
-				if (target) return mod.references().get(0).append();
-				return mod.nearest(InsertionTarget.class).contentBuilder();
+			public Node insert(Node node) throws TransformException {
+				if (target) return mod.references().get(0).append().node(node).commit();
+				return mod.nearest(InsertionTarget.class).insert(node);
+			}
+			
+			public boolean canInsertMultiple() throws TransformException {
+				return target ? true : mod.nearest(InsertionTarget.class).canInsertMultiple();
 			}
 			
 			public ItemList targets() throws TransformException {
@@ -252,27 +256,33 @@ public class For implements BlockType {
 		}
 		
 		@Test
-		public void contentBuilderWithTarget() throws RuleBaseException, TransformException {
+		public void insertWithTarget() throws RuleBaseException, TransformException {
 			ForOneBlock block = define("<for one='target'> //java:class </for>");
 			final Node selectedNode = content.query().single("//java:class").node();
 			setModReferences(selectedNode);
-			((ForBlock.ForSeg) block.createSeg(mod)).contentBuilder()
-				.elem("java:method").attr("xml:id", "m3").attr("name", "between").end("java:method").commit();
+			ForBlock.ForSeg seg = (ForBlock.ForSeg) block.createSeg(mod);
+			seg.insert(db.query().single("<java:method xml:id='m3' name='between'/>").node());
+			assertTrue(seg.canInsertMultiple());
 			assertTrue(selectedNode.query().exists("java:method[@xml:id='m3']"));
 		}
 
 		@Test
-		public void contentBuilderNotTarget() throws RuleBaseException, TransformException {
+		public void insertNotTarget() throws RuleBaseException, TransformException {
 			ForOneBlock block = define("<for one='$x'> //java:class </for>");
-			final ElementBuilder<?> contentBuilder = ElementBuilder.createScratch(null);
+			final Node nodeToInsert = db.query().single("<bar/>").node(), insertedNode = db.query().single("<foo/>").node();
 			InsertionTarget insertionTarget = new InsertionTarget() {
-				public ElementBuilder<?> contentBuilder() throws TransformException {
-					return contentBuilder;
+				public Node insert(Node node) throws TransformException {
+					assertSame(nodeToInsert, node);
+					return insertedNode;
+				}
+				public boolean canInsertMultiple() throws TransformException {
+					return false;
 				}
 			};
 			setModNearestAncestorImplementing(InsertionTarget.class, insertionTarget);
-			assertSame(contentBuilder, ((ForBlock.ForSeg) block.createSeg(mod)).contentBuilder());
-			contentBuilder.commit();
+			ForBlock.ForSeg seg = (ForBlock.ForSeg) block.createSeg(mod);
+			assertSame(insertedNode, seg.insert(nodeToInsert));
+			assertFalse(seg.canInsertMultiple());
 		}
 
 		@Test
