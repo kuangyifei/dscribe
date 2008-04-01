@@ -1,7 +1,7 @@
 package com.ideanest.dscribe.mixt.test;
 
 import static com.ideanest.dscribe.mixt.test.Matchers.emptyCollectionOf;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 import java.util.*;
 
@@ -36,19 +36,29 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		db.namespaceBindings().put("java", "http://example.com/java");
 		db.namespaceBindings().put("uml", "http://example.com/uml");
 		content = db.createFolder("/content");
-		content.documents().build(Name.create("stuff"))
-			.elem("java:class").attr("xml:id", "c1").attr("name", "Job")
-				.elem("java:method").attr("xml:id", "m1").attr("name", "start").end("java:method")
-				.elem("java:method").attr("xml:id", "m2").attr("name", "end").end("java:method")
-			.end("java:class").commit();
-		content.documents().build(Name.create("uml-stuff"))
-		.elem("uml:class").attr("xml:id", "uc1").attr("deptict", "c1")
-			.elem("uml:name").text("Job").end("uml:name")
-			.elem("uml:compartment").attr("kind", "operation")
-				.elem("uml:operation").attr("xml:id", "um1").attr("depict", "m1").end("uml:operation")
-				.elem("uml:operation").attr("xml:id", "um2").attr("depict", "m2").end("uml:operation")
-			.end("uml:compartment")
-		.end("uml:class").commit();
+		content.documents().load(Name.create("stuff"), Source.xml(
+				"<java:class xmlns:java='http://example.com/java' xml:id='c1' name='Job'>" +
+				"	<java:method xml:id='m1' name='start'/>" +
+				"	<java:method xml:id='m2' name='end'/>" +
+				"</java:class>"));
+		content.documents().load(Name.create("stuff2"), Source.xml(
+				"<java:interface xmlns:java='http://example.com/java' xml:id='c1b' name='Job'>" +
+				"	<java:field xml:id='f1' name='foo'/>" +
+				"	<java:field xml:id='f2' name='bar'/>" +
+				"</java:interface>"));
+		content.documents().load(Name.create("uml-stuff"), Source.xml(
+				"<uml:class xmlns:uml='http://example.com/uml' xml:id='uc1' depict='c1'>" +
+				"	<uml:name xml:id='cname'>Job</uml:name>" +
+				"	<uml:stereotype>interface</uml:stereotype>" +
+				"	<uml:compartment xml:id='comp1' kind='attribute'>" +
+				"		<uml:attribute xml:id='uf1' depict='f1'/>" +
+				"		<uml:attribute xml:id='uf2' depict='f2'/>" +
+				"	</uml:compartment>" +
+				"	<uml:compartment xml:id='comp2' kind='operation'>" +
+				"		<uml:operation xml:id='um1' depict='m1'/>" +
+				"		<uml:operation xml:id='um2' depict='m2'/>" +
+				"	</uml:compartment>" +
+				"</uml:class>"));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -222,9 +232,14 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 	}
 	
 	public void checkSupplement(String expected) {
-		Node supplementNode = supplementBuilder.commit().root();
-		assertTrue("supplement expected '" + expected + "', got '" + supplementNode + "'",
-				db.query().presub().single("$_1 eq $2", supplementNode, expected).booleanValue());
+		XMLDocument supplementDoc = supplementBuilder.commit();
+		if (supplementDoc == null) {
+			fail("no supplement recorded, expected '" + expected + "'");
+		} else {
+			Node supplementNode = supplementDoc.root();
+			assertTrue("supplement expected '" + expected + "', got '" + supplementNode + "'",
+					db.query().presub().single("deep-equal($_1, $2)", supplementNode, expected).booleanValue());
+		}
 	}
 	
 	public void generateIdsAndAffect(final String base, final int count, final boolean inOrder) {
