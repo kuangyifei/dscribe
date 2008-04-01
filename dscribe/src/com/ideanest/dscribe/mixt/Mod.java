@@ -203,7 +203,14 @@ public class Mod {
 	
 	void verify() throws TransformException {
 		LOG.debug("verifying " + this);
-		seg.verify();
+		try {
+			seg.verify();
+		} catch (SortingException e) {
+			for (Node orderedNode : rule.engine.globalScope().namespace("mod", Engine.MOD_NS)
+					.unordered("/id($_1/mod:order/@refid)", node).nodes()) {
+				rule.engine.eventuallySort(orderedNode);
+			}
+		}
 	}
 	
 	void analyze() throws TransformException {
@@ -1057,14 +1064,32 @@ public class Mod {
 			assertSame(parentMod.seg, mod.nearest(Cloneable.class));
 		}
 		
-		@Test public void verify() throws TransformException {
+		@Test public void verifyNoOrder() throws TransformException {
 			final Mod mod = new Mod(parentMod);
 			mod.node = modStore.append()
 				.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4)
+					.elem("order").attr("refid", "e1").attr("doc", doc1.name()).end("order")
 				.end("mod").commit();
 			mod.seg = mockery.mock(Seg.class);
 			mockery.checking(new Expectations() {{
 				one(mod.seg).verify();
+			}});
+			mod.verify();
+		}
+
+		@Test public void verifyWithOrder() throws TransformException {
+			final Mod mod = new Mod(parentMod);
+			mod.node = modStore.append()
+				.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4)
+					.elem("order").attr("refid", "e1").attr("doc", doc1.name()).end("order")
+					.elem("mod").attr("stage", 5)
+						.elem("order").attr("refid", "e2").attr("doc", doc1.name()).end("order")
+					.end("mod")
+				.end("mod").commit();
+			mod.seg = mockery.mock(Seg.class);
+			mockery.checking(new Expectations() {{
+				one(mod.seg).verify(); will(throwException(new SortingException()));
+				one(engine).eventuallySort(doc1.query().single("/id('e1')").node());
 			}});
 			mod.verify();
 		}
