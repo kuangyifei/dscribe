@@ -263,7 +263,7 @@ public class Rule {
 	}
 	
 	@SuppressWarnings("unchecked")  // each block is only fed segs that it produced; see SortController.sort(Node)
-	void sortBlock(int stage, Collection<Seg> segs, SortController.OrderGraph graph) throws TransformException {
+	void sortBlock(int stage, Collection<Seg> segs, OrderGraph graph) throws TransformException {
 		SortingBlock block;
 		try {
 			 block = (SortingBlock) blocks.get(stage);

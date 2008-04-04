@@ -13,7 +13,6 @@ import org.jmock.Expectations;
 import org.junit.Test;
 
 import com.ideanest.dscribe.mixt.*;
-import com.ideanest.dscribe.mixt.SortController.OrderGraph;
 import com.ideanest.dscribe.mixt.test.BlockTestCase;
 
 public class Insert implements BlockType {
@@ -286,7 +285,7 @@ public class Insert implements BlockType {
 			InsertBlock block = define("<insert in='order'><foo/></insert>");
 			InsertBlock.InsertSeg seg = (InsertBlock.InsertSeg) block.createSeg(mod);
 			seg.inserted = Arrays.asList("m1", "m2", "m3");
-			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+			final OrderGraph graph = mockery.mock(OrderGraph.class);
 			mockery.checking(new Expectations() {{
 				one(graph).order("m1", "m2", 0);
 				one(graph).order("m1", "m3", 0);
@@ -301,7 +300,7 @@ public class Insert implements BlockType {
 			seg1.inserted = Arrays.asList("m1", "m2");
 			InsertBlock.InsertSeg seg2 = (InsertBlock.InsertSeg) block.createSeg(mod);
 			seg2.inserted = Arrays.asList("c1", "c2");
-			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+			final OrderGraph graph = mockery.mock(OrderGraph.class);
 			mockery.checking(new Expectations() {{
 				one(graph).order("m1", "m2", 5);
 				one(graph).order("c1", "c2", 5);
