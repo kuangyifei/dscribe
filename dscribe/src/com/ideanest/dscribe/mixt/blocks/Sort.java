@@ -11,7 +11,6 @@ import org.junit.Test;
 
 import com.ideanest.dscribe.mixt.*;
 import com.ideanest.dscribe.mixt.Mod.Builder;
-import com.ideanest.dscribe.mixt.SortController.OrderGraph;
 import com.ideanest.dscribe.mixt.test.BlockTestCase;
 
 public class Sort implements BlockType {
@@ -60,7 +59,7 @@ public class Sort implements BlockType {
 		
 		abstract void resolveOrder(Mod.Builder modBuilder, Node node) throws TransformException;
 		
-		protected <T> void totalOrder(List<Pair<String, T>> items, Comparator<Pair<String, T>> comparator, SortController.OrderGraph graph) {
+		protected <T> void totalOrder(List<Pair<String, T>> items, Comparator<Pair<String, T>> comparator, OrderGraph graph) {
 			Collections.sort(items, comparator);
 			int size = items.size();
 			for (int i = 0; i < size - 1; i++) {
@@ -327,7 +326,7 @@ public class Sort implements BlockType {
 
 		@Test public void totalOrder() throws RuleBaseException {
 			SortBlock block = define("<sort by='ascending' priority='5'>@foo</sort>");
-			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+			final OrderGraph graph = mockery.mock(OrderGraph.class);
 			mockery.checking(new Expectations() {{
 				one(graph).order("x2", "x1", 5);
 				one(graph).order("x2", "x3", 5);
@@ -492,7 +491,7 @@ public class Sort implements BlockType {
 			seg1.values.add(Pair.of("m1", content.query().single("/id('m1')/@name").toAtomicItem()));
 			seg2.values = new ArrayList<Pair<String, Item>>();
 			seg2.values.add(Pair.of("m2", content.query().single("/id('m2')/@name").toAtomicItem()));
-			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+			final OrderGraph graph = mockery.mock(OrderGraph.class);
 			mockery.checking(new Expectations() {{
 				one(graph).order("m2", "m1", 0);
 			}});
@@ -507,7 +506,7 @@ public class Sort implements BlockType {
 			seg1.values.add(Pair.of("m1", content.query().single("/id('m1')/@name").toAtomicItem()));
 			seg2.values = new ArrayList<Pair<String, Item>>();
 			seg2.values.add(Pair.of("m2", content.query().single("/id('m2')/@name").toAtomicItem()));
-			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+			final OrderGraph graph = mockery.mock(OrderGraph.class);
 			mockery.checking(new Expectations() {{
 				one(graph).order("m1", "m2", 0);
 			}});
@@ -606,7 +605,7 @@ public class Sort implements BlockType {
 			seg2.proxies.add(Pair.of("uf1", content.query().single("/id('f1')").node()));
 			seg1.proxies.add(Pair.of("um2", content.query().single("/id('m2')").node()));
 			seg2.proxies.add(Pair.of("uf2", content.query().single("/id('f1')").node()));
-			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+			final OrderGraph graph = mockery.mock(OrderGraph.class);
 			mockery.checking(new Expectations() {{
 				one(graph).order("um1", "um2", 0);
 			}});
@@ -750,7 +749,7 @@ public class Sort implements BlockType {
 					Pair.of(comp2, Arrays.asList(cname))});
 			seg2.siblingsByTarget = Arrays.<Pair<Node, List<Node>>>asList(new Pair[] {
 					Pair.of(cname, Arrays.asList(comp2))});
-			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+			final OrderGraph graph = mockery.mock(OrderGraph.class);
 			mockery.checking(new Expectations() {{
 				one(graph).order(comp1, cname, 0);
 				one(graph).order(comp1, comp2, 0);
@@ -773,7 +772,7 @@ public class Sort implements BlockType {
 					Pair.of(comp2, Arrays.asList(cname))});
 			seg2.siblingsByTarget = Arrays.<Pair<Node, List<Node>>>asList(new Pair[] {
 					Pair.of(cname, Arrays.asList(comp2))});
-			final SortController.OrderGraph graph = mockery.mock(SortController.OrderGraph.class);
+			final OrderGraph graph = mockery.mock(OrderGraph.class);
 			mockery.checking(new Expectations() {{
 				one(graph).order(cname, comp1, 0);
 				one(graph).order(comp2, comp1, 0);
