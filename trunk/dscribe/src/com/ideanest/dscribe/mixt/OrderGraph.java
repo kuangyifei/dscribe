@@ -11,6 +11,7 @@ public class OrderGraph {
 	private final Node target;
 	private final int numNodes;
 	private final Map<String, Integer> nodeIndex = new HashMap<String, Integer>();
+	private final int[] naturalNodeOrder;
 	private final int[] edges;
 	private final int[] maxes;
 	private final boolean[] placed;
@@ -22,8 +23,14 @@ public class OrderGraph {
 		Arrays.fill(edges, Integer.MIN_VALUE);
 		maxes = new int[numNodes];
 		placed = new boolean[numNodes];
+		naturalNodeOrder = new int[numNodes];
 		int i = 0;
-		for (String id : target.query().all("*/@xml:id").values()) nodeIndex.put(id, i++);
+		ItemList childIds = target.query().all("*/@xml:id");
+		for (String id : childIds.values()) nodeIndex.put(id, i++);
+		List<String> childIdList = new ArrayList<String>(childIds.values().asList());
+		Collections.sort(childIdList);
+		int j = 0;
+		for (String id : childIdList) naturalNodeOrder[nodeIndex.get(id)] = j++;
 	}
 	
 	public void order(Node first, Node second, int priority) {
@@ -46,22 +53,21 @@ public class OrderGraph {
 			if (placed[i]) continue;
 			int selected = -1;
 			int min = minMax();
-			if (maxes[i] > min) {
-				for (int j = 0; j < numNodes; j++) {
-					if (!placed[j] && maxes[j] <= min) {
-						// TODO: if multiple mins, select based on id to get stability
-						selected = j;
-						break;
-					}
+			for (int j = 0; j < numNodes; j++) {
+				if (!placed[j] && maxes[j] <= min &&
+						(selected == -1 || naturalNodeOrder[j] < naturalNodeOrder[selected])) {
+					selected = j;
 				}
-				assert selected != -1;
+			}
+			assert selected != -1;
+			if (selected == i) {
+				i++;
+			} else {
 				target.query().run(
 						"let $node1 := $_3/*[$_1], $node2 := $_3/*[$_2] " +
 						"return (update insert $node1 preceding $node2, update delete $node1)",
 						selected + numMoved + 1, i + numMoved + 1, target);
 				numMoved++;
-			} else {
-				selected = i++;
 			}
 			placed[selected] = true;
 			for (int j = 0; j < numNodes; j++) {
@@ -226,6 +232,15 @@ public class OrderGraph {
 			graph.order("c2", "c1", 2);
 			graph.order("c0", "c2", 3);
 			assertOrder(1, "c0", "c2", "c1");
+		}
+
+		@Test public void applyOrderBreakTie() {
+			target.delete();
+			target = db.getFolder("/").documents().load(Name.generate(), Source.xml(
+					"<container><child0 xml:id='c'/><child1 xml:id='b'/><child2 xml:id='a'/></container>")).root();
+			graph = new OrderGraph(target);
+			graph.order("b", "a", 0);
+			assertOrder(2, "b", "a", "c");
 		}
 
 	}
