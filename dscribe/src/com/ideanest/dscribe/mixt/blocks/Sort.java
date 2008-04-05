@@ -243,7 +243,6 @@ public class Sort implements BlockType {
 		
 		@Override void resolveOrder(Mod.Builder modBuilder, Node node) throws TransformException {
 			ItemList siblings = query.runOn(modBuilder.scopeWithVariablesBound(node.query().single("..").query()));
-			if (siblings.isEmpty()) return;
 			for (Node sibling : siblings.nodes()) {
 				if (!node.query().single(".. is $_1/..", sibling).booleanValue())
 					throw new TransformException("query selected non-sibling node: " + sibling);
@@ -658,7 +657,9 @@ public class Sort implements BlockType {
 			Node cname = content.query().single("/id('cname')").node();
 			Node uc1 = content.query().single("/id('uc1')").node();
 			setModBuilderScopeWithVariablesBound(uc1.query());
+			supplement();
 			block.resolveOrder(modBuilder, cname);
+			checkSupplement("<sort-siblings run-length='0'/>");
 		}
 		
 		@Test(expected = TransformException.class)

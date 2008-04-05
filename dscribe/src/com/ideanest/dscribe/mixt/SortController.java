@@ -2,6 +2,7 @@ package com.ideanest.dscribe.mixt;
 
 import static org.junit.Assert.*;
 
+import java.lang.reflect.Field;
 import java.util.*;
 
 import org.exist.fluent.*;
@@ -114,7 +115,8 @@ public class SortController {
 		}
 		if (!segs.isEmpty()) {
 			prevRule.sortBlock(prevStage, segs, graph);
-			graph.applyOrder();
+			engine.stats().numOrdersChecked.increment();
+			engine.stats().numElementsMoved.increment(graph.applyOrder());
 		}
 	}
 
@@ -153,6 +155,8 @@ public class SortController {
 					Name.generate(), Source.xml("<modstore xmlns='" + Engine.MOD_NS + "'/>")).root();
 			modStore.namespaceBindings().put("", Engine.MOD_NS);
 
+			injectEngineCounter("numOrdersChecked");
+			injectEngineCounter("numElementsMoved");
 			mockery.checking(new Expectations() {{
 				allowing(engine).relativePath(doc1);  will(returnValue(db.getFolder("/workspace").relativePath(doc1.path())));
 				allowing(engine).relativePath(doc2);  will(returnValue(db.getFolder("/workspace").relativePath(doc2.path())));
@@ -160,9 +164,33 @@ public class SortController {
 				allowing(engine).modStore();  will(returnValue(modStore));
 				allowing(engine).workspace();  will(returnValue(workspace));
 				allowing(engine).globalScope();  will(returnValue(workspace.query()));
+				allowing(engine).stats();  will(returnValue(engine.stats));
 				allowing(engine).ensureWorkspaceNodeHasXmlId(doc1.query().single("//e1").node());  will(returnValue(true));
 				allowing(engine).ensureWorkspaceNodeHasXmlId(doc1.query().single("//e2").node());  will(returnValue(true));
-			}});	
+			}});
+		}
+		
+		private Counter injectEngineCounter(String fieldName) {
+			try {
+				if (engine.stats == null) {
+					Field field = Engine.class.getDeclaredField("stats");
+					field.setAccessible(true);
+					field.set(engine, new Engine.Stats());
+				}
+				final Counter counter = new Counter(fieldName + " = {0,number,integer}");
+				Field field = Engine.Stats.class.getDeclaredField(fieldName);
+				field.setAccessible(true);
+				field.set(engine.stats, counter);
+				return counter;
+			} catch (SecurityException e) {
+				throw new RuntimeException(e);
+			} catch (IllegalArgumentException e) {
+				throw new RuntimeException(e);
+			} catch (NoSuchFieldException e) {
+				throw new RuntimeException(e);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
 		}
 		
 		@Test public void done() {
