@@ -31,8 +31,11 @@ public class Engine {
 				numCycles = Counter.english("cycle", "cycles", null),
 				numBlocksVerified = Counter.english("block", "blocks", "verified"),
 				numBlocksResolved = Counter.english("block", "blocks", "resolved"),
+				numModsRestored = Counter.english("mod", "mods", "restored"),
 				numModsCompleted = Counter.english("mod", "mods", "completed"),
-				numModsWithdrawn = Counter.english("mod", "mods", "withdrawn");
+				numModsWithdrawn = Counter.english("mod", "mods", "withdrawn"),
+				numOrdersChecked = Counter.english("order", "orders", "checked"),
+				numElementsMoved = Counter.english("element", "elements", "moved");
 	}
 	
 	private final Map<String,Rule> ruleMap = new HashMap<String,Rule>();

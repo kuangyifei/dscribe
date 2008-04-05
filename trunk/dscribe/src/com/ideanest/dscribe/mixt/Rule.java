@@ -8,9 +8,7 @@ import java.text.MessageFormat;
 import java.util.*;
 
 import org.apache.log4j.Logger;
-import org.exist.dom.*;
 import org.exist.fluent.*;
-import org.exist.fluent.QName;
 import org.exist.storage.DBBroker;
 import org.hamcrest.*;
 import org.jmock.*;
@@ -330,6 +328,7 @@ public class Rule {
 				"order by xs:integer($mod/@stage) return $mod", node, mod.node()).nodes()) {
 			mod = mod.restoreChild(blocks.get(mod.stage+1), historyNode);
 		}
+		engine.stats.numModsRestored.increment();
 		return mod;
 	}
 
@@ -882,12 +881,16 @@ public class Rule {
 		
 		@Test public void restoreMod1() throws TransformException {
 			final List<Mod> mods = mockModRestoreSequence(1);
+			injectEngineCounter("numModsRestored");
 			assertSame(mods.get(2), rule.restoreMod(modNodeAt(1)));
+			assertEquals(1, rule.engine.stats.numModsRestored.value());
 		}
 
 		@Test public void restoreMod2() throws TransformException {
 			final List<Mod> mods = mockModRestoreSequence(2);
+			injectEngineCounter("numModsRestored");
 			assertSame(mods.get(3), rule.restoreMod(modNodeAt(2)));
+			assertEquals(1, rule.engine.stats.numModsRestored.value());
 		}
 
 		@Test public void restoreModsAtRootStageNoKeyHasMod() throws TransformException {
@@ -1178,7 +1181,7 @@ public class Rule {
 				try {
 					queryServicePrepareContext.invoke(item, (Object) null);
 					Set<String> actualNames = new TreeSet<String>();
-					for (Iterator<DocumentImpl> it = ((DocumentSet) queryServiceDocs.get(item)).getDocumentIterator(); it.hasNext(); ) {
+					for (Iterator<org.exist.dom.DocumentImpl> it = ((org.exist.dom.DocumentSet) queryServiceDocs.get(item)).getDocumentIterator(); it.hasNext(); ) {
 						String path = it.next().getURI().toString();
 						if (path.startsWith("/db")) path = path.substring(3);
 						actualNames.add(path);
