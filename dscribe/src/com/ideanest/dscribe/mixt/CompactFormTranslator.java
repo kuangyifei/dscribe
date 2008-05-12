@@ -27,13 +27,13 @@ public class CompactFormTranslator {
 		Deque<String> tags = new LinkedList<String>();
 		indents.addFirst("");
 		String line, textIndent = null;
-		boolean inTextRun = false, needIndentedText = false, inPreamble = true;
+		boolean inTextRun = false, needIndentedText = false, inPreamble = true, atRule = false;
 		for(int lineNumber = 1; (line = in.readLine()) != null; lineNumber++) {
+			if (line.trim().length() == 0) continue;	// skip empty lines, don't care about indentation
 			Matcher lineMatcher = INDENT_PATTERN.matcher(line);
 			if (!lineMatcher.matches()) throw new ParseException("indent pattern failed to match line " + lineNumber + ":\n" + line, 0);
 			String indent = lineMatcher.group(1);
 			String content = lineMatcher.group(2).trim();
-			if (content.length() == 0) continue;
 			if (indent.equals(indents.peekFirst())) {
 				if (!inPreamble) buf.append("</rules:" + tags.removeFirst() + ">");
 				if (needIndentedText) throw new ParseException("expected indented text block after line " + (lineNumber-1) + " but got:\n" + line, 0);
@@ -89,8 +89,18 @@ public class CompactFormTranslator {
 						if (ruleMatcher.group(2) != null) buf.append("xml:id='" + ruleMatcher.group(3) + "' ");
 						buf.append("name='" + ruleMatcher.group(1) + "'>");
 						tags.addFirst("rule");
+						atRule = true;
+					} else if (keyword.equals("alias")) {
+						if (indents.size() != 2) throw new ParseException("alias declarations must be nested immediately in a rule, but found one at level " + indents.size() + " on line " + lineNumber + ":\n" + line, indent.length());
+						if (!atRule) throw new ParseException("alias declarations must immediately follow a rule declaration, but found a misplaced one on line " + lineNumber + ":\n" + line, indent.length());
+						assert content.startsWith("alias");
+						if (content.length() >= 7) {
+							buf.append("<rules:alias name='").append(content.substring(6)).append("'>");
+							tags.addFirst("alias");
+						}
 					} else {
 						if (indents.size() == 1) throw new ParseException("rule blocks must be nested in a rule, but found one at outermost level on line " + lineNumber + ":\n" + line, indent.length());
+						atRule = false;
 						buf.append("<rules:" + keyword);
 						tags.addFirst(keyword);
 						if (specParts.length % 2 != 1) throw new ParseException("unpaired attribute on line " + lineNumber + ":\n" + line, indent.length());
@@ -346,6 +356,38 @@ public class CompactFormTranslator {
 			_("</rules:rules>");
 			translateAndCheck();
 		}
+		
+		@Test public void ruleWithAlias() throws IOException, ParseException {
+			captureInput();
+			_("rule do something or other [r1]");
+			_("	alias do that other thing");
+			captureOutput();
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
+			_("	<rules:rule xml:id='r1' name='do something or other'>");
+			_("		<rules:alias name='do that other thing'/>");
+			_("	</rules:rule>");
+			_("</rules:rules>");
+			translateAndCheck();
+		}
+		
+		@Test public void ruleWithTwoAliasesAndBlocks() throws IOException, ParseException {
+			captureInput();
+			_("rule do something or other [r1]");
+			_("	alias do that other thing");
+			_("	alias and that too");
+			_("	for");
+			_("	insert");
+			captureOutput();
+			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
+			_("	<rules:rule xml:id='r1' name='do something or other'>");
+			_("		<rules:alias name='do that other thing'/>");
+			_("		<rules:alias name='and that too'/>");
+			_("		<rules:for/><rules:insert/>");
+			_("	</rules:rule>");
+			_("</rules:rules>");
+			translateAndCheck();
+		}
+		
 		@Test(expected = ParseException.class)
 		public void namespaceAfterPreamble() throws ParseException, IOException {
 			captureInput();
@@ -426,6 +468,29 @@ public class CompactFormTranslator {
 			_("	for any $x empty");
 			translateBadInput();
 		}
-
+		
+		@Test(expected = ParseException.class)
+		public void aliasOutermost() throws ParseException, IOException {
+			captureInput();
+			_("alias foo bar");
+			translateBadInput();
+		}
+		
+		@Test(expected = ParseException.class)
+		public void aliasNestedWithoutRule() throws ParseException, IOException {
+			captureInput();
+			_("	alias foo bar");
+			translateBadInput();
+		}
+		
+		@Test(expected = ParseException.class)
+		public void aliasAfterBlocks() throws ParseException, IOException {
+			captureInput();
+			_("rule do stuff [r1]");
+			_("	for any $x empty");
+			_("	alias foo bar");
+			translateBadInput();
+		}
+		
 	}
 }
