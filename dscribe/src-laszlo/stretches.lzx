@@ -1,0 +1,6 @@
+<canvas width='800' height='800'>
+  <view id='blue' bgcolor='blue' width='400' height='100' stretches='both'>
+    <view bgcolor='green' x='50' y='25' width='200' height='50' stretches='both'/>
+  </view>
+  <button y='125' onclick='blue.animate("width", -25, 1000, true)'>Shrink</button>
+</canvas>

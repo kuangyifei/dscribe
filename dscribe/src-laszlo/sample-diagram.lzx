@@ -1,0 +1,26 @@
+<canvas width='800' height='600'>
+  <debug y = '400' height = '200'/>
+  <include href='uml-lib.lzx'/>
+
+  <view bgcolor='green' x='250' y='150' width='100' height='100'/>
+
+  <umldiagram x = '20' y = '20' width = '600' height = '350'>
+    <umlclass x='20' y='20' width='100'>
+      <umlblockname>VeryVerylong name with more stuff</umlblockname>
+      <umlcompartment kind='attributes'>
+        <umlattribute><umlvar><umlname>foo</umlname><umltype>int</umltype></umlvar></umlattribute>
+      </umlcompartment>
+      <umlcompartment kind='operations'>
+      	<umloperation>
+      		<umlname>bar</umlname>
+      		<umlargs>
+      			<umlvar><umlname>x</umlname><umltype>string</umltype></umlvar>
+      			<umlvar><umlname>y</umlname><umltype>Point</umltype></umlvar>
+      		</umlargs>
+      		<umltype>int</umltype>
+      	</umloperation>
+      </umlcompartment>
+    </umlclass>
+  </umldiagram>
+  
+</canvas>
