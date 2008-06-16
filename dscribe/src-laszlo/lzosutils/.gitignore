@@ -1,0 +1,10 @@
+.DS_Store
+\.\#*
+\#*\#
+*.orig
+.e.scm.*
+
+# compiler output
+*.lzx.swf
+
+working

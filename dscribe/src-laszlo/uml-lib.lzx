@@ -1,230 +1,51 @@
 <library>
 
+<include href="lzosutils/lib"/>
+<include href="common-views.lzx"/>
+
 <stylesheet>
 
-faderect {
-  fadeMargin: 15;
-}
-
-sizecorner {
-  size: 6;
-}
-
 umlclass {
-  padding: 2;
-  color: #888;
+	padding: 2;
+	color: #888;
 }
 
 umldiagram {
-  idletextcolor: #444;
-  hovertextcolor: #000;
+	idletextcolor: #444;
+	hovertextcolor: #000;
 }
+
 
 </stylesheet>
-
-
-<!--        Utilities         -->
-
-<script><![CDATA[
-
-function dump(data) {
-	Debug.write(data);
-	return data;
-}
-
-function findAncestorDragger(view) {
-	while (view != null) {
-		if (view['dragger']) return view.dragger;
-		view = view.immediateparent;
-	}
-	return null;
-}
-
-]]></script>
-
-<class name = 'hrule' extends = 'drawview'
-       x = '${mask.getAttributeRelative("x", parent)}'
-       width = '${mask.getAttributeRelative("width", parent)}'
-       height = '${2 * padding + 1}'>
-  <attribute name = 'padding' value = '$style{"padding"}' type = 'size'/>
-  <attribute name = 'ymiddle' value = '${padding + 1}' type = 'size'/>
-  <attribute name = 'color' value = '$style{"color"}' type = 'color'/>
-  <handler name = 'oninit' method = 'redraw'/>
-  <handler name = 'onx' method = 'redraw'/>
-  <handler name = 'onwidth' method = 'redraw'/>
-  <handler name = 'onymiddle' method = 'redraw'/>
-  
-  <method name = 'redraw'>
-    this.clear();
-    this.beginPath();
-    this.moveTo(0, this.ymiddle);
-    this.lineTo(this.width, this.ymiddle);
-    this.lineWidth = 0;
-    this.strokeStyle = this.color;
-    this.stroke();
-  </method>
-</class>
-
-<class name = 'rect' extends = 'drawview'>
-  <attribute name = 'fillAlpha' value = '1' type = 'size'/>
-  <attribute name = 'fillColor' type = 'color'/>
-  <attribute name = 'strokeAlpha' value = '1' type = 'size'/>
-  <attribute name = 'strokeColor' value = 'black' type = 'color'/>
-  <handler name = 'oninit' method = 'redraw'/>
-  <handler name = 'onwidth' method = 'redraw'/>
-  <handler name = 'onheight' method = 'redraw'/>
-  <handler name = 'onfillAlpha' method = 'redraw'/>
-  <handler name = 'onfillColor' method = 'redraw'/>
-  <handler name = 'onstrokeAlpha' method = 'redraw'/>
-  <handler name = 'onstrokeColor' method = 'redraw'/>
-  <method name = 'redraw'>
-    this.clear();
-    this.beginPath();
-    this.rect(0, 0, this.width-1, this.height-1);
-    if (this['fillColor']) {
-      this.globalAlpha = this.fillAlpha;
-      this.fillStyle = this.fillColor;
-      this.fill();
-    }
-    this.globalAlpha = this.strokeAlpha;
-    this.strokeStyle = this.strokeColor;
-    this.lineWidth = 0;
-    this.stroke();
-  </method>
-</class>
-
-<class name = 'faderect' extends = 'drawview'
-       x = '${gx == 0 ? targetx : maskx + (gx > 0 ? maskwidth - fadeMargin : 0)}'
-       y = '${gy == 0 ? targety : masky + (gy > 0 ? maskheight - fadeMargin : 0)}'
-       width = '${gx == 0 ? targetwidth : fadeMargin}'
-       height = '${gy == 0 ? targetheight : fadeMargin}'>
-  <attribute name = 'side' type = 'string' required = 'true'/>
-  <attribute name = 'fadeMargin' value = '$style{"fadeMargin"}' type = 'size'/>
-  <attribute name = 'target' type = 'expression' required = 'true'/>
-  <attribute name = 'targetx' value = '${target.getAttributeRelative("x", this)}' type = 'number'/>
-  <attribute name = 'targety' value = '${target.getAttributeRelative("y", this)}' type = 'number'/>
-  <attribute name = 'targetwidth' value = '${target.getAttributeRelative("width", this)}' type = 'size'/>
-  <attribute name = 'targetheight' value = '${target.getAttributeRelative("height", this)}' type = 'size'/>
-  <attribute name = 'maskx' value = '${mask.getAttributeRelative("x", immediateparent)}' type = 'number'/>
-  <attribute name = 'masky' value = '${mask.getAttributeRelative("y", immediateparent)}' type = 'number'/>  
-  <attribute name = 'maskwidth' value = '${mask.getAttributeRelative("width", immediateparent)}' type = 'number'/>
-  <attribute name = 'maskheight' value = '${mask.getAttributeRelative("height", immediateparent)}' type = 'number'/>
-  <attribute name = 'gx' value = '${side == "right" ? 1 : (side == "left" ? -1 : 0)}'/>
-  <attribute name = 'gy' value = '${side == "bottom" ? 1 : (side == "top" ? -1 : 0)}'/>
-  <handler name = 'oninit' method = 'redraw'/>
-  <handler name = 'onwidth' method = 'redraw'/>
-  <handler name = 'onheight' method = 'redraw'/>
-  <handler name = 'ontarget' method = 'redraw'/>
-  <handler name = 'onside' method = 'redraw'/>
-  <handler name = 'onvisible' method = 'redraw'/>
-  <method name = 'redraw'>
-    if (!visible) return;
-    this.clear();
-    this.beginPath();
-    this.rect(0, 0, width, height);
-    var g = this.createLinearGradient(
-      gx >= 0 ? 0 : fadeMargin,
-      gy >= 0 ? 0 : fadeMargin,
-      gx > 0 ? fadeMargin : 0,
-      gy > 0 ? fadeMargin : 0);
-    this.globalAlpha = 0;
-    g.addColorStop(0, 0xffffff);
-    this.globalAlpha = 1;
-    g.addColorStop(0.95, 0xffffff);
-    this.fillStyle = g;
-    this.fill();
-  </method>
-</class>
-
-<class name = 'sizecorner' extends = 'drawview'
-		x = '${parent.width - this.size}'
-		y = '${parent.height - this.size}'
-		width = '${this.size}'
-		height = '${this.size}'
-		onmousedown = 'resizer.apply()'
-		onmouseup = 'resizer.remove()'>
-	<attribute name = 'resizer' type = 'expression' required = 'true'/>
-	<attribute name = 'size' value = '$style{"size"}' type = 'number'/>
-	<attribute name = 'hovering' value = 'false' type = 'boolean'/>
-	<attribute name = 'dragging' value = 'false' type = 'boolean'/>
-	<handler name = 'oninit'>
-		this.clear();
-		this.beginPath();
-		this.moveTo(this.size-1, 0);
-		this.lineTo(0, this.size-1);
-		this.lineTo(this.size-1, this.size-1);
-		this.closePath();
-		this.strokeStyle = 0x888888;
-		this.fillStyle = 0xffffff;
-		this.fill();
-		this.stroke();
-	</handler>
-	<handler name = 'onmousedown'> this.dragging = true; this.redraw(); this.resizer.apply(); </handler>
-	<handler name = 'onmouseup'> this.dragging = false; this.redraw(); this.resizer.remove(); </handler>
-	<handler name = 'onmouseover'> this.hovering = true; this.redraw(); </handler>
-	<handler name = 'onmouseout'> this.hovering = false; this.redraw(); </handler>
-	<method name = 'redraw'>
-		this.fillStyle = this.hovering || this.dragging ? 0x000000 : 0xffffff;
-		this.fill();
-	</method>
-</class>
-
-<class name = 'resizestatelimits' extends = 'state'>
-  <attribute name = 'xroffset'
-             value = '$once{this.x - this.width + this.getMouse("x")}'/>
-  <attribute name = 'width'
-             value = '${Math.min(Math.max((this.immediateparent.getMouse("x") - xroffset), this["minwidth"]), this["maxwidth"])}'/>
-  <attribute name = 'yroffset'
-             value = '$once{this.y - this.height + this.getMouse("y")}'/>
-  <attribute name = 'height'
-             value = '${Math.min(Math.max((this.immediateparent.getMouse("y")- yroffset), this["minheight"]), this["maxheight"])}'/>
-</class>
-
-<class name = 'rollovertext' extends = 'text'
-       fgcolor = '$once{idletextcolor}'>
-  <attribute name = 'idletextcolor' value = '$style{"idletextcolor"}' type = 'color'/>
-  <attribute name = 'hovertextcolor' value = '$style{"hovertextcolor"}' type = 'color'/>
-  <attribute name = 'dragger' value = '$once{findAncestorDragger(this)}' type = 'expression'/>
-  <handler name = 'onmouseover'> this.setColor(hovertextcolor); </handler>
-  <handler name = 'onmouseout'> this.setColor(idletextcolor); </handler>
-  <handler name = 'onmousedown'> if (dragger) dragger.apply(); </handler>
-  <handler name = 'onmouseup'> if (dragger) dragger.remove(); </handler>
-</class>
-
-<!--        Semantic elements         -->
 
 <class name = 'umldiagram'>
   <attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
   <rect width = '${parent.width}' height = '${parent.height}'/>
   <view name = 'contents'
         clip = 'true'
-        x = '2'
-        y = '2'
-        width = '${parent.width - 4}'
-        height = '${parent.height - 4}'/>
+        x = '2' y = '2'
+        width = '${parent.width - 4}' height = '${parent.height - 4}'/>
 </class>
 
 <class name = 'umlclass'
-       onmousedown = 'this.dragger.apply()'
-       onmouseup   = 'this.dragger.remove()'>
+       onmousedown = 'dragger.apply()'
+       onmouseup = 'dragger.remove()'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'padding' value = '$style{"padding"}' type = 'size'/>
 	<attribute name = 'color' value = '$style{"color"}' type = 'color'/>
 	
-	<dragstate name = 'dragger'>
-	  <attribute name = 'drag_min_x' value = '0' type = 'number'/>
-	  <attribute name = 'drag_max_x'
-	             value = '${immediateparent.mask.getAttributeRelative("width", immediateparent) - width}' type = 'number'/>
-	  <attribute name = 'drag_min_y' value = '0' type = 'number'/>
-	  <attribute name = 'drag_max_y'
-	             value = '${immediateparent.mask.getAttributeRelative("height", immediateparent) - height}' type = 'number'/>
-	</dragstate>
-	<resizestatelimits name = 'resizer'>
-      <attribute name = 'minwidth' value = '50' type = 'number'/>
-      <attribute name = 'maxwidth' value = '${immediateparent.mask.getAttributeRelative("width", immediateparent) - this.x}' type = 'number'/>
-      <attribute name = 'minheight' value = '$once{19 + 2*padding}' type = 'number'/>
-      <attribute name = 'maxheight' value = '${inside.contents.height + 2*(padding + 1)}' type = 'number'/>
-    </resizestatelimits>
+	<dragstate name = 'dragger'
+		drag_min_x = '0'
+		drag_max_x = '${immediateparent.mask.getAttributeRelative("width", immediateparent) - width}'
+		drag_min_y = '0'
+		drag_max_y = '${immediateparent.mask.getAttributeRelative("height", immediateparent) - height}'
+	/>
+	<resizestatelimits name = 'resizer'
+		minwidth = '50'
+		maxwidth = '${immediateparent.mask.getAttributeRelative("width", immediateparent) - x}'
+		minheight = '$once{19 + 2*padding}'
+		maxheight = '${inside.contents.height + 2*(padding + 1)}'
+	/>
 	
     <rect width = '${parent.width}' height = '${parent.height}'
           fillAlpha = '0.7' fillColor = 'white'
@@ -247,16 +68,16 @@ function findAncestorDragger(view) {
     
     <method name = 'init'><![CDATA[
     	super.init();
-    	var minheight = 19 + 2*this.padding;
-    	var fullheight = this.inside.contents.height + 2*(this.padding + 1);
-    	if (this.height < minheight) setAttribute("height", fullheight);
+    	var minheight = 19 + 2*padding;
+    	var fullheight = inside.contents.height + 2*(padding + 1);
+    	if (height < minheight) setAttribute("height", fullheight);
     ]]></method>
 </class>
 
 <class name = 'umlblockname'>
   <attribute name = 'text' type = 'text'/>
   <rollovertext name = 'contents'
-        x = '${Math.max(0, (classroot.immediateparent.width-this.width)/2)}'
+        x = '${Math.max(0, (classroot.immediateparent.width - width)/2)}'
         y = '1'
         fontsize = '12'
         text = '${parent.text}'/>
@@ -271,18 +92,21 @@ function findAncestorDragger(view) {
 
 	<hrule name = 'separator'/>
 	<vbox name = 'contents' y = '${parent.separator.height}'/>
-	<faderect target = '$once{parent.contents}'
-	          side = 'right'/>
+	<faderect target = '$once{parent.contents}' side = 'right'/>
 </class>
 
-<class name = 'umlmember' extends = 'rollovertext'/>
+<class name = 'umlmember' extends = 'rollovertext'
+		onclick = ''>
+	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
+	<node name = 'contents'/>
+</class>
  
 <class name = 'umlattribute' extends = 'umlmember'>
-	<attribute name = 'text' value = '${subnodes[0].seg}'/>
+	<attribute name = 'text' value = '${contents.subnodes[0].seg}'/>
 </class>
 
 <class name = 'umloperation' extends = 'umlmember'>
-	<attribute name = 'text' value = '${subnodes[0].seg + subnodes[1].seg + (subnodes[2].visible ? " : " : "") + subnodes[2].seg}'/>
+	<attribute name = 'text' value = '${contents.subnodes[0].seg + contents.subnodes[1].seg + (contents.subnodes[2].visible ? " : " : "") + contents.subnodes[2].seg}'/>
 </class>
 
 <class name = 'textseg' extends = 'node'>
@@ -291,9 +115,8 @@ function findAncestorDragger(view) {
 	<attribute name = 'seg' value = '${visible ? text : ""}' type = 'string'/>
 </class>
 
-<class name = 'umlvar' extends = 'textseg'>
-	<attribute name = 'text' value = '${subnodes[0].seg + (subnodes[0].visible &amp;&amp; subnodes[1].visible ? " : " : "") + subnodes[1].seg}'/>
-</class>
+<class name = 'umlvar' extends = 'textseg'
+	text = '${subnodes[0].seg + (subnodes[0].visible &amp;&amp; subnodes[1].visible ? " : " : "") + subnodes[1].seg}'/>
 
 <class name = 'umlname' extends = 'textseg'/>
 <class name = 'umltype' extends = 'textseg'/>
@@ -302,37 +125,36 @@ function findAncestorDragger(view) {
 	<attribute name = 'elide' value = 'false' type = 'boolean'/>
 	<attribute name = 'concatDelegate'/>
 	<handler name = 'onelide' method = 'concat'/>
-	<method name = 'init'><![CDATA[
+	<method name = 'init'>
 		super.init();
 		this.concatDelegate = new LzDelegate(this, "concat");
-		for (var i = 0; i < this.subnodes.length; i++) {
-			this.concatDelegate.register(this.subnodes[i], "onvisible");
-			this.concatDelegate.register(this.subnodes[i], "onseg");
-		}
-		this.concat();
-	]]></method>
+		subnodes.forEach(function(node) {
+			concatDelegate.register(node, "onvisible");
+			concatDelegate.register(node, "onseg");
+		});
+		concat();
+	</method>
 	<method name="destroy">
-		this.concatDelegate.unregisterAll();
+		concatDelegate.unregisterAll();
 		super.destroy();
 	</method>
-	<method name = 'concat'><![CDATA[
+	<method name = 'concat'>
 		var s = "(";
-		if (this.elide) {
-			if (this.subnodes) s += "...";
+		if (elide) {
+			if (subnodes) s += "...";
 		} else {
 			var first = true;
-			for (var i = 0; i < this.subnodes.length; i++) {
-				var v = this.subnodes[i];
-				if (v.visible) {
+			subnodes.forEach(function(node) {
+				if (node.visible) {
 					if (!first) s += ", ";
-					s += v.seg;
+					s += node.seg;
 					first = false;
 				}
-			}
+			});
 		}
 		s += ")";
-		this.setAttribute("text", s);
-	]]></method>
+		setAttribute("text", s);
+	</method>
 </class>
 
 </library>

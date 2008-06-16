@@ -1,0 +1,233 @@
+<library>
+
+<include href="lzosutils/lib"/>
+
+<stylesheet>
+
+faderect {
+	fadeMargin: 15;
+}
+
+sizecorner {
+	size: 6;
+}
+
+bracketselector {
+	bracketwidth: 5;
+	fgcolor: #f00;
+}
+
+</stylesheet>
+
+<script><![CDATA[
+
+function dump(data) {
+	Debug.write(data);
+	return data;
+}
+
+MAX_INT = 2 << 31;
+
+LzNode.prototype.findAncestorProperty = function(propertyName) {
+	var node = this;
+	while (node != null) {
+		var property = node[propertyName];
+		if (property) return property;
+		node = node.immediateparent;
+	}
+	return null;
+}
+
+LzNode.prototype.callAncestorProperty = function(propertyName, fn) {
+	var prop = this.findAncestorProperty(propertyName);
+	if (prop) fn.call(prop);
+}
+
+]]></script>
+
+<class name = 'hrule' extends = 'drawview'
+		x = '${mask.getAttributeRelative("x", parent)}'
+		width = '${mask.getAttributeRelative("width", parent)}'
+		height = '${2 * padding + 1}'>
+	<attribute name = 'padding' value = '$style{"padding"}' type = 'size'/>
+	<attribute name = 'ymiddle' value = '${padding + 1}' type = 'size'/>
+	<attribute name = 'color' value = '$style{"color"}' type = 'color'/>
+	<handler name = 'oninit' method = 'redraw'/>
+	<handler name = 'onx' method = 'redraw'/>
+	<handler name = 'onwidth' method = 'redraw'/>
+	<handler name = 'onymiddle' method = 'redraw'/>
+	<method name = 'redraw'>
+		clear();
+		beginPath();
+		moveTo(0, this.ymiddle);
+		lineTo(this.width, this.ymiddle);
+		lineWidth = 0;
+		strokeStyle = this.color;
+		stroke();
+	</method>
+</class>
+
+<class name = 'rect' extends = 'drawview'>
+	<attribute name = 'fillAlpha' value = '1' type = 'size'/>
+	<attribute name = 'fillColor' type = 'color'/>
+	<attribute name = 'strokeAlpha' value = '1' type = 'size'/>
+	<attribute name = 'strokeColor' value = 'black' type = 'color'/>
+	<handler name = 'oninit' method = 'redraw'/>
+	<handler name = 'onwidth' method = 'redraw'/>
+	<handler name = 'onheight' method = 'redraw'/>
+	<handler name = 'onfillAlpha' method = 'redrawFill'/>
+	<handler name = 'onfillColor' method = 'redrawFill'/>
+	<handler name = 'onstrokeAlpha' method = 'redrawStroke'/>
+	<handler name = 'onstrokeColor' method = 'redrawStroke'/>
+	<method name = 'redraw'>
+		clear();
+		beginPath();
+		rect(0, 0, width-1, height-1);
+		redrawFill();
+		redrawStroke();
+	</method>
+	<method name = 'redrawStroke'>
+		this.globalAlpha = strokeAlpha;
+		this.strokeStyle = strokeColor;
+		this.lineWidth = 0;
+		stroke();
+	</method>
+	<method name = 'redrawFill'>
+		if (this['fillColor']) {
+			this.globalAlpha = fillAlpha;
+			this.fillStyle = fillColor;
+		} else {
+			this.globalAlpha = 0;
+			this.fillColor = 0x000000;
+		}
+		fill();
+	</method>
+</class>
+
+<class name = 'faderect' extends = 'drawview'
+		x = '${gx == 0 ? targetx : maskx + (gx > 0 ? maskwidth - fadeMargin : 0)}'
+		y = '${gy == 0 ? targety : masky + (gy > 0 ? maskheight - fadeMargin : 0)}'
+		width = '${gx == 0 ? targetwidth : fadeMargin}'
+		height = '${gy == 0 ? targetheight : fadeMargin}'>
+	<attribute name = 'side' type = 'string' required = 'true'/>
+	<attribute name = 'fadeMargin' value = '$style{"fadeMargin"}' type = 'size'/>
+	<attribute name = 'target' type = 'expression' required = 'true'/>
+	<attribute name = 'targetx' value = '${target.getAttributeRelative("x", this)}' type = 'number'/>
+	<attribute name = 'targety' value = '${target.getAttributeRelative("y", this)}' type = 'number'/>
+	<attribute name = 'targetwidth' value = '${target.getAttributeRelative("width", this)}' type = 'size'/>
+	<attribute name = 'targetheight' value = '${target.getAttributeRelative("height", this)}' type = 'size'/>
+	<attribute name = 'maskx' value = '${mask.getAttributeRelative("x", immediateparent)}' type = 'number'/>
+	<attribute name = 'masky' value = '${mask.getAttributeRelative("y", immediateparent)}' type = 'number'/>  
+	<attribute name = 'maskwidth' value = '${mask.getAttributeRelative("width", immediateparent)}' type = 'number'/>
+	<attribute name = 'maskheight' value = '${mask.getAttributeRelative("height", immediateparent)}' type = 'number'/>
+	<attribute name = 'gx' value = '${side == "right" ? 1 : (side == "left" ? -1 : 0)}'/>
+	<attribute name = 'gy' value = '${side == "bottom" ? 1 : (side == "top" ? -1 : 0)}'/>
+	<handler name = 'oninit' method = 'redraw'/>
+	<handler name = 'onwidth' method = 'redraw'/>
+	<handler name = 'onheight' method = 'redraw'/>
+	<handler name = 'ontarget' method = 'redraw'/>
+	<handler name = 'onside' method = 'redraw'/>
+	<handler name = 'onvisible' method = 'redraw'/>
+	<method name = 'redraw'>
+		if (!visible) return;
+		clear();
+		beginPath();
+		rect(0, 0, width, height);
+		var g = createLinearGradient(
+			gx >= 0 ? 0 : fadeMargin,
+			gy >= 0 ? 0 : fadeMargin,
+			gx > 0 ? fadeMargin : 0,
+			gy > 0 ? fadeMargin : 0);
+		this.globalAlpha = 0;
+		g.addColorStop(0, 0xffffff);
+		this.globalAlpha = 1;
+		g.addColorStop(0.95, 0xffffff);
+		this.fillStyle = g;
+		fill();
+	</method>
+</class>
+
+<class name = 'sizecorner' extends = 'drawview'
+		x = '${parent.width - size}'
+		y = '${parent.height - size}'
+		width = '${size}'
+		height = '${size}'
+		onmousedown = 'setAttribute("dragging", true); resizer.apply()'
+		onmouseup = 'setAttribute("dragging", false); resizer.remove()'
+		onmouseover = 'setAttribute("hovering", true)'
+		onmouseout = 'setAttribute("hovering", false)'>
+	<attribute name = 'resizer' type = 'expression' required = 'true'/>
+	<attribute name = 'size' value = '$style{"size"}' type = 'number'/>
+	<attribute name = 'hovering' value = 'false' type = 'boolean'/>
+	<attribute name = 'dragging' value = 'false' type = 'boolean'/>
+	<handler name = 'oninit'>
+		clear();
+		beginPath();
+		moveTo(size-1, 0);
+		lineTo(0, size-1);
+		lineTo(size-1, size-1);
+		closePath();
+		this.strokeStyle = 0x888888;
+		this.fillStyle = 0xffffff;
+		fill();
+		stroke();
+	</handler>
+	<handler name = 'ondragging' method = 'redraw'/>
+	<handler name = 'onhovering' method = 'redraw'/>
+	<method name = 'redraw'>
+		this.fillStyle = hovering || dragging ? 0x000000 : 0xffffff;
+		fill();
+	</method>
+</class>
+
+<class name = 'resizestatelimits' extends = 'state'>
+	<attribute name = 'minwidth' value = '0' type = 'number'/>
+	<attribute name = 'maxwidth' value = '$once{MAX_INT}' type = 'number'/>
+	<attribute name = 'minheight' value = '0' type = 'number'/>
+	<attribute name = 'maxheight' value = '$once{MAX_INT}' type = 'number'/>
+	<attribute name = 'xroffset' value = '$once{x - width + getMouse("x")}'/>
+	<attribute name = 'width' value = '${Math.min(Math.max((immediateparent.getMouse("x") - xroffset), minwidth), maxwidth)}'/>
+	<attribute name = 'yroffset' value = '$once{y - height + getMouse("y")}'/>
+	<attribute name = 'height' value = '${Math.min(Math.max((immediateparent.getMouse("y")- yroffset), minheight), maxheight)}'/>
+</class>
+
+<class name = 'rollovertext' extends = 'text'
+		fgcolor = '$once{idletextcolor}'>
+	<attribute name = 'idletextcolor' value = '$style{"idletextcolor"}' type = 'color'/>
+	<attribute name = 'hovertextcolor' value = '$style{"hovertextcolor"}' type = 'color'/>
+	<handler name = 'onmouseover'> setColor(hovertextcolor); </handler>
+	<handler name = 'onmouseout'> setColor(idletextcolor); </handler>
+	<handler name = 'onmousedown'> callAncestorProperty("dragger", function() {this.apply()}); </handler>
+	<handler name = 'onmouseup'> callAncestorProperty("dragger", function() {this.remove()}); </handler>
+</class>
+
+<class name = 'bracketselector'
+		fgcolor = '$style{"fgcolor"}'>
+	<attribute name = 'target' type = 'expression' required = 'true'/>
+	<drawview name = 'leftBracket'
+			x = '${parent.target.getAttributeRelative("x", immediateparent) - width - 3}'
+			y = '${parent.target.getAttributeRelative("y", immediateparent) - 1}'
+			width = '$style{"bracketwidth"}'
+			height = '${parent.target.getAttributeRelative("height", immediateparent) + 2}'
+			oncontext = 'parent.drawBracket(this, "left")'/>
+	<drawview name = 'rightBracket'
+			x = '${parent.target.getAttributeRelative("x", immediateparent) + parent.target.getAttributeRelative("width", immediateparent) + 3}'
+			y = '${parent.target.getAttributeRelative("y", immediateparent) - 1}'
+			width = '$style{"bracketwidth"}'
+			height = '${parent.target.getAttributeRelative("height", immediateparent) + 2}'
+			oncontext = 'parent.drawBracket(this, "right")'/>
+	<method name = 'drawBracket' args = 'bracket, side'>
+		var w = bracket.width - 1;
+		var h = bracket.height - 1;
+		bracket.clear();
+		bracket.beginPath();
+		bracket.moveTo(side == "left" ? w : 0, 0);
+		bracket.lineTo(side == "left" ? 0 : w, 0);
+		bracket.lineTo(side == "left" ? 0 : w, h);
+		bracket.lineTo(side == "left" ? w : 0, h);
+		bracket.strokeStyle = fgcolor;
+		bracket.stroke();
+	</method>
+</class>
+
+</library>

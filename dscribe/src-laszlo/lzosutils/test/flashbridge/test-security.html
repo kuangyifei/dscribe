@@ -1,0 +1,32 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>FlashBridge: Test Security</title>
+    <script type="text/javascript" src="swfobject.js"></script>
+    <script type="text/javascript" src="../../lib/flashbridge-browser.js"></script>
+    <script type="text/javascript" src="log-calls.js"></script>
+  </head>
+  <body>
+    <h2>Calls from the browser into the applet:</h2>
+    <div id="applet">
+      <p>The applet didn't load.</p>
+    </div>
+    <h2>Browser log:</h2>
+    <div id="output" style="font-family:monospace">
+    </div>
+    <script type="text/javascript">//<![CDATA[
+      // Load the app, and tell FlashBridge to talk to it
+      var swfUrl = "test-security.lzx?lzt=swf&lzr=swf8";
+      swfobject.embedSWF(swfUrl, "applet", '100%', '50%', '8.0.0');
+      FlashBridge.initialize('applet');
+
+      var gRegisteredObject = FlashBridge.createRemoteProxy(
+        'gRegisteredObject', ['f']);
+      var gUnregisteredObject = FlashBridge.createRemoteProxy(
+        'gUnregisteredObject', ['f']);
+      FlashBridge.call('registeredFunction');
+      FlashBridge.call('unregisteredFunction');
+      gRegisteredObject.f();
+      gUnregisteredObject.f();
+    //]]></script>
+  </body>
+</html>

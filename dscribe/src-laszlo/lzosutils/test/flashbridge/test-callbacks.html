@@ -1,0 +1,34 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <title>FlashBridge: Test Callbacks</title>
+    <script type="text/javascript" src="swfobject.js"></script>
+    <script type="text/javascript" src="../../lib/flashbridge-browser.js"></script>
+    <script type="text/javascript" src="log-calls.js"></script>
+  </head>
+  <body>
+    <h2>Calls from the applet into the browser:</h2>
+    <div id="output" style="font-family:monospace">
+    </div>
+    <h2>Return values:</h2>
+    <div id="applet">
+      <p>The applet didn't load.</p>
+    </div>
+    <script type="text/javascript">//<![CDATA[
+      // Load the app, and tell FlashBridge to talk to it
+      var swfUrl = "test-callbacks.lzx?lzt=swf&lzr=swf8";
+      swfobject.embedSWF(swfUrl, "applet", '100%', '50%', '8.0.0');
+      FlashBridge.initialize('applet');
+
+      // Set up an object for the applet to call
+      var gBrowserObject = {
+        add: function(a, b) {
+          return a+b;
+        },
+        error: function(msg) {
+          throw msg;
+        }
+      };
+      traceMethods('gBrowserObject');
+    //]]></script>
+  </body>
+</html>
