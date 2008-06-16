@@ -1,0 +1,12 @@
+= LzOsUtils TODO
+
+* docs
+
+== FlashBridge
+
+Tests:
+* slow page (applet loads first)
+
+Features:
+* queueing from applet
+* callback from js

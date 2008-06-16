@@ -1,0 +1,4 @@
+= LzOsUtils Changes
+
+== 2008-05-01
+* FlashBridge: increased the timeout; add tracing, options parameter
