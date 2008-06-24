@@ -28,18 +28,31 @@ function dump(data) {
 
 MAX_INT = 2 << 31;
 
-LzNode.prototype.findAncestorProperty = function(propertyName) {
+LzNode.prototype.findAncestor = function(propertyName) {
 	var node = this;
 	while (node != null) {
-		var property = node[propertyName];
-		if (property) return property;
+		if (node[propertyName] != null) return node;
 		node = node.immediateparent;
 	}
 	return null;
 }
 
-LzNode.prototype.callAncestorProperty = function(propertyName, fn) {
-	var prop = this.findAncestorProperty(propertyName);
+LzNode.prototype.findAncestorProperty = function(propertyName, type) {
+	var node = this;
+	while (node != null) {
+		var property = node[propertyName];
+		if (property && (!type || property instanceof type)) return property;
+		node = node.immediateparent;
+	}
+	return null;
+}
+
+LzNode.prototype.callAncestorProperty = function(propertyName, type, fn) {
+	if (fn == null) {
+		fn = type;
+		type = null;
+	}
+	var prop = this.findAncestorProperty(propertyName, type);
 	if (prop) fn.call(prop);
 }
 
@@ -195,10 +208,15 @@ LzNode.prototype.callAncestorProperty = function(propertyName, fn) {
 		fgcolor = '$once{idletextcolor}'>
 	<attribute name = 'idletextcolor' value = '$style{"idletextcolor"}' type = 'color'/>
 	<attribute name = 'hovertextcolor' value = '$style{"hovertextcolor"}' type = 'color'/>
+	<attribute name = 'overflow' type = 'boolean'/>
 	<handler name = 'onmouseover'> setColor(hovertextcolor); </handler>
 	<handler name = 'onmouseout'> setColor(idletextcolor); </handler>
 	<handler name = 'onmousedown'> callAncestorProperty("dragger", function() {this.apply()}); </handler>
 	<handler name = 'onmouseup'> callAncestorProperty("dragger", function() {this.remove()}); </handler>
+	<handler name = 'onclick' args = 'ev'>
+		this.immediateparent.callAncestorProperty("onclick", LzEvent, function() {
+			this.sendEvent(ev)});
+	</handler>
 </class>
 
 <class name = 'bracketselector'
@@ -208,14 +226,22 @@ LzNode.prototype.callAncestorProperty = function(propertyName, fn) {
 			x = '${parent.target.getAttributeRelative("x", immediateparent) - width - 3}'
 			y = '${parent.target.getAttributeRelative("y", immediateparent) - 1}'
 			width = '$style{"bracketwidth"}'
-			height = '${parent.target.getAttributeRelative("height", immediateparent) + 2}'
-			oncontext = 'parent.drawBracket(this, "left")'/>
+			height = '${parent.target.getAttributeRelative("height", immediateparent) + 2}'>
+		<handler name = 'oncontext' method = 'redraw'/>
+		<handler name = 'onwidth' method = 'redraw'/>
+		<handler name = 'onheight' method = 'redraw'/>
+		<method name = 'redraw'>parent.drawBracket(this, "left");</method>
+	</drawview>
 	<drawview name = 'rightBracket'
 			x = '${parent.target.getAttributeRelative("x", immediateparent) + parent.target.getAttributeRelative("width", immediateparent) + 3}'
 			y = '${parent.target.getAttributeRelative("y", immediateparent) - 1}'
 			width = '$style{"bracketwidth"}'
-			height = '${parent.target.getAttributeRelative("height", immediateparent) + 2}'
-			oncontext = 'parent.drawBracket(this, "right")'/>
+			height = '${parent.target.getAttributeRelative("height", immediateparent) + 2}'>
+		<handler name = 'oncontext' method = 'redraw'/>
+		<handler name = 'onwidth' method = 'redraw'/>
+		<handler name = 'onheight' method = 'redraw'/>
+		<method name = 'redraw'>parent.drawBracket(this, "right");</method>
+	</drawview>
 	<method name = 'drawBracket' args = 'bracket, side'>
 		var w = bracket.width - 1;
 		var h = bracket.height - 1;

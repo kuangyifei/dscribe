@@ -18,22 +18,47 @@ umldiagram {
 
 </stylesheet>
 
-<class name = 'umldiagram'>
-  <attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
-  <rect width = '${parent.width}' height = '${parent.height}'/>
-  <view name = 'contents'
-        clip = 'true'
-        x = '2' y = '2'
-        width = '${parent.width - 4}' height = '${parent.height - 4}'/>
+<class name = 'umldiagram' showhandcursor = 'false'>
+	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
+	<attribute name = 'selection' value = '$once{[]}' type = 'expression'/>
+	
+	<rect width = '${parent.width}' height = '${parent.height}'/>
+	<view name = 'contents'
+		clip = 'true'
+		x = '2' y = '2'
+		width = '${parent.width - 4}' height = '${parent.height - 4}'/>
+
+	<handler name = 'onclick'>
+		selection.forEach(function(selector) {selector.destroy();});
+		setAttribute("selection", []);
+	</handler>
+	<method name = 'select' args = 'item'>
+		var newSelection;
+		if (LzKeys.isKeyDown("control")) {
+			newSelection = selection.filter(function(elem) {
+				var r = elem.target == item;
+				if (r) elem.destroy();
+				return !r;
+			});
+			if (newSelection.length == selection.length) {
+				newSelection.push(new bracketselector(this, {target: item}));
+			}
+		} else {
+			selection.forEach(function(selector) {selector.destroy();});
+			newSelection = [new bracketselector(this, {target: item})];
+		}
+		setAttribute("selection", newSelection);
+	</method>
 </class>
 
 <class name = 'umlclass'
-       onmousedown = 'dragger.apply()'
-       onmouseup = 'dragger.remove()'>
+		onmousedown = 'dragger.apply()'
+		onmouseup = 'dragger.remove()'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'padding' value = '$style{"padding"}' type = 'size'/>
 	<attribute name = 'color' value = '$style{"color"}' type = 'color'/>
-	
+	<handler name = 'onclick'> findAncestor("select").select(this); </handler>
+
 	<dragstate name = 'dragger'
 		drag_min_x = '0'
 		drag_max_x = '${immediateparent.mask.getAttributeRelative("width", immediateparent) - width}'
@@ -47,67 +72,74 @@ umldiagram {
 		maxheight = '${inside.contents.height + 2*(padding + 1)}'
 	/>
 	
-    <rect width = '${parent.width}' height = '${parent.height}'
-          fillAlpha = '0.7' fillColor = 'white'
-          strokeAlpha = '1.0' strokeColor = '${parent.color}'/>
+	<rect width = '${parent.width}' height = '${parent.height}'
+		fillAlpha = '0.7' fillColor = 'white'
+		strokeAlpha = '1.0' strokeColor = '${parent.color}'/>
     
-    <view name = 'inside'
-          x = '1' y = '1'
-          width = '${parent.width-2}' height = '${parent.height-2}'
-          clip = 'true'>
-      <vbox name = 'contents'
-            x = '${classroot.padding}'
-            y = '${classroot.padding}'
-            width = '${parent.width - 2*classroot.padding}'/>
-      <faderect visible = '${parent.contents.height + 2*classroot.padding > parent.height}'
-                target = '$once{parent.contents}'
-                side = 'bottom'/>
-    </view>
+	<view name = 'inside' x = '1' y = '1' width = '${parent.width-2}' height = '${parent.height-2}' clip = 'true'>
+		<vbox name = 'contents'
+			x = '${classroot.padding}' y = '${classroot.padding}'
+			width = '${parent.width - 2*classroot.padding}'/>
+		<faderect visible = '${parent.contents.height + 2*classroot.padding > parent.height}'
+			target = '$once{parent.contents}'
+			side = 'bottom'/>
+	</view>
 
-    <sizecorner resizer = '$once{parent.resizer}'/>
-    
-    <method name = 'init'><![CDATA[
-    	super.init();
-    	var minheight = 19 + 2*padding;
-    	var fullheight = inside.contents.height + 2*(padding + 1);
-    	if (height < minheight) setAttribute("height", fullheight);
+	<sizecorner resizer = '$once{parent.resizer}'/>
+	
+	<method name = 'init'><![CDATA[
+		super.init();
+		var minheight = 19 + 2*padding;
+		var fullheight = inside.contents.height + 2*(padding + 1);
+		if (height < minheight) setAttribute("height", fullheight);
     ]]></method>
 </class>
 
 <class name = 'umlblockname'>
-  <attribute name = 'text' type = 'text'/>
-  <rollovertext name = 'contents'
-        x = '${Math.max(0, (classroot.immediateparent.width - width)/2)}'
-        y = '1'
-        fontsize = '12'
-        text = '${parent.text}'/>
-  <faderect visible = '${parent.contents.x == 0}'
-            target = '$once{parent.contents}'
-            side = 'right'/>
+	<attribute name = 'text' type = 'text'/>
+	<rollovertext name = 'contents'
+		x = '${Math.max(0, (classroot.immediateparent.width - width)/2)}'
+		y = '1'
+		fontsize = '12'
+		text = '${parent.text}'
+		overflow = '${classroot.immediateparent.width &lt; width}'/>
+	<faderect visible = '${parent.contents.x == 0}'
+		target = '$once{parent.contents}'
+		side = 'right'/>
 </class>
 
 <class name = 'umlcompartment'>
-    <attribute name = 'kind' type = 'string'/>
+	<attribute name = 'kind' type = 'string'/>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
-
 	<hrule name = 'separator'/>
-	<vbox name = 'contents' y = '${parent.separator.height}'/>
+	<vbox name = 'contents' y = '${parent.separator.height}' width = '${classroot.immediateparent.width}'/>
 	<faderect target = '$once{parent.contents}' side = 'right'/>
 </class>
 
-<class name = 'umlmember' extends = 'rollovertext'
-		onclick = ''>
+<class name = 'umlmember'
+		width = '${immediateparent.width}'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
+	<attribute name = 'value' type = 'string'/>
+	
+	<handler name = 'onmousedown'> callAncestorProperty("dragger", function() {this.apply()}); </handler>
+	<handler name = 'onmouseup'> callAncestorProperty("dragger", function() {this.remove()}); </handler>
+	<handler name = 'onclick'> findAncestor("select").select(this); </handler>
+	<handler name = 'onvalue'>
+		displayText.setText(value);
+		displayText.setAttribute("overflow", displayText.width > width);
+	</handler>
+	<handler name = 'onwidth'>
+		displayText.setAttribute("overflow", displayText.width > width);
+	</handler>
+
+	<rollovertext name = 'displayText'/>
 	<node name = 'contents'/>
 </class>
  
-<class name = 'umlattribute' extends = 'umlmember'>
-	<attribute name = 'text' value = '${contents.subnodes[0].seg}'/>
-</class>
+<class name = 'umlattribute' extends = 'umlmember' value = '${contents.subnodes[0].seg}'/>
 
-<class name = 'umloperation' extends = 'umlmember'>
-	<attribute name = 'text' value = '${contents.subnodes[0].seg + contents.subnodes[1].seg + (contents.subnodes[2].visible ? " : " : "") + contents.subnodes[2].seg}'/>
-</class>
+<class name = 'umloperation' extends = 'umlmember'
+	value = '${contents.subnodes[0].seg + contents.subnodes[1].seg + (contents.subnodes[2].visible ? " : " : "") + contents.subnodes[2].seg}'/>
 
 <class name = 'textseg' extends = 'node'>
 	<attribute name = 'text' value = '' type = 'text'/>
