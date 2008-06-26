@@ -1,0 +1,172 @@
+<library>
+
+<include href="lzosutils/lib"/>
+<include href="common-views.lzx"/>
+
+<stylesheet>
+
+ActionBar {
+	bgcolor: #d0d0d5;
+	padding: 8;
+}
+
+TitledBox {
+	bgcolor: #f5f5f5;
+	titleStripLeftColor: #fff;
+	titleStripRightColor: #ccc;
+	titleStripCornerRadius: 4;
+	padding: 4;
+	spacing: 2;
+}
+
+SimpleActionLink {
+	fgcolor: #000;
+	hovercolor: #00d;
+	activecolor: #00f;
+	iconwidth: 16;
+	iconspacing: 4;
+}
+
+</stylesheet>
+
+<class name = 'SimpleActionLink'>
+	<attribute name = 'icon' type = 'string'/>
+	<attribute name = 'text' type = 'text'/>
+	<attribute name = 'action' type = 'expression'/>
+	<hbox spacing = '$style{"iconspacing"}'>
+		<view resource = '${classroot.icon}' width = '$style{"iconwidth"}'/>
+		<text fgcolor = '$style{"fgcolor"}' text = '${classroot.text}'>
+			<attribute name = 'idlecolor' value = '$style{"fgcolor"}' type = 'color'/>
+			<attribute name = 'activecolor' value = '$style{"activecolor"}' type = 'color'/>
+			<attribute name = 'hovercolor' value = '$style{"hovercolor"}' type = 'color'/>
+			<attribute name = 'over' type = 'boolean'/>
+			<attribute name = 'down' type = 'boolean'/>
+			<handler name = 'onmouseover'> over = true; recolor(); </handler>
+			<handler name = 'onmouseout'> over = false; recolor(); </handler>
+			<handler name = 'onmousedown'> down = true; recolor(); </handler>
+			<handler name = 'onmouseup'> down = false; recolor(); </handler>
+			<method name = 'recolor'>
+				setColor(over ? (down ? activecolor : hovercolor) : idlecolor);
+			</method>
+			<handler name = 'onclick' args = 'ev'>
+				this.immediateparent.callAncestorProperty("onclick", LzEvent, function() {
+					this.sendEvent(ev)});
+			</handler>
+		</text>
+	</hbox>
+	<handler name = 'onclick'>
+		action.call(parent.history);
+		parent.parent.refreshActions();
+	</handler>
+</class>
+
+<class name = 'TitledBox' width = '${immediateparent.width}' clip = 'true'>
+	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
+	<attribute name = 'padding' value = '$style{"padding"}' type = 'number'/>
+	<attribute name = 'spacing' value = '$style{"spacing"}' type = 'number'/>
+	<drawview name = 'titleStrip' width = '${parent.width}' height = '${parent.title.height + 2}'>
+		<attribute name = 'leftColor' value = '$style{"titleStripLeftColor"}' type = 'color'/>
+		<attribute name = 'rightColor' value = '$style{"titleStripRightColor"}' type = 'color'/>
+		<attribute name = 'cornerRadius' value = '$style{"titleStripCornerRadius"}' type = 'number'/>
+		<handler name = 'oninit' method = 'redraw'/>
+		<handler name = 'onwidth' method = 'redraw'/>
+		<handler name = 'onheight' method = 'redraw'/>
+		<method name = 'redraw'>
+			clear();
+			beginPath();
+			drawRect(0, 0, width, height, cornerRadius, cornerRadius, cornerRadius, 0);
+			setGradient(0, 0, width, height, [leftColor, rightColor]);
+			fill();
+		</method>
+	</drawview>
+	<text name = 'title' x = '2'/>
+	<drawview name = 'contentbg'
+			y = '${parent.titleStrip.height}'
+			width = '${parent.width}' height = '${parent.contents.height + classroot.padding}'
+			bgcolor = '$style{"bgcolor"}'>
+		<handler name = 'oninit' method = 'redraw'/>
+		<handler name = 'onwidth' method = 'redraw'/>
+		<handler name = 'onheight' method = 'redraw'/>
+		<method name = 'redraw'>
+			clear();
+			beginPath();
+			moveTo(0, 0);
+			lineTo(0, height);
+			lineTo(width, height);
+			lineTo(width, 0);
+			this.strokeStyle = 0xffffff;
+			stroke();
+		</method>
+	</drawview>
+	<vbox name = 'contents'
+		x = '$once{classroot.padding}' y = '${parent.titleStrip.height}'
+		width = '${parent.width - 2*x}'
+		inset = '$once{classroot.padding}' spacing = '$once{classroot.spacing}'/>
+</class>
+
+<class name = 'ActionBox' extends = 'TitledBox'>
+	<attribute name = 'history' value = '$once{parent.contents.history}'/>
+	<method name = 'isEmpty'>
+		return contents.subviews.length == 0;
+	</method>
+	<method name = 'setTitle' args = 'title'>
+		this.title.setAttribute("text", title);
+	</method>
+	<method name = 'addLink' args = 'opts'>
+		new SimpleActionLink(this, opts);
+	</method>
+</class>
+
+<class name = 'HistoryBox' extends = 'TitledBox' visible = 'false'>
+	<handler name = 'oninit'>
+		title.text = "History";
+	</handler>
+	<handler name = 'onaddsubview'>
+		
+	</handler>
+</class>
+
+<class name = 'ActionBar'
+		bgcolor = '$style{"bgcolor"}' clip = 'true'>
+	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
+	<attribute name = 'padding' value = '$style{"padding"}' type = 'number'/>
+	<attribute name = 'targets' type = 'expression'/>
+	<vbox name = 'contents'
+			x = '$once{classroot.padding}'
+			width = '${parent.width-2*x-parent.scrollbar.width}' height = '${parent.height-2*y}'
+			spacing = '$once{classroot.padding}' inset = '$once{classroot.padding}'>
+		<HistoryBox name = 'history'/>
+	</vbox>
+	<vscrollbar name = 'scrollbar'/>
+	<method name = 'replaceActions' args = 'targets'>
+		setAttribute("targets", targets);
+		refreshActions();
+	</method>
+	<method name = 'refreshActions'><![CDATA[
+		clearActions();
+		var node = nearestCommonAncestor(targets);
+		while (node != null && node != node.immediateparent) {
+			if (node["gatherActions"]) {
+				var actionBox = new ActionBox(this);
+				node.gatherActions(actionBox, targets);
+				if (actionBox.isEmpty()) actionBox.destroy();
+			}
+			node = node.immediateparent;
+		}
+	]]></method>
+	<method name = 'clearActions'>
+		contents.subviews.forEach(function(box) {if (box instanceof ActionBox) box.destroy();});
+	</method>
+	<method name = 'nearestCommonAncestor' args = 'targets'>
+		if (!targets || targets.length == 0) return immediateparent;
+		var ancestor = targets[0];
+		targets.each(function(target) {
+			if (target != ancestor) {
+				while (!target.childOf(ancestor)) ancestor = ancestor.immediateparent;
+			}
+		});
+		return ancestor;
+	</method>
+</class>
+
+</library>

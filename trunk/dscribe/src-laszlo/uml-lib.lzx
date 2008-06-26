@@ -2,6 +2,7 @@
 
 <include href="lzosutils/lib"/>
 <include href="common-views.lzx"/>
+<include href="diagram-editor.lzx"/>
 
 <stylesheet>
 
@@ -15,22 +16,31 @@ umldiagram {
 	hovertextcolor: #000;
 }
 
-
 </stylesheet>
+
+<resource name = 'iconDelete' src = 'icons/delete_obj.gif'/>
 
 <class name = 'umldiagram' showhandcursor = 'false'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'selection' value = '$once{[]}' type = 'expression'/>
 	
-	<rect width = '${parent.width}' height = '${parent.height}'/>
+	<ActionBar name = 'actionbar'
+		x = '2' y = '0'
+		width = '200' height = '${parent.height}'/>
+	<rect name = 'border'
+		x = '${2*parent.actionbar.x + parent.actionbar.width}' y = '0'
+		width = '${parent.width - x}' height = '${parent.height}'/>
 	<view name = 'contents'
 		clip = 'true'
-		x = '2' y = '2'
-		width = '${parent.width - 4}' height = '${parent.height - 4}'/>
+		x = '${parent.border.x + 2}' y = '${parent.border.y + 2}'
+		width = '${parent.border.width - 4}' height = '${parent.border.height - 4}'/>
 
 	<handler name = 'onclick'>
 		selection.forEach(function(selector) {selector.destroy();});
 		setAttribute("selection", []);
+	</handler>
+	<handler name = 'onselection'>
+		actionbar.replaceActions(selection.map(function(item) {return item.target;}));
 	</handler>
 	<method name = 'select' args = 'item'>
 		var newSelection;
@@ -47,7 +57,11 @@ umldiagram {
 			selection.forEach(function(selector) {selector.destroy();});
 			newSelection = [new bracketselector(this, {target: item})];
 		}
-		setAttribute("selection", newSelection);
+		if (!selection.equalsAttribute(newSelection, "target")) setAttribute("selection", newSelection);
+	</method>
+	<method name = 'gatherActions' args = 'box, targets'>
+		box.setTitle("Diagram");
+		box.addLink({icon: 'iconDelete', text: "Do something", action: function() {dump(this);}});
 	</method>
 </class>
 
