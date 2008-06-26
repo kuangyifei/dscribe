@@ -26,11 +26,29 @@ function dump(data) {
 	return data;
 }
 
-MAX_INT = 2 << 31;
+MAX_INT = 2 << 32 - 1;
+
+Array.prototype.equals = function(that) {
+	if (!(that instanceof Array)) return false;
+	if (this.length != that.length) return false;
+	for (var i = 0; i < this.length; i++) {
+		if (this[i] != that[i]) return false;
+	}
+	return true;
+}
+
+Array.prototype.equalsAttribute = function(that, propertyName) {
+	if (!(that instanceof Array)) return false;
+	if (this.length != that.length) return false;
+	for (var i = 0; i < this.length; i++) {
+		if (this[i].getAttribute(propertyName) != that[i].getAttribute(propertyName)) return false;
+	}
+	return true;
+}
 
 LzNode.prototype.findAncestor = function(propertyName) {
 	var node = this;
-	while (node != null) {
+	while (node != null && node != node.immediateparent) {
 		if (node[propertyName] != null) return node;
 		node = node.immediateparent;
 	}
@@ -39,7 +57,7 @@ LzNode.prototype.findAncestor = function(propertyName) {
 
 LzNode.prototype.findAncestorProperty = function(propertyName, type) {
 	var node = this;
-	while (node != null) {
+	while (node != null && node != node.immediateparent) {
 		var property = node[propertyName];
 		if (property && (!type || property instanceof type)) return property;
 		node = node.immediateparent;
@@ -72,10 +90,10 @@ LzNode.prototype.callAncestorProperty = function(propertyName, type, fn) {
 	<method name = 'redraw'>
 		clear();
 		beginPath();
-		moveTo(0, this.ymiddle);
-		lineTo(this.width, this.ymiddle);
-		lineWidth = 0;
-		strokeStyle = this.color;
+		moveTo(0, ymiddle);
+		lineTo(width, ymiddle);
+		this.lineWidth = 0;
+		this.strokeStyle = color;
 		stroke();
 	</method>
 </class>
