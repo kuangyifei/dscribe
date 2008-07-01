@@ -4,7 +4,7 @@
     <attribute name="applied" value="false"/>
     <attribute name="filterName" type="string"/>
     <attribute name="properties" value="{}"/>
-    <method event="onvisible">
+    <handler name="onvisible">
       if (applied == visible) return;
       var mc = parent.getMCRef();
       if (!mc || !mc['filters']) return;
@@ -16,7 +16,7 @@
       else
         filters = [];
       mc.filters = filters;
-    </method>
+    </handler>
     <method name="createFilter">
       var filter = new flash.filters[filterName+'Filter']();
       for (var name in properties)

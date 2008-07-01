@@ -142,11 +142,11 @@ LzNode.prototype.getClip = function() {
 }
 
 LzNode.prototype.show = function() {
-    this.setVisible(true);
+    this.setAttribute('visible', true);
 }
 
 LzNode.prototype.hide = function() {
-    this.setVisible(false);
+    this.setAttribute('visible', false);
 }
 
 

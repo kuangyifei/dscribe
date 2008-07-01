@@ -37,32 +37,42 @@ Array.prototype.equals = function(that) {
 	return true;
 }
 
-Array.prototype.equalsAttribute = function(that, propertyName) {
-	if (!(that instanceof Array)) return false;
-	if (this.length != that.length) return false;
-	for (var i = 0; i < this.length; i++) {
-		if (this[i].getAttribute(propertyName) != that[i].getAttribute(propertyName)) return false;
+String.prototype.fill = function() {
+	var result = this;
+	var i = 0;
+	arguments.forEach(function(arg) {
+		result = result.replace("$" + ++i, arg);
+	});
+	return result;
+}
+
+LzNode.prototype.findFormalAncestorSuchThat = function(predicate) {
+	var node = this;
+	while (node != null && node != node.parent) {
+		if (predicate.call(node)) return node;
+		node = node.parent;
 	}
-	return true;
+	return null;
+}
+
+LzNode.prototype.findAncestorSuchThat = function(predicate) {
+	var node = this;
+	while (node != null && node != node.immediateparent) {
+		if (predicate.call(node)) return node;
+		node = node.immediateparent;
+	}
+	return null;
 }
 
 LzNode.prototype.findAncestor = function(propertyName) {
-	var node = this;
-	while (node != null && node != node.immediateparent) {
-		if (node[propertyName] != null) return node;
-		node = node.immediateparent;
-	}
-	return null;
+	return this.findAncestorSuchThat(function() {return propertyName in this;});
 }
 
 LzNode.prototype.findAncestorProperty = function(propertyName, type) {
-	var node = this;
-	while (node != null && node != node.immediateparent) {
-		var property = node[propertyName];
-		if (property && (!type || property instanceof type)) return property;
-		node = node.immediateparent;
-	}
-	return null;
+	var ancestor = this.findAncestorSuchThat(function() {
+		return propertyName in this && (!type || this[propertyName] instanceof type);
+	});
+	return ancestor ? ancestor[propertyName] : null;
 }
 
 LzNode.prototype.callAncestorProperty = function(propertyName, type, fn) {
@@ -83,11 +93,12 @@ LzNode.prototype.callAncestorProperty = function(propertyName, type, fn) {
 	<attribute name = 'padding' value = '$style{"padding"}' type = 'size'/>
 	<attribute name = 'ymiddle' value = '${padding + 1}' type = 'size'/>
 	<attribute name = 'color' value = '$style{"color"}' type = 'color'/>
-	<handler name = 'oninit' method = 'redraw'/>
+	<handler name = 'oncontext' method = 'redraw'/>
 	<handler name = 'onx' method = 'redraw'/>
 	<handler name = 'onwidth' method = 'redraw'/>
 	<handler name = 'onymiddle' method = 'redraw'/>
-	<method name = 'redraw'>
+	<method name = 'redraw' args = '_'>
+		if (!context) return;
 		clear();
 		beginPath();
 		moveTo(0, ymiddle);
@@ -103,27 +114,32 @@ LzNode.prototype.callAncestorProperty = function(propertyName, type, fn) {
 	<attribute name = 'fillColor' type = 'color'/>
 	<attribute name = 'strokeAlpha' value = '1' type = 'size'/>
 	<attribute name = 'strokeColor' value = 'black' type = 'color'/>
-	<handler name = 'oninit' method = 'redraw'/>
+	<attribute name = 'cornerRadius' value = '0' type = 'number'/>
+	<handler name = 'oncontext' method = 'redraw'/>
 	<handler name = 'onwidth' method = 'redraw'/>
 	<handler name = 'onheight' method = 'redraw'/>
+	<handler name = 'oncornerRadius' method = 'redraw'/>
 	<handler name = 'onfillAlpha' method = 'redrawFill'/>
 	<handler name = 'onfillColor' method = 'redrawFill'/>
 	<handler name = 'onstrokeAlpha' method = 'redrawStroke'/>
 	<handler name = 'onstrokeColor' method = 'redrawStroke'/>
-	<method name = 'redraw'>
+	<method name = 'redraw' args = '_'>
+		if (!context) return;
 		clear();
 		beginPath();
-		rect(0, 0, width-1, height-1);
+		drawRect(0, 0, width-1, height-1, cornerRadius);
 		redrawFill();
 		redrawStroke();
 	</method>
-	<method name = 'redrawStroke'>
+	<method name = 'redrawStroke' args = '_'>
+		if (!visible || !context) return;
 		this.globalAlpha = strokeAlpha;
 		this.strokeStyle = strokeColor;
 		this.lineWidth = 0;
 		stroke();
 	</method>
-	<method name = 'redrawFill'>
+	<method name = 'redrawFill' args = '_'>
+		if (!visible || !context) return;
 		if (this['fillColor']) {
 			this.globalAlpha = fillAlpha;
 			this.fillStyle = fillColor;
@@ -153,14 +169,13 @@ LzNode.prototype.callAncestorProperty = function(propertyName, type, fn) {
 	<attribute name = 'maskheight' value = '${mask.getAttributeRelative("height", immediateparent)}' type = 'number'/>
 	<attribute name = 'gx' value = '${side == "right" ? 1 : (side == "left" ? -1 : 0)}'/>
 	<attribute name = 'gy' value = '${side == "bottom" ? 1 : (side == "top" ? -1 : 0)}'/>
-	<handler name = 'oninit' method = 'redraw'/>
+	<handler name = 'oncontext' method = 'redraw'/>
 	<handler name = 'onwidth' method = 'redraw'/>
 	<handler name = 'onheight' method = 'redraw'/>
 	<handler name = 'ontarget' method = 'redraw'/>
 	<handler name = 'onside' method = 'redraw'/>
-	<handler name = 'onvisible' method = 'redraw'/>
-	<method name = 'redraw'>
-		if (!visible) return;
+	<method name = 'redraw' args = '_'>
+		if (!context) return;
 		clear();
 		beginPath();
 		rect(0, 0, width, height);
@@ -178,6 +193,39 @@ LzNode.prototype.callAncestorProperty = function(propertyName, type, fn) {
 	</method>
 </class>
 
+<class name = 'iconbutton'
+		onmousedown = 'setAttribute("dragging", true)'
+		onmouseup = 'setAttribute("dragging", false)'
+		onmouseover = 'setAttribute("hovering", true)'
+		onmouseout = 'setAttribute("hovering", false)'
+		width = '${Math.max(enabledIconView.width, disabledIconView.width) + 2}'
+		height = '${Math.max(enabledIconView.height, disabledIconView.height) + 2}'
+		showhandcursor = '${enabled}'>
+	<attribute name = 'enabled' value = 'true' type = 'boolean'/>
+	<attribute name = 'enabledIcon' type = 'string' required = 'true'/>
+	<attribute name = 'disabledIcon' type = 'string' required = 'true'/>
+	<attribute name = 'hovering' value = 'false' type = 'boolean'/>
+	<attribute name = 'dragging' value = 'false' type = 'boolean'/>
+	
+	<view name = 'enabledIconView' resource = '${parent.enabledIcon}' x = '2' y = '${x}' visible = '${parent.enabled}'/>
+	<view name = 'disabledIconView' resource = '${parent.disabledIcon}' x = '2' y = '${x}' visible = '${!parent.enabled}'/>
+	
+	<handler name = 'onenabled'><![CDATA[
+		if (onclick && onclick.delegateList) {
+			onclick.delegateList.forEach(function(delegate) {if (enabled) delegate.enable(); else delegate.disable();});
+		}
+	]]></handler>
+	
+	<handler name = 'onhovering' method = 'adjustIcons'/>
+	<handler name = 'ondragging' method = 'adjustIcons'/>
+	<handler name = 'onenabled' method = 'adjustIcons'/>
+	<method name = 'adjustIcons' args = '_'><![CDATA[
+		var raised = enabled && (hovering ? !dragging : dragging);
+		enabledIconView.setX(raised ? 1 : 2);
+		disabledIconView.setX(raised ? 1 : 2);
+	]]></method>
+</class>
+
 <class name = 'sizecorner' extends = 'drawview'
 		x = '${parent.width - size}'
 		y = '${parent.height - size}'
@@ -191,7 +239,7 @@ LzNode.prototype.callAncestorProperty = function(propertyName, type, fn) {
 	<attribute name = 'size' value = '$style{"size"}' type = 'number'/>
 	<attribute name = 'hovering' value = 'false' type = 'boolean'/>
 	<attribute name = 'dragging' value = 'false' type = 'boolean'/>
-	<handler name = 'oninit'>
+	<handler name = 'oncontext'>
 		clear();
 		beginPath();
 		moveTo(size-1, 0);
@@ -205,7 +253,8 @@ LzNode.prototype.callAncestorProperty = function(propertyName, type, fn) {
 	</handler>
 	<handler name = 'ondragging' method = 'redraw'/>
 	<handler name = 'onhovering' method = 'redraw'/>
-	<method name = 'redraw'>
+	<method name = 'redraw' args = '_'>
+		if (!context) return;
 		this.fillStyle = hovering || dragging ? 0x000000 : 0xffffff;
 		fill();
 	</method>
@@ -248,7 +297,7 @@ LzNode.prototype.callAncestorProperty = function(propertyName, type, fn) {
 		<handler name = 'oncontext' method = 'redraw'/>
 		<handler name = 'onwidth' method = 'redraw'/>
 		<handler name = 'onheight' method = 'redraw'/>
-		<method name = 'redraw'>parent.drawBracket(this, "left");</method>
+		<method name = 'redraw' args = '_'>if (context) parent.drawBracket(this, "left");</method>
 	</drawview>
 	<drawview name = 'rightBracket'
 			x = '${parent.target.getAttributeRelative("x", immediateparent) + parent.target.getAttributeRelative("width", immediateparent) + 3}'
@@ -258,7 +307,7 @@ LzNode.prototype.callAncestorProperty = function(propertyName, type, fn) {
 		<handler name = 'oncontext' method = 'redraw'/>
 		<handler name = 'onwidth' method = 'redraw'/>
 		<handler name = 'onheight' method = 'redraw'/>
-		<method name = 'redraw'>parent.drawBracket(this, "right");</method>
+		<method name = 'redraw' args = '_'>if (context) parent.drawBracket(this, "right");</method>
 	</drawview>
 	<method name = 'drawBracket' args = 'bracket, side'>
 		var w = bracket.width - 1;

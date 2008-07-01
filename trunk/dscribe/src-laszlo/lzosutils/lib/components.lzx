@@ -5,10 +5,10 @@
     <attribute name="borderWidth" value="1"/>
     <attribute name="radius" value="0"/>
     <attribute name="dash" value="null"/>
-    <method event="oninit">redraw()</method>
-    <method event="onwidth">redraw()</method>
-    <method event="onheight">redraw()</method>
-    <method event="onborderWidth">redraw()</method>
+    <handler name="oncontext">redraw()</handler>
+    <handler name="onwidth">redraw()</handler>
+    <handler name="onheight">redraw()</handler>
+    <handler name="onborderWidth">redraw()</handler>
     <method name="redraw">
       clear();
       beginPath();
@@ -23,9 +23,9 @@
 
   <class name="RoundBox" extends="drawview">
     <attribute name="radius" value="0"/>
-    <method event="oninit">redraw()</method>
-    <method event="onwidth">redraw()</method>
-    <method event="onheight">redraw()</method>
+    <handler name="oncontext">redraw()</handler>
+    <handler name="onwidth">redraw()</handler>
+    <handler name="onheight">redraw()</handler>
     <method name="redraw">
       clear();
       beginPath();
@@ -45,10 +45,10 @@
   </class>
 
   <class name="ScaledImage" stretches="both">
-    <method event="oninit">recompute();v=this</method>
-    <method event="onload">recompute()</method>
-    <method event="onwidth" reference="parent">recompute()</method>
-    <method event="onheight" reference="parent">recompute()</method>
+    <handler name="oninit">recompute();v=this</handler>
+    <handler name="onload">recompute()</handler>
+    <handler name="onwidth" reference="parent">recompute()</handler>
+    <handler name="onheight" reference="parent">recompute()</handler>
     <method name="recompute">
       var mc = getMCRef();
       if (!mc) return;
@@ -69,9 +69,9 @@
 
   <class name="ZoomRect" extends="BorderedBox">
     <attribute name="vanish" value="0"/>
-    <method event="onvanish">
+    <handler name="onvanish">
       if (vanish==1)
         this.destroy()
-    </method>
+    </handler>
   </class>
 </library>

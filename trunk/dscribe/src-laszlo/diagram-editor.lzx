@@ -5,9 +5,11 @@
 
 <stylesheet>
 
-ActionBar {
-	bgcolor: #d0d0d5;
+Editor {
+	barcolor: #d0d0d5;
+	barwidth: 200;
 	padding: 8;
+	titlebgcolor: #eee;
 }
 
 TitledBox {
@@ -29,34 +31,40 @@ SimpleActionLink {
 
 </stylesheet>
 
+<resource name = 'iconUndo_on' src = 'icons/undo_edit_on.gif'/>
+<resource name = 'iconUndo_off' src = 'icons/undo_edit_off.gif'/>
+<resource name = 'iconRedo_on' src = 'icons/redo_edit_on.gif'/>
+<resource name = 'iconRedo_off' src = 'icons/redo_edit_off.gif'/>
+
 <class name = 'SimpleActionLink'>
 	<attribute name = 'icon' type = 'string'/>
 	<attribute name = 'text' type = 'text'/>
-	<attribute name = 'action' type = 'expression'/>
-	<hbox spacing = '$style{"iconspacing"}'>
-		<view resource = '${classroot.icon}' width = '$style{"iconwidth"}'/>
-		<text fgcolor = '$style{"fgcolor"}' text = '${classroot.text}'>
-			<attribute name = 'idlecolor' value = '$style{"fgcolor"}' type = 'color'/>
-			<attribute name = 'activecolor' value = '$style{"activecolor"}' type = 'color'/>
-			<attribute name = 'hovercolor' value = '$style{"hovercolor"}' type = 'color'/>
-			<attribute name = 'over' type = 'boolean'/>
-			<attribute name = 'down' type = 'boolean'/>
-			<handler name = 'onmouseover'> over = true; recolor(); </handler>
-			<handler name = 'onmouseout'> over = false; recolor(); </handler>
-			<handler name = 'onmousedown'> down = true; recolor(); </handler>
-			<handler name = 'onmouseup'> down = false; recolor(); </handler>
-			<method name = 'recolor'>
-				setColor(over ? (down ? activecolor : hovercolor) : idlecolor);
-			</method>
-			<handler name = 'onclick' args = 'ev'>
-				this.immediateparent.callAncestorProperty("onclick", LzEvent, function() {
-					this.sendEvent(ev)});
-			</handler>
-		</text>
-	</hbox>
+	<attribute name = 'actionCreator' type = 'expression'/>
+	<attribute name = 'iconwidth' value = '$style{"iconwidth"}'/>
+	<attribute name = 'iconspacing' value = '$style{"iconspacing"}'/>
+	<view name = 'iconview' resource = '${classroot.icon}' width = '${parent.iconwidth}'/>
+	<text fgcolor = '$style{"fgcolor"}' text = '${classroot.text}'
+			x = '${parent.iconview.width + parent.iconspacing}'
+			width = '${parent.width - x}'>
+		<attribute name = 'idlecolor' value = '$style{"fgcolor"}' type = 'color'/>
+		<attribute name = 'activecolor' value = '$style{"activecolor"}' type = 'color'/>
+		<attribute name = 'hovercolor' value = '$style{"hovercolor"}' type = 'color'/>
+		<attribute name = 'over' type = 'boolean'/>
+		<attribute name = 'down' type = 'boolean'/>
+		<handler name = 'onmouseover'> over = true; recolor(); </handler>
+		<handler name = 'onmouseout'> over = false; recolor(); </handler>
+		<handler name = 'onmousedown'> down = true; recolor(); </handler>
+		<handler name = 'onmouseup'> down = false; recolor(); </handler>
+		<method name = 'recolor'>
+			setColor(over ? (down ? activecolor : hovercolor) : idlecolor);
+		</method>
+		<handler name = 'onclick' args = 'ev'>
+			this.immediateparent.callAncestorProperty("onclick", LzEvent, function() {
+				this.sendEvent(ev)});
+		</handler>
+	</text>
 	<handler name = 'onclick'>
-		action.call(parent.history);
-		parent.parent.refreshActions();
+		findAncestor("execute").execute(actionCreator);
 	</handler>
 </class>
 
@@ -64,14 +72,18 @@ SimpleActionLink {
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'padding' value = '$style{"padding"}' type = 'number'/>
 	<attribute name = 'spacing' value = '$style{"spacing"}' type = 'number'/>
-	<drawview name = 'titleStrip' width = '${parent.width}' height = '${parent.title.height + 2}'>
+	<attribute name = 'title' type = 'string'/>
+	<attribute name = 'titleAlign' value = 'left' type = 'string'/>
+	
+	<drawview name = 'titleStrip' width = '${parent.width}' height = '${parent.titleText.height + 2}'>
 		<attribute name = 'leftColor' value = '$style{"titleStripLeftColor"}' type = 'color'/>
 		<attribute name = 'rightColor' value = '$style{"titleStripRightColor"}' type = 'color'/>
 		<attribute name = 'cornerRadius' value = '$style{"titleStripCornerRadius"}' type = 'number'/>
-		<handler name = 'oninit' method = 'redraw'/>
+		<handler name = 'oncontext' method = 'redraw'/>
 		<handler name = 'onwidth' method = 'redraw'/>
 		<handler name = 'onheight' method = 'redraw'/>
-		<method name = 'redraw'>
+		<method name = 'redraw' args = '_'>
+			if (!context) return;
 			clear();
 			beginPath();
 			drawRect(0, 0, width, height, cornerRadius, cornerRadius, cornerRadius, 0);
@@ -79,86 +91,78 @@ SimpleActionLink {
 			fill();
 		</method>
 	</drawview>
-	<text name = 'title' x = '2'/>
+	<text name = 'titleText' text = '${"&lt;p align=&apos;" + parent.titleAlign + "&apos;&gt;" + parent.title + "&lt;/p&gt;"}' x = '2' width = '${parent.width - 4}'/>
 	<drawview name = 'contentbg'
 			y = '${parent.titleStrip.height}'
-			width = '${parent.width}' height = '${parent.contents.height + classroot.padding}'
+			width = '${parent.width}' height = '${parent.contents.height + 2*classroot.padding}'
 			bgcolor = '$style{"bgcolor"}'>
-		<handler name = 'oninit' method = 'redraw'/>
+		<handler name = 'oncontext' method = 'redraw'/>
 		<handler name = 'onwidth' method = 'redraw'/>
 		<handler name = 'onheight' method = 'redraw'/>
-		<method name = 'redraw'>
+		<method name = 'redraw' args = '_'>
+			if (!context) return;
 			clear();
 			beginPath();
 			moveTo(0, 0);
-			lineTo(0, height);
-			lineTo(width, height);
-			lineTo(width, 0);
+			lineTo(0, height-1);
+			lineTo(width-1, height-1);
+			lineTo(width-1, 0);
 			this.strokeStyle = 0xffffff;
 			stroke();
 		</method>
 	</drawview>
-	<vbox name = 'contents'
-		x = '$once{classroot.padding}' y = '${parent.titleStrip.height}'
-		width = '${parent.width - 2*x}'
-		inset = '$once{classroot.padding}' spacing = '$once{classroot.spacing}'/>
 </class>
 
 <class name = 'ActionBox' extends = 'TitledBox'>
-	<attribute name = 'history' value = '$once{parent.contents.history}'/>
+	<vbox name = 'contents'
+		x = '$once{classroot.padding}' y = '${parent.titleStrip.height + classroot.padding}'
+		width = '${parent.width - 2*x}'
+		spacing = '$once{classroot.spacing}'/>
+	
+	<method name = 'setTitle' args = 'title'>
+		setAttribute("title", title);
+	</method>
 	<method name = 'isEmpty'>
 		return contents.subviews.length == 0;
 	</method>
-	<method name = 'setTitle' args = 'title'>
-		this.title.setAttribute("text", title);
-	</method>
 	<method name = 'addLink' args = 'opts'>
-		new SimpleActionLink(this, opts);
+		new lz.SimpleActionLink(this, opts);
 	</method>
 </class>
 
-<class name = 'HistoryBox' extends = 'TitledBox' visible = 'false'>
-	<handler name = 'oninit'>
-		title.text = "History";
-	</handler>
-	<handler name = 'onaddsubview'>
-		
-	</handler>
-</class>
-
-<class name = 'ActionBar'
-		bgcolor = '$style{"bgcolor"}' clip = 'true'>
+<class name = 'ActionBar' clip = 'true'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
-	<attribute name = 'padding' value = '$style{"padding"}' type = 'number'/>
-	<attribute name = 'targets' type = 'expression'/>
+	<attribute name = 'targets' value = '[]' type = 'expression'/>
+
 	<vbox name = 'contents'
-			x = '$once{classroot.padding}'
-			width = '${parent.width-2*x-parent.scrollbar.width}' height = '${parent.height-2*y}'
-			spacing = '$once{classroot.padding}' inset = '$once{classroot.padding}'>
-		<HistoryBox name = 'history'/>
+			width = '${parent.width}'
+			spacing = '$once{findAncestorProperty("padding")}' inset = '$once{findAncestorProperty("padding")}'>
 	</vbox>
-	<vscrollbar name = 'scrollbar'/>
+	
+	<handler name = 'oninit'> refreshActions(); </handler>
+	
 	<method name = 'replaceActions' args = 'targets'>
 		setAttribute("targets", targets);
 		refreshActions();
 	</method>
+
 	<method name = 'refreshActions'><![CDATA[
-		clearActions();
+		contents.subviews.compact().invoke("destroy");
 		var node = nearestCommonAncestor(targets);
 		while (node != null && node != node.immediateparent) {
-			if (node["gatherActions"]) {
-				var actionBox = new ActionBox(this);
-				node.gatherActions(actionBox, targets);
-				if (actionBox.isEmpty()) actionBox.destroy();
+			if (node["gatherPossibleActions"]) {
+				var actionBox = new lz.ActionBox(this);
+				node.gatherPossibleActions(actionBox, targets);
+				if (actionBox.isEmpty()) {
+					actionBox.destroy();
+				}
 			}
 			node = node.immediateparent;
 		}
 	]]></method>
-	<method name = 'clearActions'>
-		contents.subviews.forEach(function(box) {if (box instanceof ActionBox) box.destroy();});
-	</method>
+
 	<method name = 'nearestCommonAncestor' args = 'targets'>
-		if (!targets || targets.length == 0) return immediateparent;
+		if (!targets || targets.length == 0) return findAncestorProperty("diagram");
 		var ancestor = targets[0];
 		targets.each(function(target) {
 			if (target != ancestor) {
@@ -168,5 +172,243 @@ SimpleActionLink {
 		return ancestor;
 	</method>
 </class>
+
+<class name = 'HistoryBox' extends = 'TitledBox'>
+	<view name = 'contents' clip = 'true'
+		x = '$once{classroot.padding}' y = '${classroot.titleStrip.height + classroot.padding}'
+		width = '${parent.width - 2*x}'/>
+</class>
+
+<class name = 'HistoryPlaceholder'>
+	<text fgcolor = '0x444444'><i>None.</i></text>
+</class>
+
+<class name = 'HistoryBar' clip = 'true'>
+	<attribute name = 'defaultplacement' value = 'box' type = 'string'/>
+	<attribute name = 'actions' value = '$once{[]}' type = 'expression'/>
+	<attribute name = 'nextActionIndex' value = '0' type = 'number'/>
+	<attribute name = 'scrolling' value = 'false' type = 'boolean'/>
+	
+	<HistoryBox name = 'box' title = 'Last Action' titleAlign = 'center'/>
+	<iconbutton enabledIcon = 'iconUndo_on' disabledIcon = 'iconUndo_off'
+		x= '${parent.box.x}'
+		enabled = '${parent.nextActionIndex &gt; 0 &amp;&amp; !parent.scrolling}'
+		onclick = 'classroot.undo()'/>
+	<iconbutton enabledIcon = 'iconRedo_on' disabledIcon = 'iconRedo_off'
+		x = '${parent.box.x + parent.box.width - width}'
+		enabled = '${parent.actions.length &gt; parent.nextActionIndex &amp;&amp; !parent.scrolling}'
+		onclick = 'classroot.redo()'/>
+	
+	<handler name = 'oninit'> addPlaceholder(); </handler>
+	
+	<method name = 'execute' args = 'action'>
+		action.createView(this);
+		scrollActionViews("left");
+		action.apply();
+		actions.splice(nextActionIndex, actions.length - nextActionIndex, action);
+		setAttribute("nextActionIndex", nextActionIndex + 1);
+	</method>
+	
+	<method name = 'scrollActionViews' args = 'direction'><![CDATA[
+		setAttribute("scrolling", true);
+		var delta = direction == "left" ? -width : width;
+		var views = box.contents.subviews;
+		
+		var animator = views[0].animate("x", delta, 150, true, {motion: "linear"});
+		new LzDelegate({execute: function(_) {views[0].destroy();}}, "execute", animator, "onstop");
+		new LzDelegate(this, "stopScrolling", animator, "onstop");
+		
+		views[1].setX(-delta);
+		views[1].animate("x", delta, 150, true, {motion: "linear"});
+		
+		if (views[1].height > views[0].height) {
+			var properHeight = views[1].height;
+			views[1].setHeight(views[0].height);
+			views[1].animate("height", properHeight, 150, false, {motion: "linear"});
+		} else {
+			views[0].animate("height", views[1].height, 150, false, {motion: "linear"});
+		}
+	]]></method>
+	
+	<method name = 'stopScrolling' args = '_'>
+		setAttribute("scrolling", false);
+	</method>
+	
+	<method name = 'addPlaceholder'>
+		new lz.HistoryPlaceholder(this);
+	</method>
+	
+	<method name = 'undo'>
+		if (nextActionIndex == 1) {
+			addPlaceholder();
+		} else {
+			actions[nextActionIndex-2].createView(this);
+		}
+		scrollActionViews("right");
+		actions[nextActionIndex-1].unapply();
+		setAttribute("nextActionIndex", nextActionIndex - 1);
+	</method>
+	
+	<method name = 'redo'>
+		actions[nextActionIndex].createView(this);
+		scrollActionViews("left");
+		actions[nextActionIndex].apply();
+		setAttribute("nextActionIndex", nextActionIndex + 1);
+	</method>
+</class>
+
+<class name = 'EditTab'>
+	<attribute name = 'dragger' type = 'expression' required = 'true'/>
+	<attribute name = 'hovering' value = 'false' type = 'boolean'/>
+	<attribute name = 'dragging' value = 'false' type = 'boolean'/>
+
+	<drawview name = 'editTabShape'
+			width = '${parent.editTabText.x + parent.editTabText.width + 8}'
+			height = '${parent.editTabText.y + parent.editTabText.height + 2}'>
+		<handler name = 'oncontext' method = 'redraw'/>
+		<handler name = 'onheight' method = 'redraw'/>
+		<handler name = 'onwidth' method = 'redraw'/>
+		<method name = 'redraw' args = '_'>
+			if (!context) return;
+			clear();
+			beginPath();
+			moveTo(0, 0);
+			lineTo(0, height);
+			lineTo(parent.editTabText.x + parent.editTabText.width, height);
+			quadraticCurveTo(width - 3, height, width, 0);
+			closePath();
+			this.fillStyle = findAncestorProperty("sidebar").bgcolor;
+			this.strokeStyle = this.fillStyle;
+			stroke();
+			fill();
+		</method>
+	</drawview>
+	
+	<text name = 'editTabText' text = 'Edit' x = '2' y = '2'>
+		<handler name = 'onhovering' reference = 'parent' method = 'changeColor'/>
+		<handler name = 'ondragging' reference = 'parent' method = 'changeColor'/>
+		<method name = 'changeColor' args = '_'>
+			var newColor = parent.dragging || parent.hovering ? 0xffffff : 0x000000;
+			if (fgcolor != newColor) setColor(newColor);
+		</method>
+	</text>
+
+	<handler name = 'onmouseover'> setAttribute("hovering", true); </handler>
+	<handler name = 'onmouseout'> setAttribute("hovering", false); </handler>
+	<handler name = 'onmousedown'> setAttribute("dragging", true); dragger.apply(); </handler>
+	<handler name = 'onmouseup'> setAttribute("dragging", false); dragger.remove(); </handler>
+</class>
+
+<class name = 'EditTabDragger' extends = 'state'>
+	<attribute name = 'xroffset' value = '$once{immediateparent.getMouse("x")}'/>
+	<attribute name = 'yroffset' value = '$once{immediateparent.getMouse("y")}'/>
+	<attribute name = 'oldx' value = '$once{x}'/>
+	<attribute name = 'oldwidth' value = '$once{width}'/>
+	<attribute name = 'maxmove' value = '0'/>
+	<handler name = 'onidle' reference = 'LzIdle'>
+		maxmove = Math.max(Math.max(maxmove, immediateparent.getMouse("x") - xroffset), immediateparent.getMouse("y") - yroffset);
+	</handler>
+	<attribute name = 'x' value = '${width == minwidth || x &lt; 0 ? Math.max(-width, Math.min(0, oldx + immediateparent.getMouse("x") - xroffset - (width - oldwidth))) : x}'/>
+	<attribute name = 'width' value = '${x == 0 ? Math.max(minwidth, oldwidth + immediateparent.getMouse("x") - xroffset - (x - oldx)) : width}'/>
+	<handler name = 'onremove'><![CDATA[
+		var sidebar = findAncestorProperty("sidebar");
+		var destx = sidebar.x;
+		if (parent.maxmove == 0) {
+			destx = sidebar.x == 0 ? -sidebar.width : 0;
+		} else if (sidebar.x > -sidebar.width && sidebar.x < 0) {
+			destx = sidebar.x > -sidebar.width / 2 ? 0 : -sidebar.width;
+		}
+		if (x != destx) sidebar.animate("x", destx, 150, false, {motion: "linear"});
+		findAncestor("editMode").setAttribute("editMode", destx == 0);
+	]]></handler>
+</class>
+
+<class name = 'Editor' clip = 'true'>
+	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
+	<attribute name = 'selection' value = '$once{[]}' type = 'expression'/>
+	<attribute name = 'padding' value = '$style{"padding"}' type = 'number'/>
+	<attribute name = 'diagram' value = '${main.contents.subviews[0]}' type = 'expression'/>
+	<attribute name = 'editMode' value = 'false' type = 'boolean'/>
+
+	<view name = 'sidebar'
+			bgcolor = '$style{"barcolor"}' clip = 'true'
+			x = '$once{parent.editMode ? 0 : -width}'
+			width = '$style{"barwidth"}' height = '${parent.height}'>
+		<attribute name = 'minwidth' value = '$style{"barwidth"}'/>
+		<vbox name = 'bars' width = '${parent.width - parent.scrollbar.width}' inset = '${classroot.padding}' spacing = '${classroot.padding}'>
+			<HistoryBar name = 'historybar' x = '${classroot.padding}' width = '${parent.width - 2*classroot.padding}'/>
+			<ActionBar name = 'actionbar' x = '${classroot.padding}' width = '${parent.width - 2*classroot.padding}'/>
+		</vbox>
+		<vscrollbar name = 'scrollbar'/>
+		<EditTabDragger name = 'dragger'/>
+	</view>
+	<view name = 'main'
+			x = '${parent.sidebar.x + parent.sidebar.width + 2}'
+			width = '${parent.width - x}'
+			height = '${parent.height}'>
+		<rect name = 'border'
+			fgcolor = '$style{"titlebgcolor"}'
+			width = '${parent.width}' height = '${parent.height}'/>
+		<view name = 'titlebar' width = '${parent.width}'>
+			<attribute name = 'reservedWidth' value = '${editTab.x + editTab.width + 8}' type = 'number'/>
+			<rect
+				width = '${parent.width}' height = '${parent.titleText.height + 6}'
+				fillColor = '$style{"titlebgcolor"}' strokeColor = '$style{"titlebgcolor"}'/>
+			<EditTab name = 'editTab' dragger = '$once{classroot.sidebar.dragger}' x = '-2'/>
+			<text name = 'titleText' text = '${"&lt;p align=&apos;center&apos;&gt;" + classroot.diagram.title + "&lt;/p&gt;"}'
+				x = '${parent.reservedWidth}' y = '2'
+				width = '${parent.width - 2*parent.reservedWidth}'
+				multiline = 'true'
+				fontsize = '16'/>
+		</view>
+		<view name = 'contents' clip = 'true'
+				x = '2' y = '${parent.titlebar.y + parent.titlebar.height + 2}'
+				width = '${parent.width - 4}' height = '${parent.height - 4}'/>
+	</view>
+	
+	<handler name = 'oneditMode'>
+		if (!editMode) _select(null, false);
+	</handler>
+
+	<handler name = 'onselection'>
+		sidebar.bars.actionbar.replaceActions(selection.map(function(item) {return item.target;}));
+	</handler>
+	
+	<method name = 'select' args = 'item'>
+		if (editMode) _select(item, LzKeys.isKeyDown("control"));
+	</method>
+	
+	<method name = '_select' args = 'item, multi'><![CDATA[
+		var newSelection;
+		if (multi) {
+			newSelection = selection.filter(function(elem) {
+				var r = elem.target == item;
+				if (r) elem.destroy();
+				return !r;
+			});
+			if (newSelection.length == selection.length && item != null) {
+				newSelection.push(new bracketselector(this, {target: item}));
+			}
+		} else {
+			selection.forEach(function(selector) {selector.destroy();});
+			newSelection = item == null ? [] : [new lz.bracketselector(this, {target: item})];
+		}
+		setAttribute("selection", newSelection);
+	]]></method>
+	
+	<method name = 'deselect' args = 'item'>
+		var newSelection = selection.filter(function(elem) {
+			var r = elem.target == item;
+			if (r) elem.destroy();
+			return !r;
+		});
+		setAttribute("selection", newSelection);
+	</method>
+	
+	<method name = 'execute' args = 'actionFn'>
+		sidebar.bars.historybar.execute(actionFn.call(null));
+	</method>
+</class>
+
 
 </library>
