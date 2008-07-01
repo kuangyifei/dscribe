@@ -3,6 +3,7 @@
 <include href="lzosutils/lib"/>
 <include href="common-views.lzx"/>
 <include href="diagram-editor.lzx"/>
+<include href="magic-sentence.lzx"/>
 
 <stylesheet>
 
@@ -20,46 +21,14 @@ umldiagram {
 
 <resource name = 'iconDelete' src = 'icons/delete_obj.gif'/>
 
-<class name = 'umldiagram' showhandcursor = 'false'>
+<class name = 'umldiagram' showhandcursor = 'false' width = '${immediateparent.width}' height = '${immediateparent.height}'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
-	<attribute name = 'selection' value = '$once{[]}' type = 'expression'/>
+	<attribute name = 'title' type = 'string'/>
 	
-	<ActionBar name = 'actionbar'
-		x = '2' y = '0'
-		width = '200' height = '${parent.height}'/>
-	<rect name = 'border'
-		x = '${2*parent.actionbar.x + parent.actionbar.width}' y = '0'
-		width = '${parent.width - x}' height = '${parent.height}'/>
-	<view name = 'contents'
-		clip = 'true'
-		x = '${parent.border.x + 2}' y = '${parent.border.y + 2}'
-		width = '${parent.border.width - 4}' height = '${parent.border.height - 4}'/>
+	<view name = 'contents' width = '${parent.width}' height = '${parent.height}'/>
 
-	<handler name = 'onclick'>
-		selection.forEach(function(selector) {selector.destroy();});
-		setAttribute("selection", []);
-	</handler>
-	<handler name = 'onselection'>
-		actionbar.replaceActions(selection.map(function(item) {return item.target;}));
-	</handler>
-	<method name = 'select' args = 'item'>
-		var newSelection;
-		if (LzKeys.isKeyDown("control")) {
-			newSelection = selection.filter(function(elem) {
-				var r = elem.target == item;
-				if (r) elem.destroy();
-				return !r;
-			});
-			if (newSelection.length == selection.length) {
-				newSelection.push(new bracketselector(this, {target: item}));
-			}
-		} else {
-			selection.forEach(function(selector) {selector.destroy();});
-			newSelection = [new bracketselector(this, {target: item})];
-		}
-		if (!selection.equalsAttribute(newSelection, "target")) setAttribute("selection", newSelection);
-	</method>
-	<method name = 'gatherActions' args = 'box, targets'>
+	<handler name = 'onclick'> findAncestor("select").select(null); </handler>
+	<method name = 'gatherPossibleActions' args = 'box, targets'>
 		box.setTitle("Diagram");
 		box.addLink({icon: 'iconDelete', text: "Do something", action: function() {dump(this);}});
 	</method>
@@ -77,14 +46,21 @@ umldiagram {
 		drag_min_x = '0'
 		drag_max_x = '${immediateparent.mask.getAttributeRelative("width", immediateparent) - width}'
 		drag_min_y = '0'
-		drag_max_y = '${immediateparent.mask.getAttributeRelative("height", immediateparent) - height}'
-	/>
+		drag_max_y = '${immediateparent.mask.getAttributeRelative("height", immediateparent) - height}'>
+		<handler name = 'onapply'>
+			if (!findAncestorProperty("editMode")) this.remove();
+		</handler>
+	</dragstate>
+	
 	<resizestatelimits name = 'resizer'
 		minwidth = '50'
 		maxwidth = '${immediateparent.mask.getAttributeRelative("width", immediateparent) - x}'
 		minheight = '$once{19 + 2*padding}'
-		maxheight = '${inside.contents.height + 2*(padding + 1)}'
-	/>
+		maxheight = '${inside.contents.height + 2*(padding + 1)}'>
+		<handler name = 'onapply'>
+			if (!findAncestorProperty("editMode")) this.remove();
+		</handler>
+	</resizestatelimits>
 	
 	<rect width = '${parent.width}' height = '${parent.height}'
 		fillAlpha = '0.7' fillColor = 'white'
@@ -99,7 +75,7 @@ umldiagram {
 			side = 'bottom'/>
 	</view>
 
-	<sizecorner resizer = '$once{parent.resizer}'/>
+	<sizecorner resizer = '$once{parent.resizer}' visible = '${findAncestor("editMode").editMode}'/>
 	
 	<method name = 'init'><![CDATA[
 		super.init();
@@ -131,9 +107,29 @@ umldiagram {
 </class>
 
 <class name = 'umlmember'
-		width = '${immediateparent.width}'>
+		width = '${immediateparent.width}' clip = 'true' opacity = '0.5'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'value' type = 'string'/>
+	
+	<method name = 'findSetHeightContainer'><![CDATA[
+		return parent.findFormalAncestorSuchThat(function() {
+				return this.hassetheight && !(this instanceof umldiagram);});
+	]]></method>
+	
+	<method name = 'animateShow'>
+		setHeight(0);
+		show();
+		animate("height", measureHeight(), 150, false, {motion: "linear"});
+		var container = findSetHeightContainer();
+		if (container) container.animate("height", measureHeight(), 150, true, {motion: "linear"});
+	</method>
+	<method name = 'animateHide'>
+		findAncestor("deselect").deselect(this);
+		var animator = animate("height", 0, 150, false, {motion: "linear"});
+		new LzDelegate({execute: function(_) {hide();}}, "execute", animator, "onstop");
+		var container = findSetHeightContainer();
+		if (container) container.animate("height", -height, 150, true, {motion: "linear"});
+	</method>
 	
 	<handler name = 'onmousedown'> callAncestorProperty("dragger", function() {this.apply()}); </handler>
 	<handler name = 'onmouseup'> callAncestorProperty("dragger", function() {this.remove()}); </handler>
@@ -146,11 +142,38 @@ umldiagram {
 		displayText.setAttribute("overflow", displayText.width > width);
 	</handler>
 
-	<rollovertext name = 'displayText'/>
+	<rollovertext name = 'displayText' opacity = '${classroot.opacity}'/>
 	<node name = 'contents'/>
 </class>
  
-<class name = 'umlattribute' extends = 'umlmember' value = '${contents.subnodes[0].seg}'/>
+<class name = 'umlattribute' extends = 'umlmember' value = '${contents.subnodes[0].seg}'>
+	<method name = 'gatherPossibleActions' args = 'actionBox, targets'>
+		if (targets.length != 1) return;
+		var target = targets[0];
+		actionBox.setTitle("Attribute");
+		actionBox.addLink({icon: "iconDelete", text: "Delete", actionCreator: function() {
+			var action = new MagicSentenceAction();
+			action.addChoice(
+					"targetSelector",
+					"attribute " + target.name, "/id('$1')".fill(target.xmlid),
+					"attributes named " + target.name, "//uml:attribute[name='$1']".fill(target.name),
+					"all attributes of type " + target.type, "//uml:attribute[type='$1']".fill(target.type));
+			action.addChoice(
+					"location",
+					"class " + target.umlclass.name, "[ancestor::uml:class/name='$1']".fill(target.umlclass.name),
+					"all classes", "");
+			action.addChoice(
+					"scope",
+					"this diagram", "/id('$1')".fill(target.umlclass.diagram.xmlid),
+					"all diagrams", "");
+			action.addSentence({targetSelector: 0}, "Delete ${targetSelector} in ${scope}.");
+			action.addSentence({}, "Delete ${targetSelector} from ${location} in ${scope}.");
+			action.apply = function() {animateHide();};
+			action.unapply = function() {animateShow();};
+			return action;
+		}});
+	</method>
+</class>
 
 <class name = 'umloperation' extends = 'umlmember'
 	value = '${contents.subnodes[0].seg + contents.subnodes[1].seg + (contents.subnodes[2].visible ? " : " : "") + contents.subnodes[2].seg}'/>
@@ -184,7 +207,7 @@ umldiagram {
 		concatDelegate.unregisterAll();
 		super.destroy();
 	</method>
-	<method name = 'concat'>
+	<method name = 'concat' args = '_'>
 		var s = "(";
 		if (elide) {
 			if (subnodes) s += "...";
