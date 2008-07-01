@@ -74,7 +74,7 @@ TextClickDispatcher.register = function(view) {
 };
 
 TextClickDispatcher.unregister = function(index) {
-	TextClickDispatcher.dispatchTable.splice[index, 1];
+	TextClickDispatcher.dispatchTable.splice(index, 1);
 }
 
 TextClickDispatcher.dispatchClick = function(cookie) {
