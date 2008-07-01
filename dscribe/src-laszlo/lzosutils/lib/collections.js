@@ -192,7 +192,7 @@ Hash.merge = function(target, source) {
 
 Hash.toQueryString = function(hash) {
     var words = [];
-    for (name in hash) {
+    for (var name in hash) {
         var value = hash[name];
         typeof value == 'function' ||
             words.push([name, '=', LzBrowser.urlEscape(value)].join(''));
