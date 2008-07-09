@@ -305,7 +305,7 @@ SimpleActionLink {
 	<attribute name = 'oldx' value = '$once{x}'/>
 	<attribute name = 'oldwidth' value = '$once{width}'/>
 	<attribute name = 'maxmove' value = '0'/>
-	<handler name = 'onidle' reference = 'LzIdle'>
+	<handler name = 'onidle' reference = 'lz.Idle'>
 		maxmove = Math.max(Math.max(maxmove, immediateparent.getMouse("x") - xroffset), immediateparent.getMouse("y") - yroffset);
 	</handler>
 	<attribute name = 'x' value = '${width == minwidth || x &lt; 0 ? Math.max(-width, Math.min(0, oldx + immediateparent.getMouse("x") - xroffset - (width - oldwidth))) : x}'/>
@@ -335,11 +335,13 @@ SimpleActionLink {
 			x = '$once{parent.editMode ? 0 : -width}'
 			width = '$style{"barwidth"}' height = '${parent.height}'>
 		<attribute name = 'minwidth' value = '$style{"barwidth"}'/>
-		<vbox name = 'bars' width = '${parent.width - parent.scrollbar.width}' inset = '${classroot.padding}' spacing = '${classroot.padding}'>
+		<vbox name = 'bars'
+					width = '${parent.width - (parent.scrollbar.visible ? parent.scrollbar.width : 0)}'
+					inset = '${classroot.padding}' spacing = '${classroot.padding}'>
 			<HistoryBar name = 'historybar' x = '${classroot.padding}' width = '${parent.width - 2*classroot.padding}'/>
 			<ActionBar name = 'actionbar' x = '${classroot.padding}' width = '${parent.width - 2*classroot.padding}'/>
 		</vbox>
-		<vscrollbar name = 'scrollbar'/>
+		<vscrollbar name = 'scrollbar' visible = '${parent.bars.height > parent.height}'/>
 		<EditTabDragger name = 'dragger'/>
 	</view>
 	<view name = 'main'
