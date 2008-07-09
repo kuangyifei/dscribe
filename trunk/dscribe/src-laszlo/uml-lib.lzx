@@ -4,6 +4,8 @@
 <include href="common-views.lzx"/>
 <include href="diagram-editor.lzx"/>
 <include href="magic-sentence.lzx"/>
+<script src="parsing.js"/>
+<script src="xpath.js"/>
 
 <stylesheet>
 
