@@ -91,7 +91,10 @@ SimpleActionLink {
 			fill();
 		</method>
 	</drawview>
-	<text name = 'titleText' text = '${"&lt;p align=&apos;" + parent.titleAlign + "&apos;&gt;" + parent.title + "&lt;/p&gt;"}' x = '2' width = '${parent.width - 4}'/>
+	<text name = 'titleText'
+			text = '${"&lt;p align=&apos;" + parent.titleAlign + "&apos;&gt;" + parent.title + "&lt;/p&gt;"}'
+				x = '2' width = '${parent.width - 4}'
+				multiline = 'true'/>
 	<drawview name = 'contentbg'
 			y = '${parent.titleStrip.height}'
 			width = '${parent.width}' height = '${parent.contents.height + 2*classroot.padding}'

@@ -9,14 +9,22 @@
 // Email: dan@zeraweb.com
 // 
 
-var Parsing;
+console = console || {
+	error: function() {Debug.error.apply(Debug, arguments);},
+	log: function() {Debug.write.apply(Debug, arguments);},
+	level: 0,
+	group: function() {
+		var prefix = "";
+		for (var i = 0; i < this.level; i++) prefix += "  ";
+		arguments.unshift(prefix);
+		Debug.write.apply(Debug, arguments);
+		this.level++;
+	},
+	groupEnd: function() {this.level--;}
+};
+
+var Parsing = {};
 (function () {
-    Parsing = {
-        Exception: function (s) { 
-            this.message = "Parse error at '" + s.substring(0, 10) + " ...'"; 
-        }
-    };
-    
     var wrapTrace = function(fn) {
     	if (!Parsing.Operators.Trace) return fn;
     	return function(s) {
@@ -155,19 +163,10 @@ var Parsing;
         ignore: function (p) {
             return p ? 
             wrapTrace(function (s) { 
-                var r = null; 
-                r = p.call(this, s);
+                var r = p.call(this, s);
                 if (r == null) return null;
                 return [null, r[1]]; 
             }) : null;
-        },
-        product: function () {
-            var px = arguments[0], 
-            qx = Array.prototype.slice.call(arguments, 1), rx = [];
-            for (var i = 0 ; i < px.length ; i++) {
-                rx.push(o.each(px[i], qx));
-            }
-            return rx;
         },
         cache: function (rule) { 
             var cache = {}; 
@@ -252,13 +251,26 @@ var Parsing;
         list: function (p, d, c) {
             d = d || o.token(' ');  
             c = c || null;
-            return wrapTrace(p instanceof Array ?
-                o.each(o.product(p.slice(0, -1), o.ignore(d)), p.slice(-1), o.ignore(c)) :
-                o.process(o.each(p, o.many(o.each(o.ignore(d), p)), o.ignore(c)), function(r) {
-                	var rx = [r[0]];
-                	for (var i = 0; i < r[1].length; i++) rx.push(r[1][i][1]);
-                	return rx;
-                }));
+            return wrapTrace(function(s) {
+            	var r = [];
+            	var tail;
+            	var rx = p.call(this, s);
+            	if (rx == null) return null;
+            	while(true) {
+            		r.push(rx[0]);
+            		tail = rx[1];
+            		rx = d.call(this, tail);
+            		if (rx == null) break;
+            		rx = p.call(this, rx[1]);
+            		if (rx == null) break;
+            	}
+            	if (c) {
+            		rx = c.call(this, tail);
+            		if (rx == null) return null;
+            		tail = rx[1];
+            	}
+            	return [r, tail];
+            });
         },
         set: function (px, d, c) {
             d = d || o.token(' '); 
@@ -406,9 +418,7 @@ var Parsing;
             return wrapTrace(function (s) {
                 var rx = rule.call(this, s);
                 if (rx == null) return null;
-                if (rx[0].length < min) { 
-                    throw new $P.Exception(s); 
-                }
+                if (rx[0].length < min) return null;
                 return rx;
             });
         }
