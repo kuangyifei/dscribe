@@ -1,0 +1,32 @@
+<library>
+
+<include href="lzosutils/lib"/>
+
+<script><![CDATA[
+var XPath = {Grammar: {}, Semantics: {}};
+
+g = XPath.Grammar;
+s = XPath.Semantics;
+
+XPath.parse = function(s) {
+	var r = XPath.Grammar.Expr(" " + s);
+	if (!r) {
+		console.error("Failed to parse XPath expression: " + s);
+		return;
+	}
+	var tail = r[1];
+	for (var i = 0; i < tail.length; i++) {
+		if (" \n\t".indexOf(tail.charAt(i)) != -1) {
+			console.error("Failed to parse XPath expression: " + s);
+			return;
+		}
+	}
+	return r[0];
+};
+]]></script>
+
+<script src="xpath-semantics.js"/>
+<script src="parsing.js"/>
+<script src="xpath-grammar.js"/>
+
+</library>
