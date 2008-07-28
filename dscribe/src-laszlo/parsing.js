@@ -117,21 +117,6 @@ var Parsing = {};
         // Atomic Operators
         // 
 
-        until: function (p) {
-            return wrapTrace(function (s) {
-                var qx = [], rx = null;
-                while (s.length) { 
-                    rx = p.call(this, s); 
-                    if (rx == null) { 
-                        qx.push(rx[0]); 
-                        s = rx[1]; 
-                        continue; 
-                    }
-                    break;
-                }
-                return [ qx, s ];
-            });
-        },
         many: function (p) {
             return wrapTrace(function (s) {
                 var rx = [], r = null; 
@@ -151,13 +136,6 @@ var Parsing = {};
                 var r = p.call(this, s); 
                 if (r == null) return [ null, s ]; 
                 return [ r[0], r[1] ];
-            });
-        },
-        not: function (p) {
-            return wrapTrace(function (s) {
-                var r = p.call(this, s);
-                if (r == null) return [null, s];
-                return null;
             });
         },
         ignore: function (p) {
@@ -202,39 +180,7 @@ var Parsing = {};
                 return [ rx, s]; 
             });
         },
-        all: function () { 
-            var px = arguments, x = x; 
-            return wrapTrace(o.each(o.optional(px))); 
-        },
 
-        // delimited operators
-        sequence: function (px, d, c) {
-            d = d || o.token(' ');
-            c = c || null;
-            
-            if (px.length === 1) { 
-                return px[0]; 
-            }
-            return wrapTrace(function (s) {
-                var r = null, q = null;
-                var rx = []; 
-                for (var i = 0; i < px.length ; i++) {
-                    r = px[i].call(this, s); 
-                    if (r == null) break;
-                    rx.push(r[0]);
-                    q = d.call(this, r[1]); 
-                    if (q == null) break; 
-                    s = q[1];
-                }
-                if (!r || q) return null;
-                if (c) {
-                    r = c.call(this, r[1]);
-                    if (r == null) return null;
-                }
-                return [ rx, (r?r[1]:s) ];
-            });
-        },
-    		
 	    //
 	    // Composite Operators
 	    //
@@ -272,125 +218,6 @@ var Parsing = {};
             	return [r, tail];
             });
         },
-        set: function (px, d, c) {
-            d = d || o.token(' '); 
-            c = c || null;
-            return wrapTrace(function (s) {
-                // r is the current match, best the current 'best' match
-                // which means it parsed the most amount of input
-                var r = null, p = null, q = null, rx = null, best = [[], s], last = false;
-
-                // go through the rules in the given set
-                for (var i = 0; i < px.length ; i++) {
-
-                    // last is a flag indicating whether this must be the last element
-                    // if there is only 1 element, then it MUST be the last one
-                    q = null; 
-                    p = null; 
-                    r = null; 
-                    last = (px.length === 1); 
-
-                    // first, we try simply to match the current pattern
-                    // if not, try the next pattern
-                    r = px[i].call(this, s);
-                    if (r == null) continue; 
-
-                    // since we are matching against a set of elements, the first
-                    // thing to do is to add r[0] to matched elements
-                    rx = [[r[0]], r[1]];
-
-                    // if we matched and there is still input to parse and 
-                    // we don't already know this is the last element,
-                    // we're going to next check for the delimiter ...
-                    // if there's none, or if there's no input left to parse
-                    // than this must be the last element after all ...
-                    if (r[1].length > 0 && ! last) {
-                        q = d.call(this, r[1]); 
-                        if (q == null) last = true; 
-                    } else { 
-                        last = true; 
-                    }
-
-				    // if we parsed the delimiter and now there's no more input,
-				    // that means we shouldn't have parsed the delimiter at all
-				    // so don't update r and mark this as the last element ...
-                    if (!last && q[1].length === 0) { 
-                        last = true; 
-                    }
-
-
-				    // so, if this isn't the last element, we're going to see if
-				    // we can get any more matches from the remaining (unmatched)
-				    // elements ...
-                    if (!last) {
-
-                        // build a list of the remaining rules we can match against,
-                        // i.e., all but the one we just matched against
-                        var qx = []; 
-                        for (var j = 0; j < px.length ; j++) { 
-                            if (i !== j) { 
-                                qx.push(px[j]); 
-                            }
-                        }
-
-                        // now invoke recursively set with the remaining input
-                        // note that we don't include the closing delimiter ...
-                        // we'll check for that ourselves at the end
-                        p = o.set(qx, d).call(this, q[1]);
-                        if (p == null) return null;
-
-                        // if we got a non-empty set as a result ...
-                        // (otw rx already contains everything we want to match)
-                        if (p[0].length > 0) {
-                            // update current result, which is stored in rx ...
-                            // basically, pick up the remaining text from p[1]
-                            // and concat the result from p[0] so that we don't
-                            // get endless nesting ...
-                            rx[0] = rx[0].concat(p[0]); 
-                            rx[1] = p[1]; 
-                        }
-                    }
-
-				    // at this point, rx either contains the last matched element
-				    // or the entire matched set that starts with this element.
-
-				    // now we just check to see if this variation is better than
-				    // our best so far, in terms of how much of the input is parsed
-                    if (rx[1].length < best[1].length) { 
-                        best = rx; 
-                    }
-
-				    // if we've parsed all the input, then we're finished
-                    if (best[1].length === 0) { 
-                        break; 
-                    }
-                }
-
-			    // so now we've either gone through all the patterns trying them
-			    // as the initial match; or we found one that parsed the entire
-			    // input string ...
-
-			    // if best has no matches, just return empty set ...
-                if (best[0].length === 0) { 
-                    return best; 
-                }
-
-			    // if a closing delimiter is provided, then we have to check it also
-                if (c) {
-                    // we try this even if there is no remaining input because the pattern
-                    // may well be optional or match empty input ...
-                    q = c.call(this, best[1]); 
-                    if (q == null) return null;
-                    
-                    // it parsed ... be sure to update the best match remaining input
-                    best[1] = q[1];
-                }
-
-			    // if we're here, either there was no closing delimiter or we parsed it
-			    // so now we have the best match; just return it!
-                return best;
-            });
-        },
         forward: function (gr, fname) {
             return wrapTrace(function (s) { 
                 return gr[fname].call(this, s); 
@@ -413,81 +240,7 @@ var Parsing = {};
                 if (r == null) return null;
                 return [fn.call(this, r[0]), r[1]]; 
             });
-        },
-        min: function (min, rule) {
-            return wrapTrace(function (s) {
-                var rx = rule.call(this, s);
-                if (rx == null) return null;
-                if (rx[0].length < min) return null;
-                return rx;
-            });
         }
     });
-	
-
-	// Generator Operators And Vector Operators
-
-	// Generators are operators that have a signature of F(R) => R,
-	// taking a given rule and returning another rule, such as 
-	// ignore, which parses a given rule and throws away the result.
-
-	// Vector operators are those that have a signature of F(R1,R2,...) => R,
-	// take a list of rules and returning a new rule, such as each.
-
-	// Generator operators are converted (via the following xgenerator
-	// function) into functions that can also take a list or array of rules
-	// and return an array of new rules as though the function had been
-	// called on each rule in turn (which is what actually happens).
-
-	// This allows generators to be used with vector operators more easily.
-	// Example:
-	// each(ignore(foo, bar)) instead of each(ignore(foo), ignore(bar))
-
-	// This also turns generators into vector operators, which allows
-	// constructs like:
-	// not(cache(foo, bar))
-	
-    var xgenerator = function (op) {
-        return function () {
-            var args = null, rx = [];
-            if (arguments.length > 1) {
-                args = Array.prototype.slice.call(arguments);
-            } else if (arguments[0] instanceof Array) {
-                args = arguments[0];
-            }
-            if (args) { 
-                for (var i = 0, px = args.shift() ; i < px.length ; i++) {
-                    args.unshift(px[i]); 
-                    rx.push(op.apply(null, args)); 
-                    args.shift();
-                    return rx;
-                } 
-            } else { 
-                return op.apply(null, arguments); 
-            }
-        };
-    };
     
-    var gx = "optional not ignore cache".split(' ');
-    
-    for (var i = 0 ; i < gx.length ; i++) { 
-        o[gx[i]] = xgenerator(o[gx[i]]); 
-    }
-
-    var xvector = function (op) {
-        return function () {
-            if (arguments[0] instanceof Array) { 
-                return op.apply(null, arguments[0]); 
-            } else { 
-                return op.apply(null, arguments); 
-            }
-        };
-    };
-    
-    var vx = "each any all".split(' ');
-    
-    for (var j = 0 ; j < vx.length ; j++) { 
-        o[vx[j]] = xvector(o[vx[j]]); 
-    }
-	
 }());

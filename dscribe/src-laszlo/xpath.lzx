@@ -23,8 +23,42 @@ XPath.parse = function(s) {
 	}
 	return r[0];
 };
+
+lz.node.prototype.query = function(xpath, env) {
+	env = env || {};
+	if (!env.roots) env.roots = [canvas];
+	env.docs = [];
+	env.roots.forEach(function(root) {
+		var doc = new s.DocumentNode(root);
+		root.xparent = function(env2) {return doc;};
+		env.docs.push(doc);
+	});
+	if (!env.vars) env.vars = {};
+	var expr = XPath.parse(xpath);
+	var result;
+	if (expr) result = expr.eval(this, env);
+	env.roots.forEach(function(root) {delete root.xparent;});
+	if (result.length == 0) result = null;
+	else if (result.length == 1) result = result[0];
+	return result;
+};
+
+Array.prototype.append = function(a) {
+	this.push.apply(this, a);
+	return this;
+};
+
+Array.prototype.concatMap = function(fn, thisObject) {
+	var result = [], len = this.length;
+	for (var i = 0; i < len; i++) {
+		if (typeof this[i] != 'undefined') result.append(fn.call(thisObject, this[i], i, this));
+	}
+	return result;
+};
+
 ]]></script>
 
+<script src="xpath-utils.js"/>
 <script src="xpath-semantics.js"/>
 <script src="parsing.js"/>
 <script src="xpath-grammar.js"/>

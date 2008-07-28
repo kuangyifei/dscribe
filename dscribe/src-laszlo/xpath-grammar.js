@@ -9,7 +9,7 @@ with(Parsing.Operators) {
 	g.lparen = token('(');  g.rparen = token(')');
 	g.lbracket = token('[');  g.rbracket = token(']');
 	g.dollar = token('$');  g.star = token('*');  g.comma = token(',');
-	g.comp = token('=', '!=', '<=', '<', '>=', '>', 'eq', 'ne', 'lt', 'le', 'gt', 'ge', 'is', '<<', '>>');
+	g.comp = token('is', '<<', '>>', '=', '!=', '<=', '<', '>=', '>', 'eq', 'ne', 'lt', 'le', 'gt', 'ge');
 	g.StringLiteral = process(dfsatoken(false, {
 			start: {'"': "dquotebody", "'": "squotebody"},
 			dquotebody: {'"': "dquoteend", "": "dquotebody"},
@@ -84,14 +84,13 @@ with(Parsing.Operators) {
 	g.PrimaryExpr = any(g.Literal, g.VarRef, g.ParenthesizedExpr, g.ContextItemExpr, g.FunctionCall);
 	g.Predicate = between(g.lbracket, g.Expr, g.rbracket);
 	g.FilterExpr = process(each(g.PrimaryExpr, many(g.Predicate)), function(r) {
-		if (r[1].length == 0) return r[0];
 		return new s.Filter(r[0], r[1]);
 	});
 	g.NameTest = any(g.star, g.QName);
 	g.NodeTest = g.NameTest;	// or KindTest
 	g.Axis = process(each(token(
-					'child', 'descendant', 'attribute', 'self', 'descendant-or-self', 'following-sibling',
-					'following', 'parent', 'ancestor', 'preceding-sibling', 'preceding', 'ancestor-or-self'), token('::')),
+					'child', 'descendant-or-self', 'descendant', 'attribute', 'self', 'following-sibling',
+					'following', 'parent', 'ancestor-or-self', 'ancestor', 'preceding-sibling', 'preceding'), token('::')),
 					function(r) {return r[0];});
 	g.AbbrevStep = any(
 			process(each(optional(token('@')), g.NodeTest), function(r) {
@@ -119,7 +118,7 @@ with(Parsing.Operators) {
 					if (r[2][i][0]) steps.push(r[2][i][0]);
 					steps.push(r[2][i][1]);
 				}
-				return !fromRoot && steps.length == 1 ? steps[0] : new s.Path(fromRoot, steps);
+				return new s.Path(fromRoot, steps);
 			}),
 			replace(g.slash, new s.Path(true, [])));
 }
