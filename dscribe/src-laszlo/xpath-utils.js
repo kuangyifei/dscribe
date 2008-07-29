@@ -6,7 +6,8 @@ lz.node.prototype.xname = function() {return this.constructor.tagname;}
 
 lz.node.prototype.xparent = function(env) {
 	var k = env ? env.roots.indexOf(this) : -1;
-	return k == -1 ? this.parent : env.docs[k];
+	var p = k == -1 ? this.parent : env.docs[k];
+	return p === this ? null : p;
 };
 
 lz.node.prototype.xchildren = function() {
@@ -16,12 +17,15 @@ lz.node.prototype.xchildren = function() {
 		prevNode = node;
 		if (node.defaultplacement) node = node.determinePlacement(null, node.defaultplacement);
 	} while (prevNode != node);
-	if ("text" in node) {
-		var children = [new s.TextNode(node)];
-		this.xchildren = function() {return children;};
-	} else {
-		this.xchildren = function() {return node.subnodes ? node.subnodes : [];};
-	}
+	var textChildren = "text" in node ? [new s.TextNode(node)] : [];
+	this.xchildren = function() {
+		if (!node.subnodes) return textChildren;
+		if (node.layouts && node.layouts.length) {
+			return node.subnodes.select(function(child) {return !node.layouts.find(child);});
+		} else {
+			return node.subnodes;
+		}
+	};
 	return this.xchildren();
 };
 
@@ -62,6 +66,9 @@ s.TextNode.prototype.atomized = function() {return this.node.text;};
 s.TextNode.prototype.toString = function() {return '"' + this.node.text + '"';};
 
 s.AttributeNode = function(node, key) {this.node = node; this.key = key;};
+s.AttributeNode.prototype.equals = function(that) {
+	return that instanceof s.AttributeNode && this.node === that.node && this.key === that.key;
+};
 s.AttributeNode.prototype.xnode = true;
 s.AttributeNode.prototype.xname = function() {return this.key;};
 s.AttributeNode.prototype.xparent = function() {return this.node;};
@@ -124,73 +131,98 @@ s.orderable = function(v) {
 	return false;
 };
 
-s.nodeSort = function(nodes, env) {
-	var traces = nodes.map(function(node) {
-		var trace = [];
-		while(node) {
-			trace.push(node);
-			node = node.xparent();
-		}
-		trace.reverse();
-		return trace;
+s.trace = function(node, env) {
+	var trace = [];
+	while(node) {
+		trace.push(node);
+		node = node.xparent(env);
+	}
+	trace.reverse();
+	return trace;
+};
+
+s.nodeCombine = function(nodesList, combiner, env) {
+	var traceList = nodesList.map(function(nodes) {
+		return nodes.map(function(node) {return s.trace(node, env);});
 	});
-	var oldLength = nodes.length;
-	nodes.splice(0, nodes.length);
-	s.nodeSortHelper(traces, 0, env.docs, nodes);
-	if (nodes.length != oldLength) {
-		console.error("internal xpath error:  lost nodes during sort, oldLength=" + oldLength + ", new length=" + nodes.length);
+	var nodes = [];
+	s.nodeSortHelper(traceList, combiner, 0, env.docs, nodes);
+	return nodes;
+};
+
+s.nodeSortHelper = function(traceList, combiner, level, branches, result) {
+	// Special short-circuiting case:  if only one node list, and only one node left,
+	// push it directly into the result.  This assumes that a single-list sort will
+	// always use the identity combiner, but saves time since we don't explore
+	// the remainder of the subtree once there's only one node left.
+	if (traceList.length == 1 && traceList[0].length == 1) {
+		result.push(traceList[0][0].last());
 		return;
 	}
-	var i = 0;
-	while(i < nodes.length-1) {
-		if (nodes[i] === nodes[i+1]) {
-			nodes.splice(i, 1);
-		} else {
-			i++;
-		}
+	// Pluck out any attributes that belong to the parent, which was inserted just
+	// before the recursive call to nodeSortHelper.
+	if (s.attributeSortHelper(traceList, combiner, level, result)) return;
+	// Traverse subtrees in order.
+	branches.forEach(function(branch) {
+		var branchNodePresent = [], exploreSubtree = false;
+		var subtraceList = traceList.map(function(traces, tracesIndex) {
+			var subtraces = [];
+			for (var i = 0; i < traces.length; i++) {
+				var trace = traces[i];
+				if (trace === null) continue;
+				if (trace[level] === branch) {
+					if (trace.length == level + 1) {
+						branchNodePresent[tracesIndex] = true;
+					} else {
+						exploreSubtree = true;
+						subtraces.push(trace);
+					}
+					traces[i] = null;
+				}
+			}
+			return subtraces;
+		});
+		if (combiner(branchNodePresent)) result.push(branch);
+		if (exploreSubtree) s.nodeSortHelper(subtraceList, combiner, level + 1, branch.xchildren(), result);
+	});
+	if (!traceList.every(function(traces) {return traces.every(function(node) {return node === null;});})) {
+		console.error("internal xpath error:  leftover traces in node sort traceList=[" + traceList + "], level=" + level + ", branches=" + branches + ", result=" + result);
+		return;
 	}
 };
 
-s.nodeSortHelper = function(traces, level, branches, result) {
-	if (traces.length == 1) {
-		result.push(traces[0].last());
-		return;
-	}
-	if (s.attributeSortHelper(traces, level, result)) return;
-	branches.forEach(function(branch) {
-		var subtraces = [];
+s.attributeSortHelper = function(traceList, combiner, level, result) {
+	var allNodesWereAttributes = true;
+	var masterAttributes = [];
+	var attributeList = traceList.map(function(traces) {
+		var attributes = [];
 		for (var i = 0; i < traces.length; i++) {
 			var trace = traces[i];
-			if (trace === null) continue;
-			if (trace[level] === branch) {
-				if (trace.length == level + 1) {
-					result.push(trace.last());
-				} else {
-					subtraces.push(trace);
-				}
+			if (trace.length == level + 1 && trace.last() instanceof s.AttributeNode) {
+				attributes.push(trace.last());
 				traces[i] = null;
+			} else {
+				allNodesWereAttributes = false;
 			}
 		}
-		if (subtraces.length) s.nodeSortHelper(subtraces, level + 1, branch.xchildren(), result);
+		masterAttributes.append(attributes);
+		return attributes;
 	});
-	if (!traces.every(function(node) {return node === null;})) {
-		console.error("internal xpath error:  leftover traces in node sort traces=[" + traces + "], level=" + level + ", branches=" + branches + ", result=" + result);
-		return;
+	if (masterAttributes.length) {
+		masterAttributes.sort(s.AttributeNode.cmp);
+		attributeList.forEach(function(attributes) {attributes.sort(s.AttributeNode.cmp);});
+		var lastAttr = null;
+		masterAttributes.forEach(function(attr) {
+			if (!attr.equals(lastAttr)) {
+				lastAttr = attr;
+				var attrPresent = attributeList.map(function(attributes) {
+					var len = attributes.length;
+					while(attributes.length && attr.equals(attributes[0])) attributes.shift();
+					return len != attributes.length;
+				});
+				if (combiner(attrPresent)) result.push(attr);
+			}
+		});
 	}
-};
-
-s.attributeSortHelper = function(traces, level, result) {
-	var attributes = [];
-	for (var i = 0; i < traces.length; i++) {
-		var trace = traces[i];
-		if (trace.length == level + 1 && trace.last() instanceof s.AttributeNode) {
-			attributes.push(trace.last());
-			traces[i] = null;
-		}
-	}
-	if (attributes.length) {
-		attributes.sort(s.AttributeNode.cmp);
-		result.append(attributes);
-	}
-	return attributes.length == traces.length;
+	return allNodesWereAttributes;
 }

@@ -66,7 +66,7 @@ s.Path.prototype.eval = function(context, env) {
 			console.error("[XPTY0018] result of path contains a mix of nodes and atomic values: " + this + " -> " + context);
 			return;
 		}
-		if (allNodes && !singleDerivation) s.nodeSort(context, env);
+		if (allNodes && !singleDerivation) context = s.nodeCombine([context], function(p) {return p[0];}, env);
 	}
 	return context;
 };
@@ -114,18 +114,18 @@ s.AxisStep.prototype.descendant_or_self = function(node) {
 };
 s.AxisStep.prototype.following = function(node) {};  // TODO: implement
 s.AxisStep.prototype.following_sibling = function(node) {};  // TODO: implement
-s.AxisStep.prototype.parent = function(node) {
-	var r = node.xparent();
-	return (r && (this.wildcard || r.xname() == this.nodeName.flat)) ? [r] : [];
+s.AxisStep.prototype.parent = function(node, env) {
+	var r = node.xparent(env);
+	return r ? this.self(r) : [];
 };
 s.AxisStep.prototype.parent.reverse = true;
-s.AxisStep.prototype.ancestor = function(node) {
-	var parent = node.xparent();
-	return parent ? this.ancestor_or_self(parent) : [];
+s.AxisStep.prototype.ancestor = function(node, env) {
+	var parent = node.xparent(env);
+	return parent ? this.ancestor_or_self(parent, env) : [];
 };
 s.AxisStep.prototype.ancestor.reverse = true;
-s.AxisStep.prototype.ancestor_or_self = function(node) {
-	return this.self(node).append(this.ancestor(node));
+s.AxisStep.prototype.ancestor_or_self = function(node, env) {
+	return this.self(node).append(this.ancestor(node, env));
 };
 s.AxisStep.prototype.ancestor_or_self.reverse = true;
 s.AxisStep.prototype.preceding = function(node, name) {};  // TODO: implement
@@ -138,7 +138,7 @@ s.AxisStep.prototype.evalStep = function(focus, env) {
 		console.error("[XPTY0020] step context contained non-node item: " + focus);
 		return;
 	}
-	var result = this.axisfn(focus);
+	var result = this.axisfn(focus, env);
 	if (this.reverse) result.reverse();
 	return result;
 };
@@ -234,7 +234,7 @@ s.GeneralComparison.prototype.eval = function(context, env) {
 
 s.NodeComparison = function(a, op, b) {this.a = a; this.op = op; this.opfn = this.opTable[op]; this.b = b;}
 s.NodeComparison.prototype.opTable = {
-	'is': function(a, b, env) {return a == b;},
+	'is': function(a, b, env) {return a.equals ? a.equals(b) : a === b;},
 	'<<': function(a, b, env) {
 		var nodes = [a, b];
 		s.nodeSort(nodes, env);
@@ -293,15 +293,15 @@ s.BinaryOp.prototype.eval = function(context, env) {
 
 s.SequenceOp = function(a, op, b) {this.a = a; this.op = op; this.opfn = this.opTable[op]; this.b = b;}
 s.SequenceOp.prototype.opTable = {
-	"union": function(a, b) {}, // TODO: implement
-	"intersect": function(a, b) {},  // TODO: implement
-	"except": function(a, b) {}  // TODO: implement;
+	"union": function(a, b, env) {return s.nodeCombine([a, b], function(p) {return p[0] || p[1];}, env);},
+	"intersect": function(a, b, env) {return s.nodeCombine([a, b], function(p) {return p[0] && p[1];}, env);},
+	"except": function(a, b, env) {return s.nodeCombine([a, b], function(p) {return p[0] && !p[1];}, env);}
 };
 s.SequenceOp.prototype.opTable["|"] = s.SequenceOp.prototype.opTable["union"];
 s.SequenceOp.prototype.toString = function() {return "SequenceOp(" + this.a + " " + this.op + " " + this.b + ")";};
 s.SequenceOp.prototype.eval = function(context, env) {
 	var va = this.a.eval(context, env), vb = this.b.eval(context, env);
-	return this.opfn(va, vb);
+	return this.opfn(va, vb, env);
 };
 
 s.Negate = function(a) {this.arg = a;};
