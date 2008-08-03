@@ -25,6 +25,8 @@ umldiagram {
 <class name = 'umldiagram' showhandcursor = 'false' width = '${immediateparent.width}' height = '${immediateparent.height}'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'title' type = 'string'/>
+	<attribute name = 'xmlid' type = 'string'/>
+	<attribute name = 'idTable' type = 'expression'/>
 	
 	<view name = 'contents' width = '${parent.width}' height = '${parent.height}'/>
 
@@ -32,6 +34,15 @@ umldiagram {
 	<method name = 'gatherPossibleActions' args = 'box, targets'>
 		box.setTitle("Diagram");
 		box.addLink({icon: 'iconDelete', text: "Do something", action: function() {dump(this);}});
+	</method>
+	<method name = 'trackXmlId' args = 'node, value'>
+		if (!this.idTable) this.idTable = {};
+		this.idTable[value] = node;
+	</method>
+	<method name = 'getByXmlId' args = 'value'>
+		var node = this.idTable[value];
+		if (!node || node.xmlid != value) return;
+		return node;
 	</method>
 </class>
 
@@ -41,6 +52,7 @@ umldiagram {
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'padding' value = '$style{"padding"}' type = 'size'/>
 	<attribute name = 'color' value = '$style{"color"}' type = 'color'/>
+	<attribute name = 'xmlid' type = 'string'/>
 	<handler name = 'onclick'> findAncestor("select").select(this); </handler>
 
 	<dragstate name = 'dragger'
@@ -88,6 +100,7 @@ umldiagram {
 
 <class name = 'umlblockname'>
 	<attribute name = 'text' type = 'text'/>
+	<attribute name = 'xmlid' type = 'string'/>
 	<rollovertext name = 'contents'
 		x = '${Math.max(0, (classroot.immediateparent.width - width)/2)}'
 		y = '1'
@@ -102,6 +115,7 @@ umldiagram {
 <class name = 'umlcompartment'>
 	<attribute name = 'kind' type = 'string'/>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
+	<attribute name = 'xmlid' type = 'string'/>
 	<hrule name = 'separator'/>
 	<vbox name = 'contents' y = '${parent.separator.height}' width = '${classroot.immediateparent.width}'/>
 	<faderect target = '$once{parent.contents}' side = 'right'/>
@@ -111,6 +125,7 @@ umldiagram {
 		width = '${immediateparent.width}' clip = 'true' opacity = '0.5'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'value' type = 'string'/>
+	<attribute name = 'xmlid' type = 'string'/>
 	
 	<method name = 'findSetHeightContainer'><![CDATA[
 		return parent.findFormalAncestorSuchThat(function() {

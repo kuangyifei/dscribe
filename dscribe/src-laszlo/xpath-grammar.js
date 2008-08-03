@@ -1,11 +1,10 @@
-Parsing.Operators.Trace = false;
+// Parsing.Operators.Trace = true;
 
 with(Parsing.Operators) {
 	var g = XPath.Grammar;
 	var s = XPath.Semantics;
 	
 	g.slash = token('/');  g.slash2 = token('//');
-	g.dot = token('.');  g.dot2 = token('..');
 	g.lparen = token('(');  g.rparen = token(')');
 	g.lbracket = token('[');  g.rbracket = token(']');
 	g.dollar = token('$');  g.star = token('*');  g.comma = token(',');
@@ -75,7 +74,7 @@ with(Parsing.Operators) {
 	g.Literal = any(g.StringLiteral, g.NumberLiteral);
 	g.VarRef = process(each(g.dollar, g.QName), function(r) {return new s.Var(r[1]);});
 	g.ParenthesizedExpr = between(g.lparen, optional(g.Expr), g.rparen);
-	g.ContextItemExpr = replace(g.dot, new s.ContextItem());
+	g.ContextItemExpr = replace(token('.'), new s.ContextItem());
 	g.FunctionCall = process(
 			each(g.QName, between(g.lparen, optional(list(g.ExprSingle, g.comma)), g.rparen)),
 			function(r) {
@@ -83,26 +82,24 @@ with(Parsing.Operators) {
 			});
 	g.PrimaryExpr = any(g.Literal, g.VarRef, g.ParenthesizedExpr, g.ContextItemExpr, g.FunctionCall);
 	g.Predicate = between(g.lbracket, g.Expr, g.rbracket);
-	g.FilterExpr = process(each(g.PrimaryExpr, many(g.Predicate)), function(r) {
-		return new s.Filter(r[0], r[1]);
-	});
 	g.NameTest = any(g.star, g.QName);
 	g.NodeTest = g.NameTest;	// or KindTest
 	g.Axis = process(each(token(
 					'child', 'descendant-or-self', 'descendant', 'attribute', 'self', 'following-sibling',
 					'following', 'parent', 'ancestor-or-self', 'ancestor', 'preceding-sibling', 'preceding'), token('::')),
 					function(r) {return r[0];});
-	g.AbbrevStep = any(
-			process(each(optional(token('@')), g.NodeTest), function(r) {
-				return new s.AxisStep(r[0] ? 'attribute' : 'child', r[1]);
-			}),
-			process(g.dot2, function(r) {return new s.AxisStep('parent', '*');}));
-	g.AxisStep = process(each(
-			any(
-					process(each(g.Axis, g.NodeTest), function(r) {return new s.AxisStep(r[0], r[1]);}),
-					g.AbbrevStep),
-			many(g.Predicate)), function(r) {r[0].predicates = r[1]; return r[0];});
-	g.StepExpr = any(g.AxisStep, g.FilterExpr);
+	g.AbbrevStep = process(each(optional(token('@')), g.NodeTest), function(r) {
+		return new s.AxisStep(r[0] ? 'attribute' : 'child', r[1]);
+	});
+	g.ParentStep = process(token('..'), function(r) {return new s.AxisStep('parent', '*');}) 
+	g.AxisStep = process(each(g.Axis, g.NodeTest), function(r) {return new s.AxisStep(r[0], r[1]);});
+	g.StepExpr = process(each(any(g.AxisStep, g.ParentStep, g.PrimaryExpr, g.AbbrevStep), many(g.Predicate)), function(r) {
+		if (r[1].length) {
+			if (!(r[0] instanceof s.AxisStep)) r[0] = new s.Filter(r[0]);
+			r[0].predicates = r[1];
+		}
+		return r[0];
+	});
 	g.PathExpr = any(
 			process(each(
 					optional(any(replace(g.slash2, new s.AxisStep("descendant-or-self", "*")), g.slash)),
@@ -118,7 +115,7 @@ with(Parsing.Operators) {
 					if (r[2][i][0]) steps.push(r[2][i][0]);
 					steps.push(r[2][i][1]);
 				}
-				return new s.Path(fromRoot, steps);
+				return (fromRoot || steps.length > 1) ? new s.Path(fromRoot, steps) : steps[0];
 			}),
 			replace(g.slash, new s.Path(true, [])));
 }

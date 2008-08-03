@@ -7,7 +7,7 @@
 
 	<Editor x = '20' y = '20' width = '600' height = '350' editMode = 'true'>
 	
-	<umldiagram title = 'Sample Diagram'>
+	<umldiagram title = 'Sample Diagram' xmlid='d1'>
 		<umlclass x='20' y='20' width='100'>
 			<umlblockname>VeryVerylong name with more stuff</umlblockname>
 			<umlcompartment kind='attributes'>
