@@ -1,13 +1,35 @@
 var s = XPath.Semantics;
 
+lz.node.prototype.recordXmlId = function(newValue) {
+	if (!newValue) return;
+	var node = this;
+	while (node != null && node != node.immediateparent) {
+		if ("trackXmlId" in node) {
+			node.trackXmlId(this, newValue);
+			return;
+		}
+		node = node.immediateparent;
+	}
+	console.error("internal xpath error: no xml:id tracker found for " + this);
+};
+
+function() {
+	var oldConstruct = lz.node.prototype.construct;
+	lz.node.prototype.construct = function(parent, args) {
+		oldConstruct.call(this, parent, args);
+		if ("xmlid" in args) {
+			this.applyConstraintMethod("recordXmlId", [this, "xmlid"]);
+			this.recordXmlId(args.xmlid);
+		}
+	};
+}();
+
 lz.node.prototype.xnode = true;
 
 lz.node.prototype.xname = function() {return this.constructor.tagname;}
 
-lz.node.prototype.xparent = function(env) {
-	var k = env ? env.roots.indexOf(this) : -1;
-	var p = k == -1 ? this.parent : env.docs[k];
-	return p === this ? null : p;
+lz.node.prototype.xparent = function() {
+	return this.parent === this ? null : this.parent;
 };
 
 lz.node.prototype.xchildren = function() {
@@ -131,11 +153,11 @@ s.orderable = function(v) {
 	return false;
 };
 
-s.trace = function(node, env) {
+s.trace = function(node) {
 	var trace = [];
 	while(node) {
 		trace.push(node);
-		node = node.xparent(env);
+		node = node.xparent();
 	}
 	trace.reverse();
 	return trace;
@@ -143,7 +165,7 @@ s.trace = function(node, env) {
 
 s.nodeCombine = function(nodesList, combiner, env) {
 	var traceList = nodesList.map(function(nodes) {
-		return nodes.map(function(node) {return s.trace(node, env);});
+		return nodes.map(function(node) {return s.trace(node);});
 	});
 	var nodes = [];
 	s.nodeSortHelper(traceList, combiner, 0, env.docs, nodes);
