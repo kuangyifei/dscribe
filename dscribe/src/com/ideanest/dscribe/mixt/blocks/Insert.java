@@ -78,6 +78,7 @@ public class Insert implements BlockType {
 					throw new TransformException("inserting multiple nodes not allowed in this context");
 				int serial = insertMultiple ? 1 : -1;
 				for (Node node : nodesToInsert.nodes()) {
+					// TODO:  what happens if node is not element?
 					Node insertedNode = target.insert(node);
 					String id = modBuilder.generateId(serial++);
 					insertedNode.update().attr("xml:id", id).commit();

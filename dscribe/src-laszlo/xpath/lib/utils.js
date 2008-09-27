@@ -1,112 +1,11 @@
-var s = XPath.Semantics;
-
-lz.node.prototype.recordXmlId = function(newValue) {
-	if (!newValue) return;
-	var node = this;
-	while (node != null && node != node.immediateparent) {
-		if ("trackXmlId" in node) {
-			node.trackXmlId(this, newValue);
-			return;
-		}
-		node = node.immediateparent;
-	}
-	console.error("internal xpath error: no xml:id tracker found for " + this);
-};
-
 function() {
-	var oldConstruct = lz.node.prototype.construct;
-	lz.node.prototype.construct = function(parent, args) {
-		oldConstruct.call(this, parent, args);
-		if ("xmlid" in args) {
-			this.applyConstraintMethod("recordXmlId", [this, "xmlid"]);
-			this.recordXmlId(args.xmlid);
-		}
-	};
-}();
 
-lz.node.prototype.xnode = true;
-
-lz.node.prototype.xname = function() {return this.constructor.tagname;}
-
-lz.node.prototype.xparent = function() {
-	return this.parent === this ? null : this.parent;
-};
-
-lz.node.prototype.xchildren = function() {
-	var node = this;
-	var prevNode;
-	do {
-		prevNode = node;
-		if (node.defaultplacement) node = node.determinePlacement(null, node.defaultplacement);
-	} while (prevNode != node);
-	var textChildren = "text" in node ? [new s.TextNode(node)] : [];
-	this.xchildren = function() {
-		if (!node.subnodes) return textChildren;
-		if (node.layouts && node.layouts.length) {
-			return node.subnodes.select(function(child) {return !node.layouts.find(child);});
-		} else {
-			return node.subnodes;
-		}
-	};
-	return this.xchildren();
-};
-
-lz.node.prototype.xattributes = function() {
-	var results = [];
-	for (var key in this) {
-		if (key == "text" || key.charAt(0) == "_"  || key.indexOf("$") != -1) continue;
-		var t = typeof this[key];
-		if (!(t == "null" || t == "boolean" || t == "string" || t == "number")) continue;
-		results.push(new s.AttributeNode(this, key));
-	}
-	results.sort(s.AttributeNode.cmp);
-	this.xattributes = function() {return results;};
-	return results;
-};
-
-lz.node.prototype.xattribute = function(name) {
-	if (!name || name == "text" || name.charAt(0) == "_"  || name.indexOf("$") != -1) return null;
-	if (!(name in this)) return null;
-	var t = typeof this[name];
-	if (!(t == "null" || t == "boolean" || t == "string" || t == "number")) return null;
-	return new s.AttributeNode(this, name);
-}
-
-s.DocumentNode = function(root) {this.root = root;};
-s.DocumentNode.prototype.xnode = true;
-s.DocumentNode.prototype.xname = function() {return null;};
-s.DocumentNode.prototype.xparent = function() {return null;};
-s.DocumentNode.prototype.xchildren = function() {return [this.root];};
-s.DocumentNode.prototype.toString = function() {return "document(" + this.root + ")";};
-
-s.TextNode = function(node) {this.node = node;};
-s.TextNode.prototype.xnode = true;
-s.TextNode.prototype.xname = function() {return null;};
-s.TextNode.prototype.xparent = function() {return this.node;};
-s.TextNode.prototype.xchildren = function() {return [];};
-s.TextNode.prototype.atomized = function() {return this.node.text;};
-s.TextNode.prototype.toString = function() {return '"' + this.node.text + '"';};
-
-s.AttributeNode = function(node, key) {this.node = node; this.key = key;};
-s.AttributeNode.prototype.equals = function(that) {
-	return that instanceof s.AttributeNode && this.node === that.node && this.key === that.key;
-};
-s.AttributeNode.prototype.xnode = true;
-s.AttributeNode.prototype.xname = function() {return this.key;};
-s.AttributeNode.prototype.xparent = function() {return this.node;};
-s.AttributeNode.prototype.xchildren = function() {return [];};
-s.AttributeNode.prototype.atomized = function() {return this.node[this.key];}
-s.AttributeNode.prototype.toString = function() {return "@" + this.key + "=" + this.node[this.key];};
-s.AttributeNode.cmp = function(a, b) {
-	var ka = a.key, kb = b.key;
-	return ka === kb ? 0 : (ka < kb ? -1 : 1);
-};
+var s = XPath.Semantics;
 
 Number.prototype.eval = function() {return [this];};
 String.prototype.eval = function() {return [this];}
 
 Array.prototype.atomized = function() {return this.map(function(item) {return item.atomized();});};
-lz.node.prototype.atomized = function() {return this.text;};
 Number.prototype.atomized = function() {return this;};
 String.prototype.atomized = function() {return this.toString();};
 
@@ -248,3 +147,5 @@ s.attributeSortHelper = function(traceList, combiner, level, result) {
 	}
 	return allNodesWereAttributes;
 }
+
+}();

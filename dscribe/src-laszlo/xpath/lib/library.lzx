@@ -1,6 +1,6 @@
 <library>
 
-<include href="lzosutils/lib"/>
+<include href="../../lzosutils/lib"/>
 
 <script><![CDATA[
 var XPath = {Grammar: {}, Semantics: {}, Functions: {}};
@@ -54,10 +54,6 @@ lz.node.prototype.query = function(xpath, env) {
 	if (expr) {
 		var context = {item: this, position: 1, size: 1, env: env};
 		result = expr.eval(context);
-		if (result) {
-			if (result.length == 0) result = null;
-			else if (result.length == 1) result = result[0];
-		}
 	}
 	var t4 = new Date().getTime();
 	env.teardown();
@@ -65,6 +61,33 @@ lz.node.prototype.query = function(xpath, env) {
 	console.log((t5 - t1) + "ms for query " + xpath + " (" + (t3-t2) + "ms parse, " + (t4-t3) + "ms eval)");
 	return result;
 };
+
+Array.prototype.query = function(xpath, env) {
+	if (this.length == 0) return null;
+	if (this.length == 1) return this[0].query(xpath, env);
+	console.error("multi-context queries not supported yet");
+	return;
+	
+	var t1 = new Date().getTime();
+	if (!env) env = new XPath.Environment();
+	env.setup();
+	var t2 = new Date().getTime();
+	var result = [];
+	var expr = XPath.parse(xpath);
+	var t3 = new Date().getTime();
+	if (expr) {
+		for (var i = 0; i < this.length; i++) {
+			var context = {item: this[i], position: 1, size: 1, env: env};
+			result.append(expr.eval(context));
+		}
+		// TODO: merge results?
+	}
+	var t4 = new Date().getTime();
+	env.teardown();
+	var t5 = new Date().getTime();
+	console.log((t5 - t1) + "ms for query " + xpath + " (" + (t3-t2) + "ms parse, " + (t4-t3) + "ms eval)");
+	return result;
+}
 
 Array.prototype.append = function(a) {
 	this.push.apply(this, a);
@@ -81,10 +104,12 @@ Array.prototype.concatMap = function(fn, thisObject) {
 
 ]]></script>
 
-<script src="xpath-utils.js"/>
-<script src="xpath-semantics.js"/>
+<script src="nodes.js"/>
+<script src="utils.js"/>
+<script src="semantics.js"/>
+<script src="semantics-paths.js"/>
 <script src="parsing.js"/>
-<script src="xpath-grammar.js"/>
-<script src="xpath-functions.js"/>
+<script src="grammar.js"/>
+<script src="functions.js"/>
 
 </library>

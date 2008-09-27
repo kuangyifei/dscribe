@@ -1,0 +1,92 @@
+## load file source.xml
+<foo xml:id='f'>
+	<bar xml:id='b1' name='aardvark'/>
+	<bar xml:id='b2' name='CLARITY'/>
+	<bar xml:id='b3' name='ZZZ'/>
+</foo>
+
+## load rules
+rule sort bars by name [r1]
+	for each target: //bar
+	sort by ascending: lower-case(@name)
+
+#### run 1
+
+## check file source.xml
+<foo xml:id='f'>
+	<bar xml:id='b1' name='aardvark'/>
+	<bar xml:id='b2' name='CLARITY'/>
+	<bar xml:id='b3' name='ZZZ'/>
+</foo>
+
+## check stats
+numCycles = 2
+numOrdersChecked = 1
+numElementsMoved = 0
+
+## check mods
+<mods xml:id='_r1.' rule='r1'>
+	<mod xml:id='_r1.b1.' stage='0'>
+		<dependency doc='source.xml' kind='verified'/>
+		<reference doc='source.xml' refid='b1'/>
+		<mod stage='1'>
+			<dependency doc='source.xml' kind='verified'/>
+			<order refid='f' doc='source.xml'/>
+			<sort-value xmlns='' refid='b1'>aardvark</sort-value>
+		</mod>
+	</mod>
+	<mod xml:id='_r1.b2.' stage='0'>
+		<dependency doc='source.xml' kind='verified'/>
+		<reference doc='source.xml' refid='b2'/>
+		<mod stage='1'>
+			<dependency doc='source.xml' kind='verified'/>
+			<order refid='f' doc='source.xml'/>
+			<sort-value xmlns='' refid='b2'>clarity</sort-value>
+		</mod>
+	</mod>
+	<mod xml:id='_r1.b3.' stage='0'>
+		<dependency doc='source.xml' kind='verified'/>
+		<reference doc='source.xml' refid='b3'/>
+		<mod stage='1'>
+			<dependency doc='source.xml' kind='verified'/>
+			<order refid='f' doc='source.xml'/>
+			<sort-value xmlns='' refid='b3'>zzz</sort-value>
+		</mod>
+	</mod>
+</mods>
+
+## modify file source.xml
+update value /id('b3')/@name with 'bye-bye'
+
+#### run 2
+
+## check file source.xml
+<foo xml:id='f'>
+	<bar xml:id='b1' name='aardvark'/>
+	<bar xml:id='b3' name='bye-bye'/>
+	<bar xml:id='b2' name='CLARITY'/>
+</foo>
+
+## check stats
+numCycles = 3
+numOrdersChecked = 1
+numElementsMoved = 1
+
+## modify file source.xml
+update insert <bar xml:id='b4' name='around'>feefiefoe</bar> into /foo
+
+#### run 3
+
+## check file source.xml
+<foo xml:id='f'>
+	<bar xml:id='b1' name='aardvark'/>
+	<bar xml:id='b4' name='around'>feefiefoe</bar>
+	<bar xml:id='b3' name='bye-bye'/>
+	<bar xml:id='b2' name='CLARITY'/>
+</foo>
+
+## check stats
+numCycles = 3
+numOrdersChecked = 1
+numElementsMoved = 1
+

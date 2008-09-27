@@ -9,20 +9,6 @@
 // Email: dan@zeraweb.com
 // 
 
-console = console || {
-	error: function() {Debug.error.apply(Debug, arguments);},
-	log: function() {Debug.write.apply(Debug, arguments);},
-	level: 0,
-	group: function() {
-		var prefix = "";
-		for (var i = 0; i < this.level; i++) prefix += "  ";
-		arguments.unshift(prefix);
-		Debug.write.apply(Debug, arguments);
-		this.level++;
-	},
-	groupEnd: function() {this.level--;}
-};
-
 var Parsing = {};
 (function () {
     var wrapTrace = function(fn) {
