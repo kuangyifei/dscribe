@@ -1,0 +1,89 @@
+<library>
+<include href="lzosutils/lib"/>
+<include href="xpath/lib"/>
+
+<script><![CDATA[
+
+Mod = function() {
+};
+
+Mod.prototype.clone = function() {
+};
+
+Mod.prototype.apply = function() {
+	
+};
+
+Mod.prototype.withdraw = function() {
+	
+};
+
+]]></script>
+
+<class name = 'mixt_for' extends = 'node'>
+	<attribute name = 'each' type = 'string' required = 'true'/>
+	<attribute name = 'text' type = 'text' required = 'true'/>
+	<method name = 'compute' args = 'basemod, env'><![CDATA[
+		env.vars = basemod.vars;
+		var results = env.roots.query(this.text);
+		if (results.length <= 1) {
+			if (results.length == 1) bind(results[0], basemod);
+			return [basemod];
+		}
+		return results.map(function(node) {
+			return bind(node, basemod.clone());
+		});
+	]]></method>
+	<method name = 'bind' args = 'node, mod'>
+		if (this.each == "target") {
+			mod.lastTarget = node;
+		} else if (this.each.startsWith("$")) {
+			mod.vars[this.each] = node;
+		} else {
+			console.error("'for' rule unable to bind '" + this.each + "'");
+		}
+		return mod;
+	</method>
+</class>
+
+<class name = 'mixt_rule' extends = 'node'>
+	<attribute name = 'xmlid' type = 'string' required = 'true'/>
+	<method name = 'init'>
+		this.mods = {};
+	</method>
+	<method name = 'recompute' args = 'env'>
+		var computedMods = {};
+		computedMods[this.xmlid] = new Mod(this.xmlid);
+		this.subnodes.forEach(function(block) {
+			if (!block.compute) return;
+			derivedMods = {};
+			computedMods.forEach(function(mod) {
+				derivedMods.append(block.compute(mod, env));
+			});
+			computedMods = derivedMods;
+		});
+		for (var key in this.mods) if (!(key in computedMods)) this.mods[key].withdraw();
+		for (var key in computedMods) if (!(key in this.mods)) computedMods[key].apply();
+		this.mods = computedMods;
+	</method>
+</class>
+
+<class name = 'mixt_rules' extends = 'node'>
+	<method name = 'recompute' args = 'env'>
+		this.subnodes.forEach(function(rule) {
+			if (rule.recompute(env)) changesMade = true;
+		});
+	</method>
+</class>
+
+<class name = 'MixtEngine' extends = 'node'>
+	<method name = 'recompute' args = 'env'>
+		var changesMade;
+		do {
+			changesMade = false;
+			this.subnodes[0].recompute(env);
+		} while (changesMade);
+	</method>
+</class>
+
+</library>

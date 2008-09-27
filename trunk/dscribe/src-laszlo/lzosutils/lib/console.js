@@ -19,11 +19,25 @@
   within the browser.
 */
 
+/*
+ * Modified by Piotr Kaminski.
+ */
+
 var console = {
+    log: function() {Debug.write.apply(Debug, arguments);},
     info: function() {Debug.write.apply(Debug, arguments); return arguments[0]},
     debug: function() {Debug.write.apply(Debug, ['debug'].concat(arguments))},
     warn: function() {Debug.warn(arguments.length > 1 ? arguments.join(', ') : arguments[0])},
-    error: function() {Debug.error(arguments.length > 1 ? arguments.join(', ') : arguments[0])}
+    error: function() {Debug.error(arguments.length > 1 ? arguments.join(', ') : arguments[0])},
+	level: 0,
+	group: function() {
+		var prefix = "";
+		for (var i = 0; i < this.level; i++) prefix += "  ";
+		arguments.unshift(prefix);
+		Debug.write.apply(Debug, arguments);
+		this.level++;
+	},
+	groupEnd: function() {this.level--;}
 }
 
 console.teeToBrowser = function(flag) {

@@ -1,5 +1,6 @@
 <library>
   <script src="browser-compatibility.js"/>
+  <script src="console.js"/>
   <script src="collections.js"/>
   <script src="string-utils.js"/>
   <script src="function-utils.js"/>

@@ -1,10 +1,12 @@
+function() {
+
 var s = XPath.Semantics;
 
-s.QName = function(s) {this.full = s; this.flat = s.replace(':', ''); this.qualified = s.indexOf(":") != -1;};
+s.QName = function(s) {this.full = s; this.flat = s.replace(':', '_').replace('-', '_'); this.qualified = s.indexOf(":") != -1;};
 s.QName.prototype.equals = function(that) {return this.full == that.full;}  // ignores actual namespace
 s.QName.prototype.toString = function() {return "QName(" + this.full + ")";};
-s.QName.prototype.atomized = function() {return this;};
-s.QName.prototype.eval = function() {return this;};
+s.QName.prototype.atomized = function() {return this.flat;};
+s.QName.prototype.eval = function(context) {return [this.flat];};
 s.QName.prototype.isQualified = function() {return this.qualified;};
 
 s.Var = function(qname) {this.varName = qname;};
@@ -16,154 +18,6 @@ s.Sequence.prototype.toString = function() {return "Sequence(" + this.items + ")
 s.Sequence.prototype.eval = function(context) {
 	return this.items.concatMap(function(item) {return item.eval(context);});
 };
-
-s.Path = function(fromRoot, steps) {
-	this.fromRoot = fromRoot;
-	for (var i = steps.length - 2; i >= 0; i--) {
-		if (steps[i].axis == "descendant-or-self" &&
-				steps[i].nodeName == "*" &&
-				!steps[i].predicates &&
-				steps[i+1].axis == "child") {
-			var combinedStep = new s.AxisStep("descendant-by-parent", steps[i+1].nodeName);
-			combinedStep.predicates = steps[i+1].predicates;
-			steps.splice(i, 2, combinedStep);
-		}
-	}
-	this.steps = steps;
-};
-s.Path.prototype.toString = function() {return "Path(" + (this.fromRoot ? "root" + (this.steps.length ? "," : "") : "") + this.steps + ")";};
-s.Path.prototype.eval = function(context) {
-	var nodes = this.fromRoot ? context.env.docs : [context.item];
-	var singleDerivation = true;
-	for (var i = 0; i < this.steps.length; i++) {
-		var step = this.steps[i];
-		var stepResults = [];
-		if (nodes.length > 1) singleDerivation = false;
-		var localContext = {size: nodes.length, env: context.env};
-		for (var j = 0; j < nodes.length; j++) {
-			localContext.item = nodes[j];
-			localContext.position = j + 1;
-			stepResults.append(step.eval(localContext));
-		}
-		nodes = stepResults;
-		if (i < this.steps.length - 1 && !nodes.every(function(item) {return item.xnode;})) {
-			console.error("[XPTY0019] result of intermediate step contains atomic values: " + this + ", step " + step + ", result " + nodes);
-			return;
-		}
-	}
-	if (nodes.length > 1) {
-		var allNodes = nodes.every(function(item) {return item.xnode;});
-		var someNodes = nodes.some(function(item) {return item.xnode;});
-		if (someNodes && !allNodes) {
-			console.error("[XPTY0018] result of path contains a mix of nodes and atomic values: " + this + " -> " + nodes);
-			return;
-		}
-		if (allNodes && !singleDerivation) nodes = s.nodeCombine([nodes], function(p) {return p[0];}, context.env);
-	}
-	return nodes;
-};
-
-s.applyPredicates = function(items, predicates, reverse, env) {
-	if (!predicates) return items;
-	var localContext = {size: items.length, env: env};
-	predicates.forEach(function(predicate) {
-		items = items.select(function(item, index) {
-			localContext.item = item;
-			localContext.position = index + 1;
-			var r = predicate.eval(localContext);
-			if (r.length == 1 && (typeof r[0] == "number" || r[0] instanceof Number)) {
-				return r[0] == (reverse ? items.length - index : index + 1);
-			}
-			return r.effectiveBooleanValue();
-		});
-	});
-	return items;
-};
-
-s.AxisStep = function(axis, nodeName) {
-	this.axis = axis;  this.axisfn = this[this.axis.replace('-', '_', 'g')];  this.reverse = !!this.axisfn.reverse;
-	this.nodeName = nodeName;  this.wildcard = nodeName === "*"; this.predicates = null;
-};
-s.AxisStep.prototype.self = function(node) {
-	return node instanceof lz.node && (this.wildcard || this.nodeName.flat == node.xname()) ? [node] : [];
-};
-s.AxisStep.prototype.attribute = function(node) {
-	if (!(node instanceof lz.node)) return [];
-	if (this.wildcard) return node.xattributes();
-	var attr = node.xattribute(this.nodeName.flat);
-	return attr ? [attr] : [];
-};
-s.AxisStep.prototype.child = function(node) {
-	var r = node.xchildren();
-	if (!this.wildcard) r = r.select(
-			function(child) {return child instanceof lz.node && child.xname() == this.nodeName.flat;},
-			this);
-	return r;
-};
-s.AxisStep.prototype.descendant = function(node) {
-	return node.xchildren().concatMap(
-			function(child) {return this.descendant_or_self(child);},
-			this);
-};
-s.AxisStep.prototype.descendant_or_self = function(node) {
-	return this.self(node).append(this.descendant(node));
-};
-s.AxisStep.prototype.descendant_by_parent = function(node, accumulator) {
-	if (!accumulator) accumulator = [];
-	var children = node.xchildren();
-	var r = children;
-	if (!this.wildcard) r = r.select(
-			function(child) {return child instanceof lz.node && child.xname() == this.nodeName.flat;},
-			this);
-	if (r.length) accumulator.push(r);
-	children.forEach(function(child) {this.descendant_by_parent(child, accumulator);}, this);
-	return accumulator;
-};
-s.AxisStep.prototype.following = function(node) {};  // TODO: implement
-s.AxisStep.prototype.following_sibling = function(node) {};  // TODO: implement
-s.AxisStep.prototype.parent = function(node) {
-	var r = node.xparent();
-	return r ? this.self(r) : [];
-};
-s.AxisStep.prototype.parent.reverse = true;
-s.AxisStep.prototype.ancestor = function(node) {
-	var parent = node.xparent();
-	return parent ? this.ancestor_or_self(parent) : [];
-};
-s.AxisStep.prototype.ancestor.reverse = true;
-s.AxisStep.prototype.ancestor_or_self = function(node) {
-	return this.self(node).append(this.ancestor(node));
-};
-s.AxisStep.prototype.ancestor_or_self.reverse = true;
-s.AxisStep.prototype.preceding = function(node, name) {};  // TODO: implement
-s.AxisStep.prototype.preceding.reverse = true;
-s.AxisStep.prototype.preceding_sibling = function(node, name) {};  // TODO: implement
-s.AxisStep.prototype.preceding_sibling.reverse = true;
-s.AxisStep.prototype.toString = function() {return "AxisStep(" + this.axis + "::" + this.nodeName + " ["+ this.predicates + "])";};
-s.AxisStep.prototype.eval = function(context) {
-	if (!context.item.xnode) {
-		console.error("[XPTY0020] step context contained non-node item: " + context.item);
-		return;
-	}
-	var result = this.axisfn(context.item);
-	if (result.length > 0) {
-		if (this.reverse) result.reverse();
-		if (result[0] instanceof Array) {
-			result = result.concatMap(function(r) {
-				return s.applyPredicates(r, this.predicates, this.reverse, context.env);}, this);
-		} else {
-			result = s.applyPredicates(result, this.predicates, this.reverse, context.env);
-		}
-	}
-	return result;
-};
-
-s.Filter = function(base) {this.base = base; this.predicates = null;}
-s.Filter.prototype.toString = function() {return "Filter(" + this.base + " [" + this.predicates + "])";};
-s.Filter.prototype.eval = function(context) {
-	return s.applyPredicates(this.base.eval(context), this.predicates, false, context.env);
-};
-
 
 s.ContextItem = function() {};
 s.ContextItem.prototype.toString = function() {return "ContextItem()";};
@@ -188,6 +42,96 @@ s.FunctionCall.prototype.eval = function(context) {
 	}
 	v.unshift(context);
 	return fnEntry.fn.apply(null, v);
+};
+
+s.evalConstructedName = function(context, nameExpr) {
+	var nameValue = nameExpr.eval(context).atomized();
+	if (nameValue.length != 1 || typeof nameValue[0] != "string") {
+		console.error("[XPTY0004] constructed attribute name is not a single string: " + nameValue);
+		return;
+	}
+	return nameValue[0];
+}
+
+s.ElementConstructor = function(nameExpr, contentsExpr) {this.nameExpr = nameExpr; this.contentsExpr = contentsExpr;};
+s.ElementConstructor.prototype.toString = function() {return "ElementConstructor(" + this.nameExpr + ", " + this.contentsExpr + ")";};
+s.ElementConstructor.prototype.eval = function(context) {
+	var name = s.evalConstructedName(context, this.nameExpr);
+	if (!name) return;
+	var contents = this.contentsExpr == null ? [] : this.contentsExpr.eval(context);
+	if (!contents) return;
+	
+	var result = new s.ConstructedElementNode(name);
+	var i = 0;
+	
+	var attribSet = {};
+	while (i < contents.length) {
+		var attr = contents[i];
+		if (attr.xnode != "attribute") break;
+
+		if (attr.key in attribSet) {
+			console.error("[XQDY0025] duplicate attribute name in element contents: " + attr.key);
+			return;
+		}
+		attribSet[attr.key] = true;
+		result.attributes.push(attr);
+		i++;
+	}
+	delete attribSet;
+	result.attributes.sort(s.AttributeNode.cmp);
+	
+	var lastItemWasAtomic = false;
+	while (i < contents.length) {
+		var item = contents[i];
+		if (item.xnode) {
+			switch (item.xnode) {
+				case "text":		result.text += item.atomized();  break;
+				case "element":	result.children.push(new s.WrappedElementNode(item, result));  break;
+				case "document":	result.children.push(new s.WrappedElementNode(item.root, result));  break;
+				case "attribute":
+					console.error("[XQTY0024] attribute following non-attribute in element contents: " + item);
+					return;
+			}
+			lastItemWasAtomic = false;
+		} else {
+			if (lastItemWasAtomic) result.text += " ";
+			result.text += item.atomized();
+			lastItemWasAtomic = true;
+		}
+		i++;
+	}
+	
+	return [result];
+};
+
+s.AttributeConstructor = function(nameExpr, contentsExpr) {this.nameExpr = nameExpr; this.contentsExpr = contentsExpr;};
+s.AttributeConstructor.prototype.toString = function() {return "AttributeConstructor(" + this.nameExpr + ", " + this.contentsExpr + ")";};
+s.AttributeConstructor.prototype.eval = function(context) {
+	var name = s.evalConstructedName(context, this.nameExpr);
+	if (!name) return;
+	if (this.contentsExpr == null) {
+		var contents = "";
+	} else {
+		var contents = this.contentsExpr.eval(context).atomized().join(" ");
+		if (!contents) return;
+	}
+	return [new s.ConstructedAttributeNode(name, contents)];
+};
+
+s.TextConstructor = function(textExpr) {this.textExpr = textExpr;};
+s.TextConstructor.prototype.toString = function() {return "TextConstructor(" + this.textExpr + ")";};
+s.TextConstructor.prototype.eval = function(context) {
+	return [new s.ConstructedTextNode(this.textExpr.eval(context).atomized().join(" "))];
+};
+
+s.If = function(condition, thenBranch, elseBranch) {this.condition = condition; this.thenBranch = thenBranch; this.elseBranch = elseBranch;};
+s.If.prototype.toString = function() {return "If(" + this.condition + "; then " + this.thenBranch + "; else " + this.elseBranch + ")";};
+s.If.prototype.eval = function(context) {
+	if (this.condition.eval(context).effectiveBooleanValue()) {
+		return this.thenBranch.eval(context);
+	} else {
+		return this.elseBranch.eval(context);
+	}
 };
 
 s.Or = function(args) {this.args = args;}
@@ -340,3 +284,5 @@ s.Negate.prototype.eval = function(context) {
 	if (v.length == 1) return [-v.numberValue()];
 	console.error("[XPTY0004] can't negate a sequence");
 };
+
+}();

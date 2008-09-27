@@ -7,6 +7,7 @@ with(Parsing.Operators) {
 	g.slash = token('/');  g.slash2 = token('//');
 	g.lparen = token('(');  g.rparen = token(')');
 	g.lbracket = token('[');  g.rbracket = token(']');
+	g.lbrace = token('{');  g.rbrace = token('}');
 	g.dollar = token('$');  g.star = token('*');  g.comma = token(',');
 	g.comp = token('is', '<<', '>>', '=', '!=', '<=', '<', '>=', '>', 'eq', 'ne', 'lt', 'le', 'gt', 'ge');
 	g.StringLiteral = process(dfsatoken(false, {
@@ -53,37 +54,61 @@ with(Parsing.Operators) {
 		};
 	};
 	
-	g.IntersectExceptExpr = process(each(g.UnaryExpr, many(each(token('intersect', 'except'), g.UnaryExpr))),
+	g.IntersectExceptExpr = process(
+			each(g.UnaryExpr, many(each(token('intersect', 'except'), g.UnaryExpr))),
 			processBinaryList(s.SequenceOp));
-	g.UnionExpr = process(each(g.IntersectExceptExpr, many(each(token('|', 'union'), g.IntersectExceptExpr))),
+	g.UnionExpr = process(
+			each(g.IntersectExceptExpr, many(each(token('|', 'union'), g.IntersectExceptExpr))),
 			processBinaryList(s.SequenceOp));
-	g.MultiplicativeExpr = process(each(g.UnionExpr, many(each(token('*', 'div', 'idiv', 'mod'), g.UnionExpr))),
+	g.MultiplicativeExpr = process(
+			each(g.UnionExpr, many(each(token('*', 'div', 'idiv', 'mod'), g.UnionExpr))),
 			processBinaryList(s.BinaryOp));
-	g.AdditiveExpr = process(each(g.MultiplicativeExpr, many(each(token('-', '+'), g.MultiplicativeExpr))),
+	g.AdditiveExpr = process(
+			each(g.MultiplicativeExpr, many(each(token('-', '+'), g.MultiplicativeExpr))),
 			processBinaryList(s.BinaryOp));
-	g.RangeExpr = process(each(g.AdditiveExpr, optional(each(token('to'), g.AdditiveExpr))), function(r) {
-		return r[1] == null ? r[0] : new s.Range(r[0], r[1][1]);
-	});
-	g.ComparisonExpr = process(each(g.RangeExpr, optional(each(g.comp, g.RangeExpr))), function(r) {
-		return r[1] == null ? r[0] : s.newComparison(r[0], r[1][0], r[1][1]);		
-	});
-	g.AndExpr = process(list(g.ComparisonExpr, token('and')), function(r) {return r.length == 1 ? r[0] : new s.And(r);});
-	g.OrExpr = process(list(g.AndExpr, token('or')), function(r) {return r.length == 1 ? r[0] : new s.Or(r);});
-	g.ExprSingle = g.OrExpr;	// or ForExpr, QuantifiedExpr, IfExpr
-	g.Expr = process(list(g.ExprSingle, g.comma), function(r) {return r.length == 1 ? r[0] : new s.Sequence(r);});
+	g.RangeExpr = process(
+			each(g.AdditiveExpr, optional(each(token('to'), g.AdditiveExpr))),
+			function(r) {return r[1] == null ? r[0] : new s.Range(r[0], r[1][1]);});
+	g.ComparisonExpr = process(
+			each(g.RangeExpr, optional(each(g.comp, g.RangeExpr))),
+			function(r) {return r[1] == null ? r[0] : s.newComparison(r[0], r[1][0], r[1][1]);});
+	g.AndExpr = process(
+			list(g.ComparisonExpr, token('and')),
+			function(r) {return r.length == 1 ? r[0] : new s.And(r);});
+	g.OrExpr = process(
+			list(g.AndExpr, token('or')),
+			function(r) {return r.length == 1 ? r[0] : new s.Or(r);});
+	g.IfExpr = process(
+			each(token('if'), between(g.lparen, forward(g, 'Expr'), g.rparen),
+					token('then'), forward(g, 'ExprSingle'), token('else'), forward(g, 'ExprSingle')),
+			function(r) {return new s.If(r[1], r[3], r[5]);});
+	g.ExprSingle = any(g.IfExpr, g.OrExpr);	// or ForExpr, QuantifiedExpr
+	g.Expr = process(
+			list(g.ExprSingle, g.comma),
+			function(r) {return r.length == 1 ? r[0] : new s.Sequence(r);});
 	g.Literal = any(g.StringLiteral, g.NumberLiteral);
 	g.VarRef = process(each(g.dollar, g.QName), function(r) {return new s.Var(r[1]);});
 	g.ParenthesizedExpr = between(g.lparen, optional(g.Expr), g.rparen);
 	g.ContextItemExpr = replace(token('.'), new s.ContextItem());
 	g.FunctionCall = process(
 			each(g.QName, between(g.lparen, optional(list(g.ExprSingle, g.comma)), g.rparen)),
-			function(r) {
-				return new s.FunctionCall(r[0], r[1] == null ? [] : r[1]);
-			});
-	g.PrimaryExpr = any(g.Literal, g.VarRef, g.ParenthesizedExpr, g.ContextItemExpr, g.FunctionCall);
+			function(r) {return new s.FunctionCall(r[0], r[1] == null ? [] : r[1]);});
+	g.ComputedElemOrAttrTail = each(
+			any(g.QName, between(g.lbrace, g.Expr, g.rbrace)), between(g.lbrace, optional(g.Expr), g.rbrace));
+	g.CompElemConstructor = process(
+			each(token('element'), g.ComputedElemOrAttrTail),
+			function(r) {return new s.ElementConstructor(r[1][0], r[1][1]);});
+	g.CompAttrConstructor = process(
+			each(token('attribute'), g.ComputedElemOrAttrTail),
+			function(r) {return new s.AttributeConstructor(r[1][0], r[1][1]);});
+	g.CompTextConstructor = process(
+			each(token('text'), between(g.lbrace, g.Expr, g.rbrace)),
+			function(r) {return new s.TextConstructor(r[1]);});
+	g.ComputedConstructor = any(g.CompElemConstructor, g.CompAttrConstructor, g.CompTextConstructor);
+	g.PrimaryExpr = any(g.Literal, g.VarRef, g.ParenthesizedExpr, g.ContextItemExpr, g.FunctionCall, g.ComputedConstructor);
 	g.Predicate = between(g.lbracket, g.Expr, g.rbracket);
 	g.NameTest = any(g.star, g.QName);
-	g.NodeTest = g.NameTest;	// or KindTest
+	g.NodeTest = g.NameTest;  // or g.KindTest
 	g.Axis = process(each(token(
 					'child', 'descendant-or-self', 'descendant', 'attribute', 'self', 'following-sibling',
 					'following', 'parent', 'ancestor-or-self', 'ancestor', 'preceding-sibling', 'preceding'), token('::')),
