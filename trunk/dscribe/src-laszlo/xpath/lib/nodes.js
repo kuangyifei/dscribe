@@ -19,6 +19,7 @@ function() {
 	var oldConstruct = lz.node.prototype.construct;
 	lz.node.prototype.construct = function(parent, args) {
 		oldConstruct.call(this, parent, args);
+		this.savedArgs = args;
 		if ("xml_id" in args) {
 			this.applyConstraintMethod("recordXmlId", [this, "xml_id"]);
 			this.recordXmlId(args.xmlid);
@@ -55,7 +56,7 @@ lz.node.prototype.xchildren = function() {
 
 lz.node.prototype.xattributes = function() {
 	var results = [];
-	for (var key in this) {
+	for (var key in this.savedArgs) {
 		if (key == "text" || key.charAt(0) == "_"  || key.indexOf("$") != -1) continue;
 		var t = typeof this[key];
 		if (!(t == "null" || t == "boolean" || t == "string" || t == "number")) continue;
@@ -68,19 +69,26 @@ lz.node.prototype.xattributes = function() {
 
 lz.node.prototype.xattribute = function(name) {
 	if (!name || name == "text" || name.charAt(0) == "_"  || name.indexOf("$") != -1) return null;
-	if (!(name in this)) return null;
+	if (!(name in this.savedArgs)) return null;
 	var t = typeof this[name];
 	if (!(t == "null" || t == "boolean" || t == "string" || t == "number")) return null;
 	return new s.AttributeNode(this, name);
 };
 
-lz.node.prototype.atomized = function() {return this.text;};
+lz.node.prototype.atomized = function() {return !this.subnodes && this.text ? this.text : "";};
+lz.node.prototype.serialized = function() {return s.serializeToXML(this);};
 
 s.ConstructedElementNode = function(name) {this.name = name; this.attributes = []; this.text = ""; this.children = [];};
 s.ConstructedElementNode.prototype.xnode = "element";
 s.ConstructedElementNode.prototype.xname = function() {return this.name;};
 s.ConstructedElementNode.prototype.xparent = function() {return null;};
-s.ConstructedElementNode.prototype.xchildren = function() {return this.children;};
+s.ConstructedElementNode.prototype.xchildren = function() {
+	if (this.children.length == 0) {
+		return this.text ? [new ConstructedTextNode(this.text)] : [];
+	} else {
+		return this.children;
+	}
+};
 s.ConstructedElementNode.prototype.xattributes = function() {return this.attributes;};
 s.ConstructedElementNode.prototype.xattribute = function(name) {
 	// Slow search, but should never be called
@@ -90,7 +98,8 @@ s.ConstructedElementNode.prototype.xattribute = function(name) {
 	}
 	return null;
 };
-s.ConstructedElementNode.prototype.atomized = function() {return this.text;};
+s.ConstructedElementNode.prototype.atomized = function() {return this.children.length == 0 ? this.text : "";};
+s.ConstructedElementNode.prototype.serialized = function() {return s.serializeToXML(this);};
 s.ConstructedElementNode.prototype.toString = function() {
 	return "element " + this.name + " { " + this.attributes + "; text = " + this.text + "; " + this.children + " } ";
 };
@@ -120,6 +129,7 @@ s.TextNode.prototype.xname = function() {return null;};
 s.TextNode.prototype.xparent = function() {return this.node;};
 s.TextNode.prototype.xchildren = function() {return [];};
 s.TextNode.prototype.atomized = function() {return this.node.text;};
+s.TextNode.prototype.serialized = function() {return this.node.text;};
 s.TextNode.prototype.toString = function() {return '"' + this.node.text + '"';};
 
 s.ConstructedTextNode = function(text) {this.text = text;}
@@ -128,6 +138,7 @@ s.ConstructedTextNode.prototype.xname = function() {return null;};
 s.ConstructedTextNode.prototype.xparent = function() {return null;};
 s.ConstructedTextNode.prototype.xchildren = function() {return [];};
 s.ConstructedTextNode.prototype.atomized = function() {return this.text;};
+s.ConstructedTextNode.prototype.serialized = function() {return this.text;};
 s.ConstructedTextNode.prototype.toString = function() {return '"' + this.text + '"';};
 
 s.AttributeNode = function(node, key) {this.node = node; this.key = key;};

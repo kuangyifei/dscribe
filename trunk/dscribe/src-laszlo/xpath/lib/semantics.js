@@ -2,7 +2,7 @@ function() {
 
 var s = XPath.Semantics;
 
-s.QName = function(s) {this.full = s; this.flat = s.replace(':', '_').replace('-', '_'); this.qualified = s.indexOf(":") != -1;};
+s.QName = function(s) {this.full = s; this.flat = s.replace(':', '_').replace('-', '_', 'g'); this.qualified = s.indexOf(":") != -1;};
 s.QName.prototype.equals = function(that) {return this.full == that.full;}  // ignores actual namespace
 s.QName.prototype.toString = function() {return "QName(" + this.full + ")";};
 s.QName.prototype.atomized = function() {return this.flat;};

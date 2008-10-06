@@ -27,7 +27,14 @@
 		</uml_diagram>
 		
 		<mixt_rules>
+			<mixt_rule xml_id='r01'>
+				<mixt_for each='target'>//uml:compartment[@kind='attributes']</mixt_for>
+				<mixt_insert>element uml:attribute {element uml:var {element uml:name {text {'hello'}}}}</mixt_insert>
+			</mixt_rule>
 		</mixt_rules>
+		
+		<mod_modstore>
+		</mod_modstore>
 	
 	</Editor>
 </canvas>

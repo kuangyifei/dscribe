@@ -385,7 +385,8 @@ SimpleActionLink {
 		if (!child) return this;
 		if (child.constructor.tagname.startsWith('uml_')) {
 			return this.main.contents;
-		} else if (child.constructor.tagname.startsWith('mixt_')) {
+		} else if (child.constructor.tagname.startsWith('mixt_')
+				|| child.constructor.tagname.startsWith('mod_')) {
 			return this.engine;
 		} else {
 			return this;

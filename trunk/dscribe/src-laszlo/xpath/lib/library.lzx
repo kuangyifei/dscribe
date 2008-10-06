@@ -27,7 +27,7 @@ XPath.parse = function(s) {
 	var expr = XPath.parse.cache[s];
 	if (expr) return expr;
 	
-	var r = XPath.Grammar.Expr(" " + s);
+	var r = Parsing.eval(XPath.Grammar.Expr, " " + s);
 	if (!r) {
 		console.error("Failed to parse XPath expression: " + s);
 		return;

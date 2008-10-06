@@ -1,53 +1,40 @@
 <library>
 <include href="lzosutils/lib"/>
 <include href="xpath/lib"/>
+<script src="md5.js"/>
 
-<script><![CDATA[
+<class name = 'block' extends = 'node'>
+	<attribute name = 'text' type = 'text'/>
+	<attribute name = 'query' type = 'expression'/>
+	<handler name = 'oninit'><![CDATA[
+		setAttribute('text', this.text.replace('&apos;', "'", 'g').replace('&quot;', '"', 'g'));
+		console.log(this.text);
+		this.setAttribute('query', XPath.parse(this.text));
+		if (this.query) this.setAttribute('text', null);
+		// TODO: set up dependency on query and variables
+	]]></handler>
+</class>
 
-Mod = function() {
-};
-
-Mod.prototype.clone = function() {
-};
-
-Mod.prototype.apply = function() {
-	
-};
-
-Mod.prototype.withdraw = function() {
-	
-};
-
-]]></script>
-
-<class name = 'mixt_for' extends = 'node'>
+<class name = 'mixt_for' extends = 'block'>
 	<attribute name = 'each' type = 'string' required = 'true'/>
-	<attribute name = 'text' type = 'text' required = 'true'/>
-	<method name = 'compute' args = 'basemod, env'><![CDATA[
-		env.vars = basemod.vars;
-		var results = env.roots.query(this.text);
-		if (results.length <= 1) {
-			if (results.length == 1) bind(results[0], basemod);
-			return [basemod];
-		}
-		return results.map(function(node) {
-			return bind(node, basemod.clone());
-		});
-	]]></method>
 	<method name = 'bind' args = 'node, mod'>
 		if (this.each == "target") {
 			mod.lastTarget = node;
 		} else if (this.each.startsWith("$")) {
 			mod.vars[this.each] = node;
 		} else {
-			console.error("'for' rule unable to bind '" + this.each + "'");
+			console.error("'for' block unable to bind '" + this.each + "'");
 		}
 		return mod;
 	</method>
 </class>
 
+<class name = 'mixt_insert' extends = 'block'>
+</class>
+
 <class name = 'mixt_rule' extends = 'node'>
-	<attribute name = 'xmlid' type = 'string' required = 'true'/>
+	<attribute name = 'xml_id' type = 'string' required = 'true'/>
+	<attribute name = 'description' type = 'string' required = 'false'/>
 	<method name = 'init'>
 		this.mods = {};
 	</method>
@@ -74,6 +61,38 @@ Mod.prototype.withdraw = function() {
 			if (rule.recompute(env)) changesMade = true;
 		});
 	</method>
+</class>
+
+<class name = 'mod_affected' extends = 'node'>
+	<attribute name = 'refid' type = 'string' required = 'true'/>
+</class>
+
+<class name = 'mod_dependency' extends = 'node'>
+	<attribute name = 'doc' type = 'string' required = 'false'/>
+	<attribute name = 'kind' type = 'string' required = 'false'/>
+</class>
+
+<class name = 'mod_reference' extends = 'node'>
+	<attribute name = 'refid' type = 'string' required = 'true'/>
+	<attribute name = 'doc' type = 'string' required = 'false'/>
+</class>
+
+<class name = 'mod_order' extends = 'node'>
+	<attribute name = 'refid' type = 'string' required = 'true'/>
+	<attribute name = 'doc' type = 'string' required = 'false'/>
+</class>
+
+<class name = 'mod_mod' extends = 'node'>
+	<attribute name = 'xml_id' type = 'string' required = 'false'/>
+	<attribute name = 'stage' type = 'number' required = 'true'/>
+</class>
+
+<class name = 'mod_mods' extends = 'node'>
+	<attribute name = 'xml_id' type = 'string' required = 'true'/>
+	<attribute name = 'rule' type = 'string' required = 'true'/>
+</class>
+
+<class name = 'mod_modstore' extends = 'node'>
 </class>
 
 <class name = 'MixtEngine' extends = 'node'>

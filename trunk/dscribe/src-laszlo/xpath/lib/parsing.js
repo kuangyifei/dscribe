@@ -11,23 +11,24 @@
 
 var Parsing = {};
 (function () {
-    var wrapTrace = function(fn) {
-    	if (!Parsing.Operators.Trace) return fn;
-    	return function(s) {
-    		for (var key in this) {
-    			if (this[key] == arguments.callee) {
-    				console.group(key + ":", s);
-    				var r = fn.call(this, s);
-   					console.groupEnd();
-   					return r;
-    			}
-    		}
-    		return fn.call(this, s);
-    	};
-    };
-    
-    var $P = Parsing; 
-    var o = ($P.Operators = {
+
+	Parsing.eval = function(fn, s) {
+		var stack = [[fn, s]];
+		var lastResult = null;
+		while (stack.length) {
+			var topCall = stack.pop();
+			var r = topCall[0].call(null, topCall[1] === null ? lastResult : topCall[1]);
+			if (r === null || r.length === 2) {
+				lastResult = r;
+			} else {
+				stack.push([r[2], null]);
+				stack.push([r[0], r[1]]);
+			}
+		}
+		return lastResult;
+	};
+	    
+    Parsing.Operators = {
         //
         // Tokenizers
         //
@@ -103,130 +104,125 @@ var Parsing = {};
         // Atomic Operators
         // 
 
-        many: function (p) {
-            return wrapTrace(function (s) {
-                var rx = [], r = null; 
-                while (s.length) { 
-                    r = p.call(this, s); 
-                    if (r == null) return [ rx, s ]; 
-                    rx.push(r[0]); 
-                    s = r[1];
+        many: function(p) {
+            return function(s) {
+                var rx = [];
+            	if (!s.length) return [rx, s];
+                function cont(r) {
+                	if (!r) return [rx, s];
+                	rx.push(r[0]);
+                	s = r[1];
+                	if (!s.length) return [rx, s];
+                	return [p, s, cont];
                 }
-                return [ rx, s ];
-            });
+                return [p, s, cont];
+            };
         },
 
-        // generator operators -- see below
-        optional: function (p) {
-            return wrapTrace(function (s) {
-                var r = p.call(this, s); 
-                if (r == null) return [ null, s ]; 
-                return [ r[0], r[1] ];
-            });
+        optional: function(p) {
+            return function(s) {
+            	return [p, s, function(r) {
+            		return r || [null, s];
+            	}];
+            };
         },
-        ignore: function (p) {
-            return p ? 
-            wrapTrace(function (s) { 
-                var r = p.call(this, s);
-                if (r == null) return null;
-                return [null, r[1]]; 
-            }) : null;
-        },
-        cache: function (rule) { 
-            var cache = {}; 
-            return wrapTrace(function (s) {
-                return cache[s] = (cache[s] || rule.call(this, s)); 
-            });
+        
+        ignore: function(p) {
+            return function(s) { 
+                return [p, s, function(r) {
+                	if (!r) return null;
+                	return [null, r[1]];
+                }];
+            };
         },
     	  
-        // vector operators -- see below
-        any: function () {
+        any: function() {
             var px = arguments;
-            return wrapTrace(function (s) { 
-                var r = null;
-                for (var i = 0; i < px.length; i++) { 
-                    if (px[i] === null) continue; 
-                    r = (px[i].call(this, s)); 
-                    if (r) return r; 
-                } 
-                return null;
-            });
+            return function(s) {
+            	if (!px.length) return null;
+            	var i = 0;
+            	function cont(r) {
+            		return r ? r : (++i < px.length ? [px[i], s, cont] : null);
+            	}
+            	return [px[0], s, cont];
+            };
         },
-        each: function () { 
+        
+        each: function() { 
             var px = arguments;
-            return wrapTrace(function (s) { 
-                var rx = [], r = null;
-                for (var i = 0; i < px.length ; i++) { 
-                    if (px[i] === null) continue; 
-                    r = (px[i].call(this, s)); 
-                    if (r == null) return null;
-                    rx.push(r[0]); 
-                    s = r[1];
-                }
-                return [ rx, s]; 
-            });
+            return function(s) {
+                var rx = [], i = 0;
+            	if (!px.length) return [rx, s];
+            	function cont(r) {
+            		if (!r) return null;
+            		rx.push(r[0]);
+            		s = r[1];
+            		return ++i < px.length ? [px[i], s, cont] : [rx, s];
+            	}
+            	return [px[0], s, cont];
+            };
         },
 
 	    //
 	    // Composite Operators
 	    //
     		
-        between: function (d1, p, d2) { 
+        between: function(d1, p, d2) { 
             d2 = d2 || d1; 
-            var xfn = o.each(o.ignore(d1), p, o.ignore(d2));
-            return wrapTrace(function (s) { 
-                var rx = xfn.call(this, s);
-                if (rx == null) return null;
-                return [ rx[0][1], rx[1] ]; 
-            });
+            var xfn = Parsing.Operators.each(Parsing.Operators.ignore(d1), p, Parsing.Operators.ignore(d2));
+            return function(s) {
+            	return [xfn, s, function(r) {
+            		return r ? [r[0][1], r[1]] : null;
+            	}];
+            };
         },
-        list: function (p, d, c) {
-            d = d || o.token(' ');  
-            c = c || null;
-            return wrapTrace(function(s) {
-            	var r = [];
+        
+        list: function(p, d) {
+            d = d || Parsing.Operators.token(' ');  
+            return function(s) {
+            	var rx = [];
             	var tail;
-            	var rx = p.call(this, s);
-            	if (rx == null) return null;
-            	while(true) {
-            		r.push(rx[0]);
-            		tail = rx[1];
-            		rx = d.call(this, tail);
-            		if (rx == null) break;
-            		rx = p.call(this, rx[1]);
-            		if (rx == null) break;
+            	function cont1(r) {
+            		return r ? [p, r[1], cont2] : [rx, tail];
             	}
-            	if (c) {
-            		rx = c.call(this, tail);
-            		if (rx == null) return null;
-            		tail = rx[1];
+            	function cont2(r) {
+            		if (!r) return [rx, tail];
+            		rx.push(r[0]);
+            		tail = r[1];
+            		return [d, tail, cont1];
             	}
-            	return [r, tail];
-            });
+            	return [p, s, function(r) {
+            		if (!r) return null;
+            		return cont2(r);
+            	}];
+            };
         },
-        forward: function (gr, fname) {
-            return wrapTrace(function (s) { 
-                return gr[fname].call(this, s); 
-            });
+        
+        forward: function(gr, fname) {
+            return function(s) {
+                return gr[fname].call(this, s);
+            };
         },
 
         //
         // Translation Operators
         //
-        replace: function (rule, repl) {
-            return wrapTrace(function (s) { 
-                var r = rule.call(this, s);
-                if (r == null) return null;
-                return [repl, r[1]]; 
-            });
+        
+        replace: function(rule, repl) {
+            return function(s) {
+            	return [rule, s, function(r) {
+            		return r ? [repl, r[1]] : null;
+            	}];
+            };
         },
-        process: function (rule, fn) {
-            return wrapTrace(function (s) {  
-                var r = rule.call(this, s);
-                if (r == null) return null;
-                return [fn.call(this, r[0]), r[1]]; 
-            });
+        
+        process: function(rule, fn) {
+            return function(s) {
+            	return [rule, s, function(r) {
+            		return r ? [fn.call(this, r[0]), r[1]] : null;
+            	}];
+            };
         }
-    });
+    };
     
 }());

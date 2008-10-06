@@ -1,6 +1,4 @@
-// Parsing.Operators.Trace = true;
-
-with(Parsing.Operators) {
+function() { with(Parsing.Operators) {
 	var g = XPath.Grammar;
 	var s = XPath.Semantics;
 	
@@ -143,4 +141,4 @@ with(Parsing.Operators) {
 				return (fromRoot || steps.length > 1) ? new s.Path(fromRoot, steps) : steps[0];
 			}),
 			replace(g.slash, new s.Path(true, [])));
-}
+}} ();
