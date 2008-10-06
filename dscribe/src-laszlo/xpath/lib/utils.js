@@ -9,6 +9,10 @@ Array.prototype.atomized = function() {return this.map(function(item) {return it
 Number.prototype.atomized = function() {return this;};
 String.prototype.atomized = function() {return this.toString();};
 
+Array.prototype.serialized = function() {
+	return this.map(function(item) {return item.serialized()}).join("");
+};
+
 Array.prototype.effectiveBooleanValue = function() {
 	switch(this.length) {
 		case 0:
@@ -38,6 +42,22 @@ lz.node.prototype.numberValue = function() {};
 
 Number.prototype.isInteger = function() {
 	return this === parseInt(this);
+};
+
+s.serializeToXML = function(element) {
+	if (element.xnode != "element") {
+		console.error("trying to serializeToXML a non-element: " + element);
+		return;
+	}
+	var name = element.xname();
+	var attributes = element.xattributes(), children = element.xchildren();
+	if (!text && attributes.length == 0 && children.length == 0) return "<" + name + "/>";
+	var attrStrings = [], childrenStrings = [];
+	for (var i = 0; i < attributes.length; i++) {
+		attrStrings.push(attributes[i].key + '="' + attributes[i].atomized() + '"'); // TODO: escape value
+	}
+	return "<" + name + (attrStrings.length == 0 ? "" : " ") + attrStrings.join(" ") + ">"
+			+ children.serialized() + "</" + name + ">";  // TODO: escape text
 };
 
 s.equatable = function(v) {
