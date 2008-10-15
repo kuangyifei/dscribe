@@ -1,0 +1,82 @@
+<library>
+
+<include href="lzosutils/lib"/>
+<include href="baseutils/lib"/>
+
+<stylesheet>
+
+Viewer {
+	barcolor: #d0d0d5;
+	barwidth: 200;
+	margin: 8;
+	titlebgcolor: #eee;
+/* Meant for uml_class */
+	padding: 2;
+	color: #888;
+/* Meant for uml_diagram */
+	idletextcolor: #444;
+	hovertextcolor: #000;
+}
+
+</stylesheet>
+
+<class name = 'XmlContainer' width = '${parent.width}' height = '${parent.height}'>
+	<attribute name = 'idTable' value = '{}' type = 'expression'/>
+	<method name = 'trackXmlId' args = 'node, value'>
+		this.idTable[value] = node;
+	</method>
+	<method name = 'getByXmlId' args = 'value'>
+		var node = this.idTable[value];
+		if (!node || node.xml_id != value) return;
+		return node;
+	</method>
+	<method name = 'notifyNodeChanged' args = 'nodeName'>
+	</method>
+</class>
+
+
+<class name = 'Viewer' clip = 'true'>
+	<attribute name = 'defaultplacement' value = 'custom_method' type = 'string'/>
+	<attribute name = 'padding' value = '$style{"margin"}' type = 'number'/>
+	<attribute name = 'diagram' value = '${main.contents.subviews[0]}' type = 'expression'/>
+	
+	<view name = 'main'
+			x = '${parent.sidebar.x + parent.sidebar.width + 2}'
+			width = '${parent.width - x}'
+			height = '${parent.height}'>
+		<rect name = 'border'
+			fgcolor = '$style{"titlebgcolor"}'
+			width = '${parent.width}' height = '${parent.height}'/>
+		<view name = 'titlebar' width = '${parent.width}'>
+			<attribute name = 'reservedWidth' value = '${editTab.x + editTab.width + 8}' type = 'number'/>
+			<rect
+				width = '${parent.width}' height = '${parent.titleText.height + 6}'
+				fillColor = '$style{"titlebgcolor"}' strokeColor = '$style{"titlebgcolor"}'/>
+			<EditTab name = 'editTab' visible = 'false' fillColor = '$style{"barcolor"}' x = '-2'/>
+			<text name = 'titleText' text = '${"&lt;p align=&apos;center&apos;&gt;" + classroot.diagram.title + "&lt;/p&gt;"}'
+				x = '${parent.reservedWidth}' y = '2'
+				width = '${parent.width - 2*parent.reservedWidth}'
+				multiline = 'true'
+				fontsize = '16'/>
+		</view>
+		<XmlContainer name = 'contents' clip = 'true'
+				x = '2' y = '${parent.titlebar.y + parent.titlebar.height + 2}'
+				width = '${parent.width - 4}' height = '${parent.height - 4}'/>
+	</view>
+	
+	<method name = 'determinePlacement' args = 'child, placement, args'>
+		if (!child) return this;
+		if (child.constructor.tagname.startsWith('uml_')
+				|| child.constructor.tagname.startsWith('mixt_')
+				|| child.constructor.tagname.startsWith('mod_')) {
+			return this.main.contents;
+		} else {
+			return this;
+		}
+	</method>
+	
+</class>
+
+
+
+</library>

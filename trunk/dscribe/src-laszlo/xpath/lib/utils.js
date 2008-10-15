@@ -5,6 +5,9 @@ var s = XPath.Semantics;
 Number.prototype.eval = function() {return [this];};
 String.prototype.eval = function() {return [this];}
 
+Number.prototype.analyze = function() {};
+String.prototype.analyze = function() {};
+
 Array.prototype.atomized = function() {return this.map(function(item) {return item.atomized();});};
 Number.prototype.atomized = function() {return this;};
 String.prototype.atomized = function() {return this.toString();};

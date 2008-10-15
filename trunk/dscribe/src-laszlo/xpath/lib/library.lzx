@@ -1,6 +1,7 @@
 <library>
 
 <include href="../../lzosutils/lib"/>
+<include href="../../baseutils/lib"/>
 
 <script><![CDATA[
 var XPath = {Grammar: {}, Semantics: {}, Functions: {}};
@@ -8,7 +9,7 @@ var XPath = {Grammar: {}, Semantics: {}, Functions: {}};
 XPath.Environment = function(roots) {
 	if (!roots) roots = [canvas];
 	this.roots = roots;
-	this.docs = roots.map(function(root) {return new s.DocumentNode(root);});
+	this.docs = roots.map(function(root) {return new XPath.Semantics.DocumentNode(root);});
 	this.vars = {};
 	this.functions = {};
 };
@@ -43,13 +44,20 @@ XPath.parse = function(s) {
 	return r[0];
 };
 
+XPath.analyze = function(xpath, env) {
+	var expr = (typeof xpath == 'string' || xpath instanceof String) ? XPath.parse(xpath) : xpath;
+	var analysis = {bounded: true, referencedVars: [], referencedNodeNames: [], env: env};
+	xpath.analyze(analysis);
+	return analysis;
+};
+
 lz.node.prototype.query = function(xpath, env) {
 	var t1 = new Date().getTime();
 	if (!env) env = new XPath.Environment();
 	env.setup();
 	var t2 = new Date().getTime();
 	var result;
-	var expr = XPath.parse(xpath);
+	var expr = (typeof xpath == 'string' || xpath instanceof String) ? XPath.parse(xpath) : xpath;
 	var t3 = new Date().getTime();
 	if (expr) {
 		var context = {item: this, position: 1, size: 1, env: env};

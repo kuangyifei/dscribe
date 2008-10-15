@@ -8,13 +8,13 @@
 	<Editor x = '20' y = '20' width = '600' height = '350' editMode = 'true'>
 	
 		<uml_diagram title = 'Sample Diagram' xml_id='d1'>
-			<uml_class x='20' y='20' width='100'>
-				<uml_blockname>VeryVerylong name with more stuff</uml_blockname>
-				<uml_compartment kind='attributes'>
-					<uml_attribute><uml_var><uml_name>foo</uml_name><uml_type>int</uml_type></uml_var></uml_attribute>
+			<uml_class x='20' y='20' width='100' xml_id='c1'>
+				<uml_blockname xml_id='n1'>VeryVerylong name with more stuff</uml_blockname>
+				<uml_compartment kind='attributes' xml_id='ca1'>
+					<uml_attribute xml_id='a1'><uml_var><uml_name>foo</uml_name><uml_type>int</uml_type></uml_var></uml_attribute>
 				</uml_compartment>
-				<uml_compartment kind='operations'>
-					<uml_operation>
+				<uml_compartment kind='operations' xml_id='co1'>
+					<uml_operation xml_id='o1'>
 						<uml_name>bar</uml_name>
 						<uml_args>
 							<uml_var><uml_name>x</uml_name><uml_type>string</uml_type></uml_var>
@@ -34,6 +34,7 @@
 		</mixt_rules>
 		
 		<mod_modstore>
+			<mod_mods rule='r01' xml_id='_r01.'/>
 		</mod_modstore>
 	
 	</Editor>

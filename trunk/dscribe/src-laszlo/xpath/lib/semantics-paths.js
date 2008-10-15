@@ -48,6 +48,9 @@ s.Path.prototype.eval = function(context) {
 	}
 	return nodes;
 };
+s.Path.prototype.analyze = function(analysis) {
+	this.steps.forEach(function(step) {step.analyze(analysis);});
+};
 
 s.applyPredicates = function(items, predicates, reverse, env) {
 	if (!predicates) return items;
@@ -64,6 +67,10 @@ s.applyPredicates = function(items, predicates, reverse, env) {
 		});
 	});
 	return items;
+};
+
+s.analyzePredicates = function(predicates, analysis) {
+	if (predicates) predicates.forEach(function(predicate) {predicate.analyze(analysis);});
 };
 
 s.AxisStep = function(axis, nodeName) {
@@ -105,8 +112,14 @@ s.AxisStep.prototype.descendant_by_parent = function(node, accumulator) {
 	children.forEach(function(child) {this.descendant_by_parent(child, accumulator);}, this);
 	return accumulator;
 };
-s.AxisStep.prototype.following = function(node) {};  // TODO: implement
-s.AxisStep.prototype.following_sibling = function(node) {};  // TODO: implement
+s.AxisStep.prototype.following = function(node) {
+	// TODO: implement
+	console.error("following:: not yet implemented");
+};
+s.AxisStep.prototype.following_sibling = function(node) {
+	// TODO: implement
+	console.error("following-sibling:: not yet implemented");
+};
 s.AxisStep.prototype.parent = function(node) {
 	var r = node.xparent();
 	return r ? this.self(r) : [];
@@ -121,9 +134,15 @@ s.AxisStep.prototype.ancestor_or_self = function(node) {
 	return this.self(node).append(this.ancestor(node));
 };
 s.AxisStep.prototype.ancestor_or_self.reverse = true;
-s.AxisStep.prototype.preceding = function(node, name) {};  // TODO: implement
+s.AxisStep.prototype.preceding = function(node, name) {
+	// TODO: implement
+	console.error("preceding:: not yet implemented");
+};
 s.AxisStep.prototype.preceding.reverse = true;
-s.AxisStep.prototype.preceding_sibling = function(node, name) {};  // TODO: implement
+s.AxisStep.prototype.preceding_sibling = function(node, name) {
+	// TODO: implement
+	console.error("preceding-sibling:: not yet implemented");
+};
 s.AxisStep.prototype.preceding_sibling.reverse = true;
 s.AxisStep.prototype.toString = function() {return "AxisStep(" + this.axis + "::" + this.nodeName + " ["+ this.predicates + "])";};
 s.AxisStep.prototype.eval = function(context) {
@@ -143,11 +162,24 @@ s.AxisStep.prototype.eval = function(context) {
 	}
 	return result;
 };
+s.AxisStep.prototype.analyze = function(analysis) {
+	if (this.wildcard) {
+		analysis.bounded = false;
+		return;
+	}
+	if (!analysis.referencedNodeNames.find(this.nodeName.flat)) {
+		analysis.referencedNodeNames.push(this.nodeName.flat);
+	}
+	s.analyzePredicates(this.predicates, analysis);
+};
 
 s.Filter = function(base) {this.base = base; this.predicates = null;}
 s.Filter.prototype.toString = function() {return "Filter(" + this.base + " [" + this.predicates + "])";};
 s.Filter.prototype.eval = function(context) {
 	return s.applyPredicates(this.base.eval(context), this.predicates, false, context.env);
 };
-
+s.Filter.prototype.analyze = function(analysis) {
+	this.base.analyze(analysis);
+	s.analyzePredicates(this.predicates, analysis);
+};
 }();

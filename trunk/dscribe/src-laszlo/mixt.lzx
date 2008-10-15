@@ -6,61 +6,106 @@
 <class name = 'block' extends = 'node'>
 	<attribute name = 'text' type = 'text'/>
 	<attribute name = 'query' type = 'expression'/>
+	<attribute name = 'analysis' type = 'expression'/>
+	<attribute name = 'mayHaveChanged' value = 'true' type = 'boolean'/>
 	<handler name = 'oninit'><![CDATA[
 		setAttribute('text', this.text.replace('&apos;', "'", 'g').replace('&quot;', '"', 'g'));
-		console.log(this.text);
 		this.setAttribute('query', XPath.parse(this.text));
-		if (this.query) this.setAttribute('text', null);
+		if (this.query) {
+			this.setAttribute('text', null);
+			this.setAttribute('analysis', XPath.analyze(this.query));
+		}
 		// TODO: set up dependency on query and variables
 	]]></handler>
+	<method name = 'runQuery' args = 'env'>
+		return canvas.query(this.query, env);
+	</method>
+	<method name = 'bind' args = 'mod, env'></method>
+	<method name ='unbind' args = 'env'></method>
 </class>
 
 <class name = 'mixt_for' extends = 'block'>
 	<attribute name = 'each' type = 'string' required = 'true'/>
-	<method name = 'bind' args = 'node, mod'>
-		if (this.each == "target") {
-			mod.lastTarget = node;
-		} else if (this.each.startsWith("$")) {
-			mod.vars[this.each] = node;
-		} else {
-			console.error("'for' block unable to bind '" + this.each + "'");
+	<method name = 'recompute' args = 'baseMod, env'>
+		var newRefs = {};
+		this.runQuery(env).forEach(function(node) {
+			if (node.xml_id) {
+				newRefs[node.xml_id] = node;
+			} else {
+				console.error('node selected by for block has no xml_id: ' + node);
+			}
+		});
+		if (baseMod.subnodes) {
+			var oldMods = baseMod.subnodes.slice();
+			oldMods.forEach(function(oldMod) {
+				var oldRefId = oldMod.references[0].xml_id;
+				if (newRefs[oldRefId]) {
+					delete newRefs[oldRefId];
+				} else {
+					oldMod.destroy();
+				}
+			});
 		}
-		return mod;
+		for (var key in newRefs) {
+			new lz.mod_mod(baseMod, {references: [newRefs[key]], key: key});
+		}
+	</method>
+	<method name = 'bind' args = 'mod, env'>
+		var ref = mod.references[0];
+		if (this.each == "target") {
+			env.nodeTargets.push(ref);
+			env.insertTargets.push(ref);
+		} else if (this.each.startsWith("$")) {
+			var varName = this.each.slice(1);
+			if (varName in env.vars) console.error(this + " duplicates binding '" + this.each + "'");
+			env.vars[varName] = ref;
+		} else {
+			console.error(this + " unable to bind '" + this.each + "'");
+		}
+	</method>
+	<method name = 'unbind' args = 'env'>
+		if (this.each == "target") {
+			env.nodeTargets.pop();
+			env.insertTargets.pop();
+		} else if (this.each.startsWith("$")) {
+			delete env.vars[this.each.slice(1)];
+		}
 	</method>
 </class>
 
 <class name = 'mixt_insert' extends = 'block'>
+	<method name = 'recompute' args = 'baseMod, env'><![CDATA[
+		var elements = this.runQuery(env);
+		var checksum = b64_md5(elements.serialized());
+		if (baseMod.subnodes && baseMod.subnodes.length > 0) {
+			var oldMod = baseMod.subnodes[0];
+			if (oldMod.checksum && checksum == oldMod.checksum) return;
+			oldMod.destroy();
+		}
+		var insertedElements = env.insertTargets.last().insertCopy(elements);
+		var newMod = new lz.mod_mod(baseMod, {affected: insertedElements, checksum: checksum});
+		var serial = insertedElements.length > 1 ? 1 : -1;
+		insertedElements.forEach(function(element) {
+			element.setXmlAttribute(
+					'xml_id',
+					newMod.findAncestorProperty('xml_id') + newMod.stage + (serial >= 0 ? '-' + serial : '') + '.');
+			serial++;
+			if (element.refresh) element.refresh();
+		});
+	]]></method>
 </class>
 
 <class name = 'mixt_rule' extends = 'node'>
 	<attribute name = 'xml_id' type = 'string' required = 'true'/>
 	<attribute name = 'description' type = 'string' required = 'false'/>
-	<method name = 'init'>
-		this.mods = {};
-	</method>
-	<method name = 'recompute' args = 'env'>
-		var computedMods = {};
-		computedMods[this.xmlid] = new Mod(this.xmlid);
-		this.subnodes.forEach(function(block) {
-			if (!block.compute) return;
-			derivedMods = {};
-			computedMods.forEach(function(mod) {
-				derivedMods.append(block.compute(mod, env));
-			});
-			computedMods = derivedMods;
-		});
-		for (var key in this.mods) if (!(key in computedMods)) this.mods[key].withdraw();
-		for (var key in computedMods) if (!(key in this.mods)) computedMods[key].apply();
-		this.mods = computedMods;
-	</method>
 </class>
 
 <class name = 'mixt_rules' extends = 'node'>
-	<method name = 'recompute' args = 'env'>
-		this.subnodes.forEach(function(rule) {
-			if (rule.recompute(env)) changesMade = true;
-		});
-	</method>
+	<attribute name = 'map' value = '{}' type = 'expression'/>
+	<handler name = 'oninit'>
+		this.subnodes.forEach(function(rule) {map[rule.xml_id] = rule;});
+	</handler>
+	<method name = 'trackXmlId' args = 'node, value'/>
 </class>
 
 <class name = 'mod_affected' extends = 'node'>
@@ -83,24 +128,97 @@
 </class>
 
 <class name = 'mod_mod' extends = 'node'>
-	<attribute name = 'xml_id' type = 'string' required = 'false'/>
-	<attribute name = 'stage' type = 'number' required = 'true'/>
+	<attribute name = 'xml_id' type = 'string'/>
+	<attribute name = 'stage' type = 'number'/>
+	<attribute name = 'rule' type = 'string'/>
+	<attribute name = 'key' type = 'string'/>
+	<attribute name = 'references' type = 'expression'/>
+	<attribute name = 'affected' type = 'expression'/>
+	<attribute name = 'checksum' type = 'string'/>
+	<attribute name = 'dependenciesMayHaveChanged' value = 'true' type = 'boolean'/>
+	<attribute name = 'descendantsMayHaveChanged' value = 'true' type = 'boolean'/>
+	
+	<handler name = 'oninit'><![CDATA[
+		if (!this.rule && parent.rule) this.setXmlAttribute('rule', parent.rule);
+		if (!this.stage) this.setXmlAttribute('stage', parent.stage+1);
+		if (!this.xml_id && this.key) this.setXmlAttribute('xml_id', this.findAncestorProperty('xml_id') + this.key + '.');
+	]]></handler>
+	
+	<handler name = 'ondestroy'>
+		if (this.affected) this.affected.forEach(function(node) {
+			node.destroy();
+		});
+	</handler>
+
+	<method name = 'traverse' args = 'fn'>
+		fn(this);
+		if (this.subnodes) this.subnodes.forEach(function(child) {child.traverse(fn);});
+	</method>
+	
+	<method name = 'recompute' args = 'env'><![CDATA[
+		if (this.stage >= 0) {
+			var thisBlock = this.rule.subnodes[this.stage];
+		}
+		var nextBlock = this.rule.subnodes[this.stage+1];
+		if (!nextBlock) return;
+		
+		if (thisBlock) thisBlock.bind(this, env);
+		if (this.dependenciesMayHaveChanged || nextBlock.mayHaveChanged) {
+			nextBlock.recompute(this, env);
+		}
+		if (this.subnodes && this.descendantsMayHaveChanged) {
+			this.subnodes.forEach(function(child) {child.recompute(env);});
+		}
+		if (thisBlock) thisBlock.unbind(env);
+	]]></method>
 </class>
 
-<class name = 'mod_mods' extends = 'node'>
-	<attribute name = 'xml_id' type = 'string' required = 'true'/>
-	<attribute name = 'rule' type = 'string' required = 'true'/>
+<class name = 'mod_mods' extends = 'mod_mod'>
+	<attribute name = 'stage' value = '-1' type = 'number'/>
 </class>
 
 <class name = 'mod_modstore' extends = 'node'>
+	<method name = 'connectRules' args = 'ruleMap'>
+		this.subnodes.forEach(function(rootmod) {
+			var rule = ruleMap[rootmod.rule];
+			rootmod.traverse(function(mod) {
+				mod.setAttribute('rule', rule);
+			});
+		});
+	</method>
+	<method name = 'recompute' args = 'env'>
+		this.subnodes.forEach(function(rootmod) {
+			rootmod.recompute(env);
+		});
+	</method>
+	<method name = 'trackXmlId' args = 'node, value'/>
 </class>
 
 <class name = 'MixtEngine' extends = 'node'>
-	<method name = 'recompute' args = 'env'>
+	<attribute name = 'xmlContainer' type = 'expression'/>
+	<attribute name = 'env' type = 'expression'/>
+	<attribute name = 'rules' type = 'expression'/>
+	<attribute name = 'modstore' type = 'expression'/>
+	<handler name = 'oninit'><![CDATA[
+		var self = this;
+		this.xmlContainer.subnodes.forEach(function(child) {
+			if (child.constructor.tagname == 'mixt_rules') self.rules = child;
+			if (child.constructor.tagname == 'mod_modstore') self.modstore = child;
+		});
+		if (!(this.rules && this.modstore)) {
+			console.error("missing required rules engine subnode: rules=" + this.rules + ", modstore=" + this.modstore);
+			return;
+		}
+		this.modstore.connectRules(this.rules.map);
+		this.env = new XPath.Environment(this.xmlContainer.subnodes);
+		this.env.nodeTargets = [];
+		this.env.insertTargets = [];
+	]]></handler>
+	<method name = 'recompute'>
 		var changesMade;
 		do {
 			changesMade = false;
-			this.subnodes[0].recompute(env);
+			modstore.recompute(this.env);
 		} while (changesMade);
 	</method>
 </class>

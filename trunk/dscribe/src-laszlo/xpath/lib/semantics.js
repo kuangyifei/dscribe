@@ -8,27 +8,39 @@ s.QName.prototype.toString = function() {return "QName(" + this.full + ")";};
 s.QName.prototype.atomized = function() {return this.flat;};
 s.QName.prototype.eval = function(context) {return [this.flat];};
 s.QName.prototype.isQualified = function() {return this.qualified;};
+s.QName.prototype.analyze = function(analysis) {};
 
 s.Var = function(qname) {this.varName = qname;};
 s.Var.prototype.toString = function() {return "Var($" + this.varName + ")";};
 s.Var.prototype.eval = function(context) {return context.env.vars[this.varName.full];};
+s.Var.prototype.analyze = function(analysis) {
+	if (!analysis.referencedVars.find(this.varName.full)) analysis.referencedVars.push(this.varName.full);
+};
 
 s.Sequence = function(a) {this.items = a;}
 s.Sequence.prototype.toString = function() {return "Sequence(" + this.items + ")";};
 s.Sequence.prototype.eval = function(context) {
 	return this.items.concatMap(function(item) {return item.eval(context);});
 };
+s.Sequence.prototype.analyze = function(analysis) {
+	this.items.forEach(function(item) {item.analyze(analysis);});
+};
 
 s.ContextItem = function() {};
 s.ContextItem.prototype.toString = function() {return "ContextItem()";};
 s.ContextItem.prototype.eval = function(context) {return [context.item];};
+s.ContextItem.prototype.analyze = function(analysis) {};
 
 s.FunctionCall = function(name, args) {this.name = name;  this.args = args;};
 s.FunctionCall.prototype.toString = function() {return "FunctionCall(" + this.name + " with (" + this.args + "))";};
+s.FunctionCall.prototype.findFunction = function(env) {
+	var fnEntry = env.functions[this.name.full];
+	if (!fnEntry) fnEntry = env.builtinFunctions[this.name.full];
+	return fnEntry;
+};
 s.FunctionCall.prototype.eval = function(context) {
 	var v = this.args.map(function(arg) {return arg.eval(context);});
-	var fnEntry = context.env.functions[this.name.full];
-	if (!fnEntry) fnEntry = context.env.builtinFunctions[this.name.full];
+	var fnEntry = this.findFunction(context.env);
 	if (!fnEntry) {
 		console.error("[XPST0017] unknown function " + this.name.full);
 		return;
@@ -42,6 +54,11 @@ s.FunctionCall.prototype.eval = function(context) {
 	}
 	v.unshift(context);
 	return fnEntry.fn.apply(null, v);
+};
+s.FunctionCall.prototype.analyze = function(analysis) {
+	var fnEntry = this.findFunction(analysis.env);
+	if (!(fnEntry && fnEntry.bounded)) analysis.bounded = false;
+	this.args.forEach(function(arg) {arg.analyze(analysis);});
 };
 
 s.evalConstructedName = function(context, nameExpr) {
@@ -103,6 +120,10 @@ s.ElementConstructor.prototype.eval = function(context) {
 	
 	return [result];
 };
+s.ElementConstructor.prototype.analyze = function(analysis) {
+	this.nameExpr.analyze(analysis);
+	if (this.contentsExpr) this.contentsExpr.analyze(analysis);
+};
 
 s.AttributeConstructor = function(nameExpr, contentsExpr) {this.nameExpr = nameExpr; this.contentsExpr = contentsExpr;};
 s.AttributeConstructor.prototype.toString = function() {return "AttributeConstructor(" + this.nameExpr + ", " + this.contentsExpr + ")";};
@@ -117,11 +138,18 @@ s.AttributeConstructor.prototype.eval = function(context) {
 	}
 	return [new s.ConstructedAttributeNode(name, contents)];
 };
+s.AttributeConstructor.prototype.analyze = function(analysis) {
+	this.nameExpr.analyze(analysis);
+	if (this.contentsExpr) this.contentsExpr.analyze(analysis);
+};
 
 s.TextConstructor = function(textExpr) {this.textExpr = textExpr;};
 s.TextConstructor.prototype.toString = function() {return "TextConstructor(" + this.textExpr + ")";};
 s.TextConstructor.prototype.eval = function(context) {
 	return [new s.ConstructedTextNode(this.textExpr.eval(context).atomized().join(" "))];
+};
+s.TextConstructor.prototype.analyze = function(analysis) {
+	this.textExpr.analyze(analysis);
 };
 
 s.If = function(condition, thenBranch, elseBranch) {this.condition = condition; this.thenBranch = thenBranch; this.elseBranch = elseBranch;};
@@ -133,17 +161,28 @@ s.If.prototype.eval = function(context) {
 		return this.elseBranch.eval(context);
 	}
 };
+s.If.prototype.analyze = function(analysis) {
+	this.condition.analyze(analysis);
+	this.thenBranch.analyze(analysis);
+	this.elseBranch.analyze(analysis);
+};
 
 s.Or = function(args) {this.args = args;}
 s.Or.prototype.toString = function() {return "Or(" + this.args + ")";};
 s.Or.prototype.eval = function(context) {
-	return args.some(function(arg) {return arg.eval(context).effectiveBooleanValue();});
+	return this.args.some(function(arg) {return arg.eval(context).effectiveBooleanValue();});
+};
+s.Or.prototype.analyze = function(analysis) {
+	this.args.forEach(function(arg) {arg.analyze(analysis);});
 };
 
 s.And = function(args) {this.args = args;}
 s.And.prototype.toString = function() {return "And(" + this.args + ")";};
 s.And.prototype.eval = function(context) {
-	return args.every(function(arg) {return arg.eval(context).effectiveBooleanValue();});
+	return this.args.every(function(arg) {return arg.eval(context).effectiveBooleanValue();});
+};
+s.And.prototype.analyze = function(analysis) {
+	this.args.forEach(function(arg) {arg.analyze(analysis);});
 };
 
 s.newComparison = function(a, op, b) {
@@ -176,6 +215,10 @@ s.ValueComparison.prototype.eval = function(context) {
 	}
 	return [this.opfn(va[0], vb[0])];
 };
+s.ValueComparison.prototype.analyze = function(analysis) {
+	this.a.analyze(analysis);
+	this.b.analyze(analysis);
+};
 
 s.GeneralComparison = function(a, op, b) {this.a = a; this.op = op; this.opfn = this.opTable[op]; this.b = b;}
 s.GeneralComparison.prototype.opTable = {
@@ -203,6 +246,10 @@ s.GeneralComparison.prototype.eval = function(context) {
 	}
 	return [false];
 };
+s.GeneralComparison.prototype.analyze = function(analysis) {
+	this.a.analyze(analysis);
+	this.b.analyze(analysis);
+};
 
 s.NodeComparison = function(a, op, b) {this.a = a; this.op = op; this.opfn = this.opTable[op]; this.b = b;}
 s.NodeComparison.prototype.opTable = {
@@ -226,6 +273,10 @@ s.NodeComparison.prototype.eval = function(context) {
 	}
 	return [this.opfn(va[0], vb[0], env)];
 };
+s.NodeComparison.prototype.analyze = function(analysis) {
+	this.a.analyze(analysis);
+	this.b.analyze(analysis);
+};
 
 s.Range = function(a, b) {this.a = a; this.b = b;}
 s.Range.prototype.toString = function() {return "Range(" + this.a + ", " + this.b + ")";};
@@ -241,6 +292,10 @@ s.Range.prototype.eval = function(context) {
 	var r = new Array(vb - va + 1);
 	for (var i = va; i <= vb; i++) r[i-va] = i;
 	return r;
+};
+s.Range.prototype.analyze = function(analysis) {
+	this.a.analyze(analysis);
+	this.b.analyze(analysis);
 };
 
 s.BinaryOp = function(a, op, b) {this.a = a; this.op = op; this.opfn = this.opTable[op]; this.b = b;}
@@ -262,6 +317,10 @@ s.BinaryOp.prototype.eval = function(context) {
 	}
 	return [this.opfn(va.numberValue(), vb.numberValue())];
 };
+s.BinaryOp.prototype.analyze = function(analysis) {
+	this.a.analyze(analysis);
+	this.b.analyze(analysis);
+};
 
 s.SequenceOp = function(a, op, b) {this.a = a; this.op = op; this.opfn = this.opTable[op]; this.b = b;}
 s.SequenceOp.prototype.opTable = {
@@ -275,6 +334,10 @@ s.SequenceOp.prototype.eval = function(context) {
 	var va = this.a.eval(context), vb = this.b.eval(context);
 	return this.opfn(va, vb, context.env);
 };
+s.SequenceOp.prototype.analyze = function(analysis) {
+	this.a.analyze(analysis);
+	this.b.analyze(analysis);
+};
 
 s.Negate = function(a) {this.arg = a;};
 s.Negate.prototype.toString = function() {return "Negate(" + this.arg + ")";};
@@ -283,6 +346,9 @@ s.Negate.prototype.eval = function(context) {
 	if (!v.length) return [];
 	if (v.length == 1) return [-v.numberValue()];
 	console.error("[XPTY0004] can't negate a sequence");
+};
+s.Negate.prototype.analyze = function(analysis) {
+	this.a.analyze(analysis);
 };
 
 }();
