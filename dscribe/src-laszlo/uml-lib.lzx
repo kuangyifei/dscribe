@@ -1,10 +1,9 @@
 <library>
 
 <include href="lzosutils/lib"/>
-<include href="common-views.lzx"/>
+<include href="baseutils/lib"/>
 <include href="diagram-editor.lzx"/>
 <include href="magic-sentence.lzx"/>
-<include href="mixt.lzx"/>
 
 <resource name = 'iconDelete' src = 'icons/delete_obj.gif'/>
 
@@ -12,7 +11,6 @@
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'title' type = 'string'/>
 	<attribute name = 'xml_id' type = 'string'/>
-	<attribute name = 'idTable' type = 'expression'/>
 	
 	<view name = 'contents' width = '${parent.width}' height = '${parent.height}'/>
 
@@ -20,15 +18,6 @@
 	<method name = 'gatherPossibleActions' args = 'box, targets'>
 		box.setTitle("Diagram");
 		box.addLink({icon: 'iconDelete', text: "Do something", action: function() {dump(this);}});
-	</method>
-	<method name = 'trackXmlId' args = 'node, value'>
-		if (!this.idTable) this.idTable = {};
-		this.idTable[value] = node;
-	</method>
-	<method name = 'getByXmlId' args = 'value'>
-		var node = this.idTable[value];
-		if (!node || node.xml_id != value) return;
-		return node;
 	</method>
 </class>
 
@@ -110,8 +99,9 @@
 <class name = 'uml_member'
 		width = '${immediateparent.width}' clip = 'true' opacity = '0.5'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
-	<attribute name = 'value' type = 'string'/>
 	<attribute name = 'xml_id' type = 'string'/>
+	<attribute name = 'varnames_visibility' value = 'show' type = 'string'/>
+	<attribute name = 'vartypes_visibility' value = 'show' type = 'string'/>
 	
 	<method name = 'findSetHeightContainer'><![CDATA[
 		return parent.findFormalAncestorSuchThat(function() {
@@ -133,22 +123,47 @@
 		if (container) container.animate("height", -height, 150, true, {motion: "linear"});
 	</method>
 	
+	<method name = 'refresh' args = 'unused'>
+		displayText.setAttribute('text', computeText());
+	</method>
+
+	<method name = 'renderVar' args = 'v'><![CDATA[
+		if (!(v instanceof lz.uml_var)) return 'expected a uml:var: ' + v;
+		if (!(v.subnodes && v.subnodes.length)) return '';
+		var vname = v.subnodes[0];
+		if (!(vname instanceof lz.uml_name)) return 'uml:var has first child other than uml:name: ' + vname;
+		var vtype = v.subnodes.length > 1 ? v.subnodes[1] : null;
+		if (vtype && !(vtype instanceof lz.uml_type)) return 'uml:var has second child other than uml:type: ' + vtype;
+		var s = '';
+		if (varnames_visibility == 'show') s += vname.text;
+		if (vtype && varnames_visibility == 'show' && vartypes_visibility == 'show') s += ' : ';
+		if (vtype && vartypes_visibility == 'show') s += vtype.text;
+		return s;
+	]]></method>
+	
 	<handler name = 'onmousedown'> callAncestorProperty("dragger", function() {this.apply()}); </handler>
 	<handler name = 'onmouseup'> callAncestorProperty("dragger", function() {this.remove()}); </handler>
 	<handler name = 'onclick'> findAncestor("select").select(this); </handler>
-	<handler name = 'onvalue'>
-		displayText.setText(value);
-		displayText.setAttribute("overflow", displayText.width > width);
-	</handler>
 	<handler name = 'onwidth'>
 		displayText.setAttribute("overflow", displayText.width > width);
 	</handler>
+	<handler name = 'oninit' method = 'refresh'/>
 
-	<rollovertext name = 'displayText' opacity = '${classroot.opacity}'/>
 	<node name = 'contents'/>
+	<rollovertext name = 'displayText' opacity = '${classroot.opacity}'>
+		<handler name = 'ontext'>
+			setAttribute("overflow", width > parent.width);
+		</handler>
+	</rollovertext>
 </class>
  
-<class name = 'uml_attribute' extends = 'uml_member' value = '${contents.subnodes[0].seg}'>
+<class name = 'uml_attribute' extends = 'uml_member'>
+	<method name = 'computeText'><![CDATA[
+		if (varnames_visibility == 'hide' && vartypes_visibility == 'hide') return '';
+		if (!(contents.subnodes && contents.subnodes.length)) return '';
+		return renderVar(contents.subnodes[0]);
+	]]></method>
+	
 	<method name = 'gatherPossibleActions' args = 'actionBox, targets'>
 		if (targets.length != 1) return;
 		var target = targets[0];
@@ -177,55 +192,39 @@
 	</method>
 </class>
 
-<class name = 'uml_operation' extends = 'uml_member'
-	value = '${contents.subnodes[0].seg + contents.subnodes[1].seg + (contents.subnodes[2].visible ? " : " : "") + contents.subnodes[2].seg}'/>
+<class name = 'uml_operation' extends = 'uml_member'>
+	<attribute name = 'args_visibility' value = 'show' type = 'string'/>
+	<attribute name = 'return_type_visibility' value = 'show' type = 'string'/>
 
-<class name = 'textseg' extends = 'node'>
-	<attribute name = 'text' value = '' type = 'text'/>
-	<attribute name = 'visible' value = 'true' type = 'boolean'/>
-	<attribute name = 'seg' value = '${visible ? text : ""}' type = 'string'/>
-</class>
-
-<class name = 'uml_var' extends = 'textseg'
-	text = '${subnodes[0].seg + (subnodes[0].visible &amp;&amp; subnodes[1].visible ? " : " : "") + subnodes[1].seg}'/>
-
-<class name = 'uml_name' extends = 'textseg'/>
-<class name = 'uml_type' extends = 'textseg'/>
-
-<class name = 'uml_args' extends = 'textseg'>
-	<attribute name = 'elide' value = 'false' type = 'boolean'/>
-	<attribute name = 'concatDelegate'/>
-	<handler name = 'onelide' method = 'concat'/>
-	<method name = 'init'>
-		super.init();
-		this.concatDelegate = new LzDelegate(this, "concat");
-		subnodes.forEach(function(node) {
-			concatDelegate.register(node, "onvisible");
-			concatDelegate.register(node, "onseg");
-		});
-		concat();
-	</method>
-	<method name="destroy">
-		concatDelegate.unregisterAll();
-		super.destroy();
-	</method>
-	<method name = 'concat' args = '_'>
-		var s = "(";
-		if (elide) {
-			if (subnodes) s += "...";
-		} else {
-			var first = true;
-			subnodes.forEach(function(node) {
-				if (node.visible) {
-					if (!first) s += ", ";
-					s += node.seg;
-					first = false;
-				}
-			});
+	<method name = 'computeText'><![CDATA[
+		if (!(contents.subnodes && contents.subnodes.length)) return '';
+		var oname = contents.subnodes[0];
+		if (!(oname instanceof lz.uml_name)) return 'expected uml:name: ' + oname;
+		var oargs = contents.subnodes.length >= 2 ? contents.subnodes[1] : null;
+		if (oargs && !(oargs instanceof lz.uml_args)) return 'expected uml:args: ' + oargs;
+		var ortype = contents.subnodes.length >= 3 ? contents.subnodes[2] : null;
+		if (ortype && (!ortype instanceof uml_type)) return 'expected uml:type: ' + ortype;
+		var s = oname.text + '(';
+		if (args_visibility == 'elide') {
+			s += '...';
+		} else if (oargs && args_visibility == 'show') {
+			s += oargs.subnodes.map(function(arg) {return renderVar(arg);}).join(', ');
 		}
-		s += ")";
-		setAttribute("text", s);
-	</method>
+		s += ')';
+		if (ortype && return_type_visibility == 'show') {
+			s += ' : ' + ortype.text;
+		}
+		return s;
+	]]></method>
 </class>
+
+<class name = 'textnode' extends = 'node'>
+	<attribute name = 'text' value = '' type = 'text'/>
+</class>
+
+<class name = 'uml_var' extends = 'textnode'/>
+<class name = 'uml_name' extends = 'textnode'/>
+<class name = 'uml_type' extends = 'textnode'/>
+<class name = 'uml_args' extends = 'textnode'/>
 
 </library>

@@ -4,28 +4,63 @@ var s = XPath.Semantics;
 
 lz.node.prototype.recordXmlId = function(newValue) {
 	if (!newValue) return;
-	var node = this;
-	while (node != null && node != node.immediateparent) {
-		if ("trackXmlId" in node) {
-			node.trackXmlId(this, newValue);
-			return;
-		}
-		node = node.immediateparent;
+	if (!this.callAncestor('trackXmlId', newValue)) {
+		console.error("internal xpath error: no xml:id tracker found for " + this);
 	}
-	console.error("internal xpath error: no xml:id tracker found for " + this);
 };
 
 function() {
 	var oldConstruct = lz.node.prototype.construct;
 	lz.node.prototype.construct = function(parent, args) {
 		oldConstruct.call(this, parent, args);
-		this.savedArgs = args;
 		if ("xml_id" in args) {
 			this.applyConstraintMethod("recordXmlId", [this, "xml_id"]);
 			this.recordXmlId(args.xmlid);
 		}
+		this.savedArgs = {};
+		for (key in args) {
+			this.savedArgs[key] = true;
+			if (key != 'text') this.callAncestor('notifyNodeChanged', '@' + key);
+		}
+		this.callAncestor('notifyNodeChanged', this.constructor.tagname);
+	};
+	var oldDestroy = lz.node.prototype.destroy;
+	lz.node.prototype.destroy = function() {
+		if (this.dependents) this.dependents.invoke('notifyElementChanged', this);
+		this.callAncestor('notifyNodeChanged', this.constructor.tagname);
+		oldDestroy();
 	};
 }();
+
+lz.node.prototype.setXmlAttribute = function(name, value) {
+	this.setAttribute(name, value);
+	this.savedArgs[name] = value;
+	if (name == "xml_id") {
+		this.applyConstraintMethod("recordXmlId", [this, "xml_id"]);
+		this.recordXmlId(value);
+	}
+	if (name == 'text') {
+		if (this.dependents) this.dependents.invoke('notifyElementChanged', this);
+	} else {
+		this.callAncestor('notifyNodeChanged', '@' + name);
+	}
+};
+
+lz.node.prototype.insertCopy = function(elements) {
+	var self = this;
+	return elements.map(function(element) {
+		var attrDict = {};
+		element.xattributes().forEach(function(attr) {
+			attrDict[attr.xname()] = attr.atomized();
+		});
+		var elementChildren = element.xchildren();
+		var textChildOnly = (elementChildren.length == 1 && elementChildren[0].xnode == 'text');
+		if (textChildOnly) attrDict['text'] = elementChildren[0].atomized();
+		var elementCopy = new lz[element.xname()](self, attrDict);
+		if (!textChildOnly) elementCopy.insertCopy(element.xchildren());
+		return elementCopy;
+	});
+};
 
 lz.node.prototype.xnode = "element";
 
@@ -84,7 +119,7 @@ s.ConstructedElementNode.prototype.xname = function() {return this.name;};
 s.ConstructedElementNode.prototype.xparent = function() {return null;};
 s.ConstructedElementNode.prototype.xchildren = function() {
 	if (this.children.length == 0) {
-		return this.text ? [new ConstructedTextNode(this.text)] : [];
+		return this.text ? [new s.ConstructedTextNode(this.text)] : [];
 	} else {
 		return this.children;
 	}
@@ -112,6 +147,7 @@ s.WrappedElementNode.prototype.xchildren = function() {return this.element.xchil
 s.WrappedElementNode.prototype.xattributes = function() {return this.element.xattributes();};
 s.WrappedElementNode.prototype.xattribute = function(name) {return this.element.xattribute(name);};
 s.WrappedElementNode.prototype.atomized = function() {return this.element.atomized();};
+s.WrappedElementNode.prototype.serialized = function() {return this.element.serialized();};
 s.WrappedElementNode.prototype.toString = function() {
 	return "wrappedElement(parentName = " + this.parent.xname() + "; " + this.element + ")";
 };
@@ -133,7 +169,7 @@ s.TextNode.prototype.serialized = function() {return this.node.text;};
 s.TextNode.prototype.toString = function() {return '"' + this.node.text + '"';};
 
 s.ConstructedTextNode = function(text) {this.text = text;}
-s.ConstructedTextNode.xnode = "text";
+s.ConstructedTextNode.prototype.xnode = "text";
 s.ConstructedTextNode.prototype.xname = function() {return null;};
 s.ConstructedTextNode.prototype.xparent = function() {return null;};
 s.ConstructedTextNode.prototype.xchildren = function() {return [];};

@@ -1,0 +1,5 @@
+<library>
+	<include href='../../lzosutils/lib'/>
+	<script src='utils-base.js'/>
+	<include href='common-views.lzx'/>
+</library>
