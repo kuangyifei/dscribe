@@ -19,8 +19,10 @@ declare function actionProperties($action) {
 
 to deconflict candidate actions
 	for each target: /a:triggers
-	for distinct $key: /a:candidates/a:*/@key
-	with some $c1: /a:candidates/a:*[@key = $key]
+	for all $candidates: /a:candidates
+	with some $c0: $candidates/a:*
+	with distinct $key: $c0/@key
+	with some $c1: $c0[@key = $key]
 	with some $minserial: max((0, $c1[@override]/@serial))
 	with some $c2: $c1[@serial >= $minserial]
 	with some $minspecificity: max((0, $c2/@specificity))

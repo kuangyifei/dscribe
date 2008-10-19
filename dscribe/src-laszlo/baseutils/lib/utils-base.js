@@ -64,5 +64,5 @@ lz.node.prototype.callAncestorProperty = function(propertyName, type, fn) {
 
 lz.node.prototype.callAncestor = function(methodName) {
 	var ancestor = this.findAncestor(methodName);
-	if (ancestor) return ancestor[methodName].call(ancestor, arguments.slice(1));
+	if (ancestor) return ancestor[methodName].apply(ancestor, arguments.slice(1));
 }

@@ -1,27 +1,45 @@
 <library>
 <include href="lzosutils/lib"/>
+<include href="baseutils/lib"/>
 <include href="xpath/lib"/>
 <script src="md5.js"/>
 
 <class name = 'block' extends = 'node'>
 	<attribute name = 'text' type = 'text'/>
 	<attribute name = 'query' type = 'expression'/>
-	<attribute name = 'analysis' type = 'expression'/>
-	<attribute name = 'mayHaveChanged' value = 'true' type = 'boolean'/>
+	<attribute name = 'delegate' value = '$once{new LzDelegate(this, "handleChange")}' type = 'expression'/>
+	<attribute name = 'mayHaveChanged' value = 'false' type = 'boolean'/>
+	<attribute name = 'followingMayHaveChanged' value = 'false' type = 'boolean'/>
+	<attribute name = 'mayBeChanging' value = 'false' type = 'boolean'/>
+	
 	<handler name = 'oninit'><![CDATA[
 		setAttribute('text', this.text.replace('&apos;', "'", 'g').replace('&quot;', '"', 'g'));
 		this.setAttribute('query', XPath.parse(this.text));
 		if (this.query) {
 			this.setAttribute('text', null);
-			this.setAttribute('analysis', XPath.analyze(this.query));
+			var analysis = XPath.analyze(this.query);
+			analysis.referencedNodeNames.forEach(function(name) {
+				this.callAncestor('listenNodeChanged', delegate, name);}, this);
 		}
-		// TODO: set up dependency on query and variables
 	]]></handler>
+	
+	<method name = 'handleChange' args = 'unused'>
+		setAttribute('mayBeChanging', true);
+	</method>
+	
+	<method name = 'prepareForCycle' args = 'followingMayHaveChanged'>
+		setAttribute('mayHaveChanged', this.mayBeChanging);
+		setAttribute('followingMayHaveChanged', followingMayHaveChanged);
+		setAttribute('mayBeChanging', false);
+	</method>
+	
 	<method name = 'runQuery' args = 'env'>
 		return canvas.query(this.query, env);
 	</method>
-	<method name = 'bind' args = 'mod, env'></method>
-	<method name ='unbind' args = 'env'></method>
+	
+	<method name = 'bind' args = 'mod, env'>
+		env.pushVar();
+	</method>
 </class>
 
 <class name = 'mixt_for' extends = 'block'>
@@ -51,25 +69,7 @@
 		}
 	</method>
 	<method name = 'bind' args = 'mod, env'>
-		var ref = mod.references[0];
-		if (this.each == "target") {
-			env.nodeTargets.push(ref);
-			env.insertTargets.push(ref);
-		} else if (this.each.startsWith("$")) {
-			var varName = this.each.slice(1);
-			if (varName in env.vars) console.error(this + " duplicates binding '" + this.each + "'");
-			env.vars[varName] = ref;
-		} else {
-			console.error(this + " unable to bind '" + this.each + "'");
-		}
-	</method>
-	<method name = 'unbind' args = 'env'>
-		if (this.each == "target") {
-			env.nodeTargets.pop();
-			env.insertTargets.pop();
-		} else if (this.each.startsWith("$")) {
-			delete env.vars[this.each.slice(1)];
-		}
+		env.pushVar(this.each, mod.references);
 	</method>
 </class>
 
@@ -82,8 +82,17 @@
 			if (oldMod.checksum && checksum == oldMod.checksum) return;
 			oldMod.destroy();
 		}
-		var insertedElements = env.insertTargets.last().insertCopy(elements);
+		if (!env.vars.target) {
+			console.error(this + ' has no target');
+			return;
+		}
+		if (env.vars.target.length > 1) {
+			console.error(this + ' has multiple targets: ' + env.vars.target);
+			return;
+		}
+		var insertedElements = env.vars.target[0].insertCopy(elements);
 		var newMod = new lz.mod_mod(baseMod, {affected: insertedElements, checksum: checksum});
+		elements.forEach(function(element) {element.listenForChanges(baseMod.delegate);});
 		var serial = insertedElements.length > 1 ? 1 : -1;
 		insertedElements.forEach(function(element) {
 			element.setXmlAttribute(
@@ -93,11 +102,28 @@
 			if (element.refresh) element.refresh();
 		});
 	]]></method>
+	<method name = 'bind' args = 'mod, env'>
+		env.pushVar('nodeTarget', mod.affected);
+	</method>
 </class>
 
 <class name = 'mixt_rule' extends = 'node'>
 	<attribute name = 'xml_id' type = 'string' required = 'true'/>
 	<attribute name = 'description' type = 'string' required = 'false'/>
+
+	<method name = 'prepareForCycle'>
+		var changed = false;
+		this.forEachReversedBlock(function(block) {
+			block.prepareForCycle(changed);
+			changed |= block.mayHaveChanged;
+		});
+	</method>
+		
+	<method name = 'forEachReversedBlock' args = 'fn'>
+		var reversedBlocks = this.subnodes.slice();
+		reversedBlocks.reverse();
+		reversedBlocks.forEach(fn);
+	</method>
 </class>
 
 <class name = 'mixt_rules' extends = 'node'>
@@ -108,25 +134,6 @@
 	<method name = 'trackXmlId' args = 'node, value'/>
 </class>
 
-<class name = 'mod_affected' extends = 'node'>
-	<attribute name = 'refid' type = 'string' required = 'true'/>
-</class>
-
-<class name = 'mod_dependency' extends = 'node'>
-	<attribute name = 'doc' type = 'string' required = 'false'/>
-	<attribute name = 'kind' type = 'string' required = 'false'/>
-</class>
-
-<class name = 'mod_reference' extends = 'node'>
-	<attribute name = 'refid' type = 'string' required = 'true'/>
-	<attribute name = 'doc' type = 'string' required = 'false'/>
-</class>
-
-<class name = 'mod_order' extends = 'node'>
-	<attribute name = 'refid' type = 'string' required = 'true'/>
-	<attribute name = 'doc' type = 'string' required = 'false'/>
-</class>
-
 <class name = 'mod_mod' extends = 'node'>
 	<attribute name = 'xml_id' type = 'string'/>
 	<attribute name = 'stage' type = 'number'/>
@@ -135,13 +142,15 @@
 	<attribute name = 'references' type = 'expression'/>
 	<attribute name = 'affected' type = 'expression'/>
 	<attribute name = 'checksum' type = 'string'/>
-	<attribute name = 'dependenciesMayHaveChanged' value = 'true' type = 'boolean'/>
-	<attribute name = 'descendantsMayHaveChanged' value = 'true' type = 'boolean'/>
+	<attribute name = 'mayHaveChanged' value = 'true' type = 'boolean'/>
+	<attribute name = 'descendantsMayHaveChanged' value = 'false' type = 'boolean'/>
+	<attribute name = 'delegate' value = '$once{new LzDelegate(this, "handleChange")}' type = 'expression'/>
 	
 	<handler name = 'oninit'><![CDATA[
 		if (!this.rule && parent.rule) this.setXmlAttribute('rule', parent.rule);
 		if (!this.stage) this.setXmlAttribute('stage', parent.stage+1);
 		if (!this.xml_id && this.key) this.setXmlAttribute('xml_id', this.findAncestorProperty('xml_id') + this.key + '.');
+		this.parent.childChanged();
 	]]></handler>
 	
 	<handler name = 'ondestroy'>
@@ -149,6 +158,17 @@
 			node.destroy();
 		});
 	</handler>
+	
+	<method name = 'childChanged'>
+		if (!this.descendantsMayHaveChanged) {
+			this.setAttribute('descendantsMayHaveChanged', true);
+			this.parent.childChanged();
+		}
+	</method>
+	
+	<method name = 'handleChange' args = 'unused'>
+		this.setAttribute('mayHaveChanged', true);
+	</method>
 
 	<method name = 'traverse' args = 'fn'>
 		fn(this);
@@ -156,25 +176,31 @@
 	</method>
 	
 	<method name = 'recompute' args = 'env'><![CDATA[
-		if (this.stage >= 0) {
-			var thisBlock = this.rule.subnodes[this.stage];
-		}
-		var nextBlock = this.rule.subnodes[this.stage+1];
-		if (!nextBlock) return;
+	    if (this.rule.subnodes.length <= this.stage + 1) return;
+		var nextBlock = this.rule.subnodes[this.stage + 1];
 		
-		if (thisBlock) thisBlock.bind(this, env);
-		if (this.dependenciesMayHaveChanged || nextBlock.mayHaveChanged) {
+		if (!(nextBlock.mayHaveChanged || nextBlock.followingMayHaveChanged ||
+				this.mayHaveChanged || this.descendantsMayHaveChanged)) return;
+		
+		if (this.stage >= 0) this.rule.subnodes[this.stage].bind(this, env);
+		if (this.mayHaveChanged || nextBlock.mayHaveChanged) {
 			nextBlock.recompute(this, env);
+			this.setAttribute('mayHaveChanged', false);
 		}
-		if (this.subnodes && this.descendantsMayHaveChanged) {
+		if (this.subnodes && (this.descendantsMayHaveChanged || nextBlock.followingMayHaveChanged)) {
 			this.subnodes.forEach(function(child) {child.recompute(env);});
 		}
-		if (thisBlock) thisBlock.unbind(env);
+		this.setAttribute('descendantsMayHaveChanged', false);
+		if (this.stage >= 0) env.popVar();
 	]]></method>
 </class>
 
 <class name = 'mod_mods' extends = 'mod_mod'>
 	<attribute name = 'stage' value = '-1' type = 'number'/>
+	<method name = 'recompute' args = 'env'>
+		this.rule.prepareForCycle();
+		super.recompute(env);
+	</method>
 </class>
 
 <class name = 'mod_modstore' extends = 'node'>
@@ -191,7 +217,7 @@
 			rootmod.recompute(env);
 		});
 	</method>
-	<method name = 'trackXmlId' args = 'node, value'/>
+	<method name = 'childChanged'/>
 </class>
 
 <class name = 'MixtEngine' extends = 'node'>
@@ -199,6 +225,8 @@
 	<attribute name = 'env' type = 'expression'/>
 	<attribute name = 'rules' type = 'expression'/>
 	<attribute name = 'modstore' type = 'expression'/>
+	<attribute name = 'changesMade' value = 'false' type = 'boolean'/>
+
 	<handler name = 'oninit'><![CDATA[
 		var self = this;
 		this.xmlContainer.subnodes.forEach(function(child) {
@@ -211,15 +239,16 @@
 		}
 		this.modstore.connectRules(this.rules.map);
 		this.env = new XPath.Environment(this.xmlContainer.subnodes);
-		this.env.nodeTargets = [];
-		this.env.insertTargets = [];
+		this.env.varsStack = [];
 	]]></handler>
+	<handler reference = 'xmlContainer' name = 'onanynodechanged'>
+		this.setAttribute('changesMade', true);
+	</handler>
 	<method name = 'recompute'>
-		var changesMade;
 		do {
-			changesMade = false;
+			this.setAttribute('changesMade', false);
 			modstore.recompute(this.env);
-		} while (changesMade);
+		} while (this.changesMade);
 	</method>
 </class>
 

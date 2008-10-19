@@ -22,15 +22,28 @@ Viewer {
 
 <class name = 'XmlContainer' width = '${parent.width}' height = '${parent.height}'>
 	<attribute name = 'idTable' value = '{}' type = 'expression'/>
-	<method name = 'trackXmlId' args = 'node, value'>
-		this.idTable[value] = node;
-	</method>
+	<event name = 'onanynodechanged'/>
+	
+	<method name = 'trackXmlId' args = 'element, oldValue, newValue'><![CDATA[
+		if (oldValue && this.idTable[oldValue] == element) delete idTable[oldValue];
+		if (newValue) idTable[newValue] = element;
+	]]></method>
+		
 	<method name = 'getByXmlId' args = 'value'>
 		var node = this.idTable[value];
 		if (!node || node.xml_id != value) return;
 		return node;
 	</method>
-	<method name = 'notifyNodeChanged' args = 'nodeName'>
+	
+	<method name = 'fireNodeChanged' args = 'nodeName'>
+		var ev = this['onnodechanged_' + nodeName];
+		if (ev) ev.sendEvent(nodeName);
+		this.onanynodechanged.sendEvent(nodeName);
+	</method>
+	
+	<method name = 'listenNodeChanged' args = 'delegate, nodeName'>
+		if (this[nodeName]) new LzEvent(this, 'onnodechanged_' + nodeName);
+		delegate.register(this, 'onnodechanged_' + nodeName);
 	</method>
 </class>
 
