@@ -10,11 +10,11 @@ s.QName.prototype.eval = function(context) {return [this.flat];};
 s.QName.prototype.isQualified = function() {return this.qualified;};
 s.QName.prototype.analyze = function(analysis) {};
 
-s.Var = function(qname) {this.varName = qname;};
-s.Var.prototype.toString = function() {return "Var($" + this.varName + ")";};
-s.Var.prototype.eval = function(context) {return context.env.vars[this.varName.full];};
+s.Var = function(qname) {this.varName = "$" + qname.full;};
+s.Var.prototype.toString = function() {return "Var(" + this.varName + ")";};
+s.Var.prototype.eval = function(context) {return context.env.vars[this.varName];};
 s.Var.prototype.analyze = function(analysis) {
-	if (!analysis.referencedVars.find(this.varName.full)) analysis.referencedVars.push(this.varName.full);
+	if (!analysis.referencedVars.find(this.varName)) analysis.referencedVars.push(this.varName);
 };
 
 s.Sequence = function(a) {this.items = a;}

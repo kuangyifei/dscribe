@@ -2,47 +2,56 @@ function() {
 
 var s = XPath.Semantics;
 
-lz.node.prototype.recordXmlId = function(newValue) {
-	if (!newValue) return;
-	if (!this.callAncestor('trackXmlId', newValue)) {
-		console.error("internal xpath error: no xml:id tracker found for " + this);
+lz.node.prototype.fireElementChanged = function() {
+	var element = this;
+	while (element.onelementchanged) {
+		element.onelementchanged.sendEvent(this);
+		element = element.parent;
 	}
 };
 
+lz.node.prototype.listenForChanges = function(delegate) {
+	delegate.register(this, 'onelementchanged');
+};
+
 function() {
+	
 	var oldConstruct = lz.node.prototype.construct;
 	lz.node.prototype.construct = function(parent, args) {
 		oldConstruct.call(this, parent, args);
-		if ("xml_id" in args) {
-			this.applyConstraintMethod("recordXmlId", [this, "xml_id"]);
-			this.recordXmlId(args.xmlid);
-		}
 		this.savedArgs = {};
-		for (key in args) {
-			this.savedArgs[key] = true;
-			if (key != 'text') this.callAncestor('notifyNodeChanged', '@' + key);
+		for (key in args) this.savedArgs[key] = true;
+		this.container = this.findAncestor('fireNodeChanged');
+		if (this.container) {
+			new LzDeclaredEventClass(this, 'onelementchanged');
+			this.container.trackXmlId(this, null, this.xml_id);
+			for (var key in this.savedArgs) this.container.fireNodeChanged('@' + key);
+			this.container.fireNodeChanged(this.constructor.tagname);
 		}
-		this.callAncestor('notifyNodeChanged', this.constructor.tagname);
 	};
+	
 	var oldDestroy = lz.node.prototype.destroy;
 	lz.node.prototype.destroy = function() {
-		if (this.dependents) this.dependents.invoke('notifyElementChanged', this);
-		this.callAncestor('notifyNodeChanged', this.constructor.tagname);
+		if (this.container) {
+			this.fireElementChanged();
+			// Prevent subnodes from firing redundant element change events on ancestors.
+			delete this['onelementchanged'];
+			this.container.trackXmlId(this, this.xml_id, null);
+			for (var key in this.savedArgs) this.container.fireNodeChanged('@' + key);
+			this.container.fireNodeChanged(this.constructor.tagname);
+		}
 		oldDestroy();
 	};
 }();
 
 lz.node.prototype.setXmlAttribute = function(name, value) {
+	var oldXmlId = this.xml_id;
 	this.setAttribute(name, value);
-	this.savedArgs[name] = value;
-	if (name == "xml_id") {
-		this.applyConstraintMethod("recordXmlId", [this, "xml_id"]);
-		this.recordXmlId(value);
-	}
-	if (name == 'text') {
-		if (this.dependents) this.dependents.invoke('notifyElementChanged', this);
-	} else {
-		this.callAncestor('notifyNodeChanged', '@' + name);
+	this.savedArgs[name] = value != null;
+	if (this.container) {
+		this.fireElementChanged();
+		if (name == 'xml_id') this.container.trackXmlId(this, oldXmlId, value);
+		if (name != 'text') this.container.fireNodeChanged('@' + name);
 	}
 };
 
@@ -133,6 +142,10 @@ s.ConstructedElementNode.prototype.xattribute = function(name) {
 	}
 	return null;
 };
+s.ConstructedElementNode.prototype.listenForChanges = function(delegate) {
+	this.attributes.forEach(function(attr) {attr.listenForChanges(delegate);});
+	this.children.forEach(function(element) {element.listenForChanges(delegate);});
+};
 s.ConstructedElementNode.prototype.atomized = function() {return this.children.length == 0 ? this.text : "";};
 s.ConstructedElementNode.prototype.serialized = function() {return s.serializeToXML(this);};
 s.ConstructedElementNode.prototype.toString = function() {
@@ -146,6 +159,7 @@ s.WrappedElementNode.prototype.xparent = function() {return this.parent;};
 s.WrappedElementNode.prototype.xchildren = function() {return this.element.xchildren();};
 s.WrappedElementNode.prototype.xattributes = function() {return this.element.xattributes();};
 s.WrappedElementNode.prototype.xattribute = function(name) {return this.element.xattribute(name);};
+s.WrappedElementNode.prototype.listenForChanges = function(delegate) {return this.element.listenForChanges(delegate);};
 s.WrappedElementNode.prototype.atomized = function() {return this.element.atomized();};
 s.WrappedElementNode.prototype.serialized = function() {return this.element.serialized();};
 s.WrappedElementNode.prototype.toString = function() {
@@ -157,6 +171,7 @@ s.DocumentNode.prototype.xnode = "document";
 s.DocumentNode.prototype.xname = function() {return null;};
 s.DocumentNode.prototype.xparent = function() {return null;};
 s.DocumentNode.prototype.xchildren = function() {return [this.root];};
+s.DocumentNode.prototype.listenForChanges = function(delegate) {this.root.listenForChanges(delegate);};
 s.DocumentNode.prototype.toString = function() {return "document(" + this.root + ")";};
 
 s.TextNode = function(node) {this.node = node;};
@@ -164,6 +179,7 @@ s.TextNode.prototype.xnode = "text";
 s.TextNode.prototype.xname = function() {return null;};
 s.TextNode.prototype.xparent = function() {return this.node;};
 s.TextNode.prototype.xchildren = function() {return [];};
+s.TextNode.prototype.listenForChanges = function(delegate) {this.node.listenForChanges(delegate);};
 s.TextNode.prototype.atomized = function() {return this.node.text;};
 s.TextNode.prototype.serialized = function() {return this.node.text;};
 s.TextNode.prototype.toString = function() {return '"' + this.node.text + '"';};
@@ -173,6 +189,7 @@ s.ConstructedTextNode.prototype.xnode = "text";
 s.ConstructedTextNode.prototype.xname = function() {return null;};
 s.ConstructedTextNode.prototype.xparent = function() {return null;};
 s.ConstructedTextNode.prototype.xchildren = function() {return [];};
+s.ConstructedTextNode.prototype.listenForChanges = function(delegate) {};
 s.ConstructedTextNode.prototype.atomized = function() {return this.text;};
 s.ConstructedTextNode.prototype.serialized = function() {return this.text;};
 s.ConstructedTextNode.prototype.toString = function() {return '"' + this.text + '"';};
@@ -185,6 +202,7 @@ s.AttributeNode.prototype.xnode = "attribute";
 s.AttributeNode.prototype.xname = function() {return this.key;};
 s.AttributeNode.prototype.xparent = function() {return this.node;};
 s.AttributeNode.prototype.xchildren = function() {return [];};
+s.AttributeNode.prototype.listenForChanges = function(delegate) {this.node.listenForChanges(delegate);};
 s.AttributeNode.prototype.atomized = function() {return this.node[this.key];}
 s.AttributeNode.prototype.toString = function() {return "@" + this.key + "=" + this.node[this.key];};
 s.AttributeNode.cmp = function(a, b) {
@@ -197,6 +215,7 @@ s.ConstructedAttributeNode.prototype.xnode = "attribute";
 s.ConstructedAttributeNode.prototype.xname = function() {return this.key;};
 s.ConstructedAttributeNode.prototype.xparent = function() {return null;};
 s.ConstructedAttributeNode.prototype.xchildren = function() {return [];};
+s.ConstructedAttributeNode.prototype.listenForChanges = function(delegate) {};
 s.ConstructedAttributeNode.prototype.atomized = function() {return this.value;}
 s.ConstructedAttributeNode.prototype.toString = function() {return "@" + this.key + "=" + this.value;};
 

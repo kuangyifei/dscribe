@@ -12,6 +12,7 @@ XPath.Environment = function(roots) {
 	this.docs = roots.map(function(root) {return new XPath.Semantics.DocumentNode(root);});
 	this.vars = {};
 	this.functions = {};
+	this.pushedVars = [];
 };
 XPath.Environment.prototype.setup = function() {
 	var env = this;
@@ -21,6 +22,14 @@ XPath.Environment.prototype.setup = function() {
 };
 XPath.Environment.prototype.teardown = function() {
 	this.roots.forEach(function(root) {delete root.xparent;});
+};
+XPath.Environment.prototype.pushVar = function(key, value) {
+	if (key) this.vars[key] = value;
+	this.pushedVars.push(key);
+};
+XPath.Environment.prototype.popVar = function() {
+	var key = this.pushedVars.pop();
+	if (key) delete this.vars[key];
 };
 
 XPath.parse = function(s) {
