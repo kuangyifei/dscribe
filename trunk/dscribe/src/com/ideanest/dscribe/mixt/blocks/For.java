@@ -22,12 +22,15 @@ public class For implements BlockType {
 		return "1";
 	}
 
-	@AllowAttributes({"each", "one"})
+	@AllowAttributes({"each", "one", "all"})
 	public Block define(Node def) throws RuleBaseException {
-		boolean each = def.query().exists("@each"), one = def.query().exists("@one");
-		if (each && one) throw new RuleBaseException("for block specified with both @each and @one");
-		if (!(each || one)) throw new RuleBaseException("for block specified with neither @each nor @one");
-		return each ? new ForEachBlock(def) : new ForOneBlock(def); 
+		int numDirectives = def.query().single("count(@each | @one | @all)").intValue();
+		if (numDirectives > 1) throw new RuleBaseException("for block specified with more than one of @each, @one and @all");
+		if (numDirectives <1) throw new RuleBaseException("for block specified without any @each, @one or @all");
+		return
+			def.query().exists("@each") ? new ForEachBlock(def)
+			: def.query().exists("@one") ? new ForOneBlock(def)
+			: new ForAllBlock(def);
 	}
 	
 	private static class ForEachBlock extends ForBlock implements KeyBlock {
@@ -40,6 +43,9 @@ public class For implements BlockType {
 				modBuilder.dependOn(requiredVariables);
 				modBuilder.commit();
 			}
+		}
+		public Seg createSeg(Mod mod) {
+			return new ForEachSeg(mod);
 		}
 	}
 	
@@ -55,12 +61,59 @@ public class For implements BlockType {
 			modBuilder.dependOn(requiredVariables);
 			modBuilder.commit();
 		}
+		public Seg createSeg(Mod mod) {
+			return new ForEachSeg(mod);
+		}
+	}
+	
+	private static class ForAllBlock extends ForBlock implements LinearBlock {
+		private static final Comparator<Node> XML_ID_COMPARATOR = new Comparator<Node>() {
+			@Override public int compare(Node n1, Node n2) {
+				return n1.query().single("@xml:id").value().compareTo(n2.query().single("@xml:id").value());
+			}
+		};
+		
+		ForAllBlock(Node def) throws RuleBaseException {
+			super(def, "@all");
+			if (target) throw new RuleBaseException("for-all cannot be used with 'target'");
+		}
+		
+		private static Node[] nodesToCanonicalArray(ItemList items) {
+			Node[] nodes = items.nodes().toArray();
+			Arrays.sort(nodes, XML_ID_COMPARATOR);
+			return nodes;
+		}
+		
+		public void resolve(Mod.Builder modBuilder) throws TransformException {
+			ItemList items = query.runOn(modBuilder.scope());
+			if (items.size() == 0) return;
+			for (Node node : nodesToCanonicalArray(items)) modBuilder.reference(node);
+			modBuilder.dependOn(requiredVariables);
+			modBuilder.commit();
+		}
+		@Override public Seg createSeg(Mod mod) {
+			return new ForAllSeg(mod);
+		}
+		
+		private class ForAllSeg extends ForSeg {
+			ForAllSeg(Mod mod) {super(mod);}
+			
+			@Override public void restore() throws TransformException {
+				bindVariable(mod.globalScope().all("$_1", mod.references()));
+			}
+			
+			@Override public void verify() throws TransformException {
+				List<Node> queryResult = Arrays.asList(nodesToCanonicalArray(query.runOn(mod.scope(null))));
+				if (!queryResult.equals(mod.references()))
+					throw new TransformException("query selected a different set of nodes");
+			}			
+		}
 	}
 	
 	private static abstract class ForBlock implements Block {
 		private final String variableName;
 		final Query.Items query;
-		private final boolean target;
+		final boolean target;
 		Collection<String> requiredVariables;
 		
 		ForBlock(Node def, String varAttrName) throws RuleBaseException {
@@ -76,14 +129,10 @@ public class For implements BlockType {
 			query = new Query.Items(def);	
 		}
 		
-		public Seg createSeg(Mod mod) {
-			return new ForSeg(mod);
-		}
-		
-		private class ForSeg extends Seg implements InsertionTarget, NodeTarget {
+		class ForSeg extends Seg {
 			ForSeg(Mod mod) {super(mod);}
 			
-			private void bindVariable(Resource value) throws TransformException {
+			void bindVariable(Resource value) throws TransformException {
 				if (variableName != null) mod.bindVariable(variableName, value);
 			}
 			
@@ -91,6 +140,11 @@ public class For implements BlockType {
 				requiredVariables = query.analyze(mod.globalScope()).requiredVariables();
 				bindVariable(null);
 			}
+			
+		}
+		
+		class ForEachSeg extends ForSeg implements InsertionTarget, NodeTarget {
+			ForEachSeg(Mod mod) {super(mod);}
 			
 			@Override public void restore() throws TransformException {
 				bindVariable(mod.references().get(0));
@@ -117,7 +171,6 @@ public class For implements BlockType {
 				return mod.nearest(NodeTarget.class).targets();
 			}
 		}
-
 	}
 
 	@Deprecated
@@ -150,6 +203,14 @@ public class For implements BlockType {
 		}
 		
 		@Test
+		public void parseForAllBlock() throws RuleBaseException {
+			ForBlock block = define("<for all='$x'> //foo </for>");
+			assertTrue(block instanceof For.ForAllBlock);
+			assertEquals("$x", block.variableName);
+			assertFalse(block.target);
+		}
+		
+		@Test
 		public void parseTargetKeyword() throws RuleBaseException {
 			ForBlock block = define("<for each='target'> //foo </for>");
 			assertTrue(block instanceof For.ForEachBlock);
@@ -157,6 +218,11 @@ public class For implements BlockType {
 			assertTrue(block.target);
 		}
 		
+		@Test(expected = RuleBaseException.class)
+		public void parseForAllTargetKeywordFails() throws RuleBaseException {
+			define("<for all='target'> //foo </for>");
+		}
+
 		@Test(expected = RuleBaseException.class)
 		public void parseBadKeyword() throws RuleBaseException {
 			define("<for each='foo'> //foo </for>");
@@ -203,6 +269,13 @@ public class For implements BlockType {
 		}
 		
 		@Test
+		public void resolveAllDoesNothingOnNoResult() throws RuleBaseException, TransformException {
+			ForAllBlock block = define("<for all='$x'> //java:foobar </for>");
+			setModBuilderScope(content.query());
+			block.resolve(modBuilder);
+		}
+
+		@Test
 		public void analyzeWorksWithVariable() throws RuleBaseException, TransformException {
 			ForOneBlock block = define("<for one='$x'> //java:method[@name=$other] </for>");
 			setModGlobalScope(content.query());
@@ -238,6 +311,16 @@ public class For implements BlockType {
 		}
 		
 		@Test
+		public void restoreForAllWorks() throws RuleBaseException, TransformException {
+			ForAllBlock block = define("<for all='$x'> //java:method </for>");
+			ItemList items = content.query().all("for $m in //java:method order by $m/@xml:id return $m");
+			setModReferences(items.nodes().toArray());
+			setModGlobalScope(content.query());
+			bindVariable("$x", content.query().all("//java:method"));
+			block.createSeg(mod).restore();
+		}
+
+		@Test
 		public void verifyWorks() throws RuleBaseException, TransformException {
 			ForOneBlock block = define("<for one='$x'> //java:class </for>");
 			final Node selectedNode = content.query().single("//java:class").node();
@@ -256,11 +339,29 @@ public class For implements BlockType {
 		}
 		
 		@Test
+		public void verifyForAllWorks() throws RuleBaseException, TransformException {
+			ForAllBlock block = define("<for all='$x'> //java:method </for>");
+			ItemList items = content.query().all("for $m in //java:method order by $m/@xml:id return $m");
+			setModReferences(items.nodes().toArray());
+			setModScope(content.query());
+			block.createSeg(mod).verify();
+		}
+		
+		@Test(expected = TransformException.class)
+		public void verifyForAllFails() throws RuleBaseException, TransformException {
+			ForAllBlock block = define("<for all='$x'> //java:method[@name='start'] </for>");
+			ItemList items = content.query().all("for $m in //java:method order by $m/@xml:id return $m");
+			setModReferences(items.nodes().toArray());
+			setModScope(content.query());
+			block.createSeg(mod).verify();
+		}
+		
+		@Test
 		public void insertWithTarget() throws RuleBaseException, TransformException {
 			ForOneBlock block = define("<for one='target'> //java:class </for>");
 			final Node selectedNode = content.query().single("//java:class").node();
 			setModReferences(selectedNode);
-			ForBlock.ForSeg seg = (ForBlock.ForSeg) block.createSeg(mod);
+			ForBlock.ForEachSeg seg = (ForBlock.ForEachSeg) block.createSeg(mod);
 			seg.insert(db.query().single("<java:method xml:id='m3' name='between'/>").node());
 			assertTrue(seg.canInsertMultiple());
 			assertTrue(selectedNode.query().exists("java:method[@xml:id='m3']"));
@@ -280,7 +381,7 @@ public class For implements BlockType {
 				}
 			};
 			setModNearestAncestorImplementing(InsertionTarget.class, insertionTarget);
-			ForBlock.ForSeg seg = (ForBlock.ForSeg) block.createSeg(mod);
+			ForBlock.ForEachSeg seg = (ForBlock.ForEachSeg) block.createSeg(mod);
 			assertSame(insertedNode, seg.insert(nodeToInsert));
 			assertFalse(seg.canInsertMultiple());
 		}
@@ -290,7 +391,7 @@ public class For implements BlockType {
 			ForOneBlock block = define("<for one='target'> //java:class </for>");
 			final Node selectedNode = content.query().single("//java:class").node();
 			setModReferences(selectedNode);
-			assertEquals(Collections.singletonList(selectedNode), ((ForBlock.ForSeg) block.createSeg(mod)).targets().asList());
+			assertEquals(Collections.singletonList(selectedNode), ((ForBlock.ForEachSeg) block.createSeg(mod)).targets().asList());
 		}
 
 		@Test
@@ -303,7 +404,7 @@ public class For implements BlockType {
 				}
 			};
 			setModNearestAncestorImplementing(NodeTarget.class, insertionTarget);
-			assertEquals(Collections.singletonList(selectedNode), ((ForBlock.ForSeg) block.createSeg(mod)).targets().asList());
+			assertEquals(Collections.singletonList(selectedNode), ((ForBlock.ForEachSeg) block.createSeg(mod)).targets().asList());
 		}
 
 	}

@@ -49,8 +49,30 @@ public class KeyMod extends Mod {
 		
 		public void referenceKey(Node node) {
 			super.reference(node);
-			if (keySuffix != null) throw new IllegalStateException("block cannot reference more than one key");
+			if (keySuffix != null) throw new IllegalStateException("block cannot have more than one key");
 			keySuffix = node.query().single("@xml:id").value() + ".";
+		}
+		
+		public void setKey(String rawKey) {
+			if (keySuffix != null) throw new IllegalStateException("block cannot have more than one key");
+			keySuffix = sanitizeKey(rawKey) + ".";
+		}
+		
+		private String sanitizeKey(String rawKey) {
+			StringBuilder key = new StringBuilder();
+			for (int offset = 0; offset < rawKey.length();) {
+				int c = rawKey.codePointAt(offset);
+				if (Character.isLetterOrDigit(c)) {
+					key.appendCodePoint(c);
+				} else if (c == '-') {
+					key.append("--");
+				} else {
+					assert c >= 0;
+					key.append('-').append(Integer.toString(c, 16)).append('-');  // stringify codepoint to its int value
+				}
+				offset += Character.charCount(c);
+			}
+			return key.toString();
 		}
 		
 		@Override void checkChildrenSize() {
@@ -104,6 +126,18 @@ public class KeyMod extends Mod {
 		public void referenceKeyTwice() {
 			builder.referenceKey(doc1.query().single("//e1").node());
 			builder.referenceKey(doc1.query().single("//e1").node());
+		}
+		
+		@Test public void sanitizeKeyWithoutSpecialChars() {
+			assertEquals("foo1234BAR", builder.sanitizeKey("foo1234BAR"));
+		}
+
+		@Test public void sanitizeKeyWithSpecialChars() {
+			assertEquals("foo--bar-5f-test-2e-1-23-2", builder.sanitizeKey("foo-bar_test.1#2"));
+		}
+
+		@Test public void sanitizeKeyWithAstralChars() {
+			assertEquals("f-2780-\u041f-482-xxx\ud800\udf46", builder.sanitizeKey("f\u2780\u041f\u0482xxx\ud800\udf46"));
 		}
 
 		@Test public void commitTwice() throws TransformException {
