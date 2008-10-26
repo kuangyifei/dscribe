@@ -30,6 +30,7 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 	
 	protected List<Sequence> modBuilderPriors = new LinkedList<Sequence>();
 	private ElementBuilder<XMLDocument> supplementBuilder;
+	private int counter;
 	
 	@Before
 	public void prepareDatabase() {
@@ -39,6 +40,7 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		content.documents().load(Name.create("stuff"), Source.xml(
 				"<java:class xmlns:java='http://example.com/java' xml:id='c1' name='Job'>" +
 				"	<java:method xml:id='m1' name='start'/>" +
+				"	<java:method xml:id='m3' name='other'/>" +
 				"	<java:method xml:id='m2' name='end'/>" +
 				"</java:class>"));
 		content.documents().load(Name.create("stuff2"), Source.xml(
@@ -190,6 +192,14 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		}});
 	}
 	
+	public void setKey(final String key) {
+		mockery.checking(new Expectations() {{
+			Sequence seq = mockery.sequence("modBuilder pre-commit setKey");
+			one(keyModBuilder).setKey(key); inSequence(seq);
+			modBuilderPriors.add(seq);
+		}});
+	}
+	
 	public void dependOnDocument(final XMLDocument doc) {
 		mockery.checking(new Expectations() {{
 			Sequence seq = mockery.sequence("modBuilder pre-commit dependOn document");
@@ -211,11 +221,11 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		if (varNames.length == 0) return;
 		mockery.checking(new Expectations() {{
 			Sequence seq = mockery.sequence("modBuilder pre-commit dependOnVariables");
-			DependencyModifier dependecyModifier = mockery.mock(Mod.Builder.DependencyModifier.class);
+			DependencyModifier dependencyModifier = mockery.mock(Mod.Builder.DependencyModifier.class, "dependencyModifier_" + ++counter);
 			one(modBuilder).dependOn(with(new Matchers.CollectionMatcher<String>(varNames)));
-			will(returnValue(dependecyModifier)); inSequence(seq);
+			will(returnValue(dependencyModifier)); inSequence(seq);
 			if (unverified) {
-				one(dependecyModifier).unverified();
+				one(dependencyModifier).unverified();
 				inSequence(seq);
 			}
 			modBuilderPriors.add(seq);
@@ -223,22 +233,24 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 	}
 	
 	public void supplement() {
-		supplementBuilder = db.createFolder("/supplement").documents().build(Name.generate());
+		if (supplementBuilder == null) {
+			supplementBuilder = db.createFolder("/supplement").documents().build(Name.generate()).elem("root");
+		}
 		mockery.checking(new Expectations() {{
 			Sequence seq = mockery.sequence("modBuilder pre-commit supplement");
-			atLeast(1).of(modBuilder).supplement(); will(returnValue(supplementBuilder)); inSequence(seq);
+			allowing(modBuilder).supplement(); will(returnValue(supplementBuilder)); inSequence(seq);
 			modBuilderPriors.add(seq);
 		}});
 	}
 	
 	public void checkSupplement(String expected) {
-		XMLDocument supplementDoc = supplementBuilder.commit();
+		XMLDocument supplementDoc = supplementBuilder.end("root").commit();
 		if (supplementDoc == null) {
 			fail("no supplement recorded, expected '" + expected + "'");
 		} else {
-			Node supplementNode = supplementDoc.root();
-			assertTrue("supplement expected '" + expected + "', got '" + supplementNode + "'",
-					db.query().presub().single("deep-equal($_1, $2)", supplementNode, expected).booleanValue());
+			ItemList supplement = supplementDoc.root().query().all("*");
+			assertTrue("supplement expected '" + expected + "', got '" + supplement + "'",
+					db.query().presub().single("deep-equal($_1, $2)", supplement, expected).booleanValue());
 		}
 	}
 	
