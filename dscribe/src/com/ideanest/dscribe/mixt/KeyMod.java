@@ -12,23 +12,23 @@ import org.junit.*;
 
 public class KeyMod extends Mod {
 	
-	private final Map<String, Resource> variableBindings;
+	private final Map<QName, Resource> variableBindings;
 	private String key;
 
 	KeyMod(Rule rule) {
 		super(rule);
 		this.key = "_" + rule.id + ".";
-		this.variableBindings = new HashMap<String, Resource>();
+		this.variableBindings = new HashMap<QName, Resource>();
 	}
 	
 	KeyMod(Mod parent, String key) {
 		super(parent);
 		if (key == null) throw new IllegalArgumentException("null key");
 		this.key = key;
-		variableBindings = new HashMap<String, Resource>(parent.variableBindings());
+		variableBindings = new HashMap<QName, Resource>(parent.variableBindings());
 	}
 	
-	@Override Map<String, Resource> variableBindings() {
+	@Override Map<QName, Resource> variableBindings() {
 		return variableBindings;
 	}
 	
@@ -169,7 +169,7 @@ public class KeyMod extends Mod {
 		}
 		
 		@Test public void constructorFromParentMod() {
-			parentModBindings.put("a", doc1);
+			parentModBindings.put(new QName(null, "a", null), doc1);
 			KeyMod mod = new KeyMod(parentMod, "_r1.e13.g23.");
 			assertSame(rule, mod.rule);
 			assertEquals(4, mod.stage);

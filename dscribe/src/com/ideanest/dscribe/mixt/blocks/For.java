@@ -111,10 +111,10 @@ public class For implements BlockType {
 	}
 	
 	private static abstract class ForBlock implements Block {
-		private final String variableName;
+		private final QName variableName;
 		final Query.Items query;
 		final boolean target;
-		Collection<String> requiredVariables;
+		Collection<QName> requiredVariables;
 		
 		ForBlock(Node def, String varAttrName) throws RuleBaseException {
 			String varName = def.query().single(varAttrName).value();
@@ -124,9 +124,10 @@ public class For implements BlockType {
 			} else {
 				if (!varName.startsWith("$"))  // TODO: verify variable name syntax
 					throw new RuleBaseException("unrecognized for block variable keyword '" + varName + "'");
+				varName = varName.substring(1);
 			}
-			variableName = varName;
 			query = new Query.Items(def);	
+			variableName = varName == null ? null : query.parseQName(varName);
 		}
 		
 		class ForSeg extends Seg {
@@ -190,7 +191,7 @@ public class For implements BlockType {
 		public void parseForEachBlock() throws RuleBaseException {
 			ForBlock block = define("<for each='$x'> //foo </for>");
 			assertTrue(block instanceof ForEachBlock);
-			assertEquals("$x", block.variableName);
+			assertEquals(new QName(null, "x", null), block.variableName);
 			assertFalse(block.target);
 		}
 		
@@ -198,7 +199,7 @@ public class For implements BlockType {
 		public void parseForOneBlock() throws RuleBaseException {
 			ForBlock block = define("<for one='$x'> //foo </for>");
 			assertTrue(block instanceof For.ForOneBlock);
-			assertEquals("$x", block.variableName);
+			assertEquals(new QName(null, "x", null), block.variableName);
 			assertFalse(block.target);
 		}
 		
@@ -206,7 +207,7 @@ public class For implements BlockType {
 		public void parseForAllBlock() throws RuleBaseException {
 			ForBlock block = define("<for all='$x'> //foo </for>");
 			assertTrue(block instanceof For.ForAllBlock);
-			assertEquals("$x", block.variableName);
+			assertEquals(new QName(null, "x", null), block.variableName);
 			assertFalse(block.target);
 		}
 		
@@ -279,10 +280,10 @@ public class For implements BlockType {
 		public void analyzeWorksWithVariable() throws RuleBaseException, TransformException {
 			ForOneBlock block = define("<for one='$x'> //java:method[@name=$other] </for>");
 			setModGlobalScope(content.query());
-			bindVariable("$x", null);
+			bindVariable(new QName(null, "x", null), null);
 			Seg seg = block.createSeg(mod);
 			seg.analyze();
-			assertThat(block.requiredVariables, is(collection("$other")));
+			assertThat(block.requiredVariables, is(collection(new QName(null, "other", null))));
 		}
 		
 		@Test
@@ -299,7 +300,7 @@ public class For implements BlockType {
 			ForOneBlock block = define("<for one='$x'> //java:method[@name=$other] </for>");
 			final Node variableValue = content.query().single("//java:method[@name='start']").node();
 			setModReferences(variableValue);
-			bindVariable("$x", variableValue);
+			bindVariable(new QName(null, "x", null), variableValue);
 			block.createSeg(mod).restore();
 		}
 
@@ -316,7 +317,7 @@ public class For implements BlockType {
 			ItemList items = content.query().all("for $m in //java:method order by $m/@xml:id return $m");
 			setModReferences(items.nodes().toArray());
 			setModGlobalScope(content.query());
-			bindVariable("$x", content.query().all("//java:method"));
+			bindVariable(new QName(null, "x", null), content.query().all("//java:method"));
 			block.createSeg(mod).restore();
 		}
 

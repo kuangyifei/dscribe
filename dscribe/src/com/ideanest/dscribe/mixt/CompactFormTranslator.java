@@ -16,6 +16,7 @@ public class CompactFormTranslator {
 	
 	private static final Pattern INDENT_PATTERN = Pattern.compile("^(\\s*)(.*)$");
 	private static final Pattern RULE_PATTERN = Pattern.compile("^rule (.*?)( \\[(.+)\\])?$");
+	private static final Pattern FUNCTION_PATTERN = Pattern.compile("^function (.*?)\\s*\\(\\s*(\\$\\w+\\s*(\\,\\s*\\$\\w+\\s*)*)?\\)\\s*$");
 
 	private CompactFormTranslator() {}
 	
@@ -80,7 +81,19 @@ public class CompactFormTranslator {
 				} else {
 					if (inPreamble) buf.append(">");
 					inPreamble = false;
-					if (keyword.equals("rule")) {
+					boolean parseText = false;
+					if (keyword.equals("function")) {
+						if (indents.size() != 1) throw new ParseException("function definitions must be at outermost level, but found a nested one on line " + lineNumber + ":\n" + line, indent.length());
+						if (k == -1) throw new ParseException("function definitions must have text content on line " + lineNumber + ":\n" + line, indent.length());
+						Matcher functionMatcher = FUNCTION_PATTERN.matcher(content.substring(0, k));
+						if (!functionMatcher.matches()) throw new ParseException("function definition syntax doesn't match 'function <function name>(<arg1>, <arg2>, ...' on line " + lineNumber + ":\n" + line, indent.length());
+						buf.append("<rules:function");
+						buf.append(" name='").append(functionMatcher.group(1)).append("'");
+						if (functionMatcher.group(2) != null) buf.append(" args='").append(functionMatcher.group(2)).append("'");
+						buf.append(">");
+						tags.addFirst("function");
+						parseText = true;
+					} else if (keyword.equals("rule")) {
 						if (indents.size() != 1) throw new ParseException("rule definitions must be at outermost level, but found a nested one on line " + lineNumber + ":\n" + line, indent.length());
 						if (k != -1) throw new ParseException("rule definitions must not have text content on line " + lineNumber + ":\n" + line, indent.length());
 						Matcher ruleMatcher = RULE_PATTERN.matcher(content);
@@ -108,14 +121,15 @@ public class CompactFormTranslator {
 							buf.append(" " + specParts[i] + "='" + specParts[i+1] + "'");
 						}
 						buf.append(">");
-						if (k != -1) {
-							String text = k+1 >= content.length() ? "" : content.substring(k+1).trim();
-							if (text.length() == 0) {
-								inTextRun = true;
-								needIndentedText = true;
-							} else {
-								buf.append(text);
-							}
+						parseText = true;
+					}
+					if (parseText && k != -1) {
+						String text = k+1 >= content.length() ? "" : content.substring(k+1).trim();
+						if (text.length() == 0) {
+							inTextRun = true;
+							needIndentedText = true;
+						} else {
+							buf.append(text);
 						}
 					}
 				}
@@ -183,6 +197,40 @@ public class CompactFormTranslator {
 			captureOutput();
 			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "' xmlns:java='" + Namespace.JAVA + "' xmlns:uml='" + Namespace.UML + "'>");
 			_("	<rules:rule xml:id='r1' name='do stuff'/>");
+			_("</rules:rules>");
+			translateAndCheck();
+		}
+		
+		@Test public void functionDeclaration() throws IOException, ParseException {
+			captureInput();
+			_("function foo($a1, $a2): x");
+			captureOutput();
+			_("<rules:rules xmlns:rules='" + Engine.RULES_NS + "'>");
+			_("	<rules:function name='foo' args='$a1, $a2'>x</rules:function>");
+			_("</rules:rules>");
+			translateAndCheck();
+		}
+		
+		@Test public void functionDeclarationNoArgs() throws IOException, ParseException {
+			captureInput();
+			_("function foo(): x");
+			captureOutput();
+			_("<rules:rules xmlns:rules='" + Engine.RULES_NS + "'>");
+			_("	<rules:function name='foo'>x</rules:function>");
+			_("</rules:rules>");
+			translateAndCheck();
+		}
+		
+		@Test public void functionDeclarationMultiLine() throws IOException, ParseException {
+			captureInput();
+			_("function foo ( $a1 )  :");
+			_("	/bar/baz");
+			_("		[@blah]");
+			captureOutput();
+			_("<rules:rules xmlns:rules='" + Engine.RULES_NS + "'>");
+			_("	<rules:function name='foo' args='$a1 '>/bar/baz");
+			_("	[@blah]");
+			_("</rules:function>");
 			_("</rules:rules>");
 			translateAndCheck();
 		}
@@ -489,6 +537,27 @@ public class CompactFormTranslator {
 			_("rule do stuff [r1]");
 			_("	for any $x empty");
 			_("	alias foo bar");
+			translateBadInput();
+		}
+		
+		@Test(expected = ParseException.class)
+		public void functionNested() throws ParseException, IOException {
+			captureInput();
+			_("  function foo($arg): x");
+			translateBadInput();
+		}
+		
+		@Test(expected = ParseException.class)
+		public void functionWithoutText() throws ParseException, IOException {
+			captureInput();
+			_("  function foo($arg)");
+			translateBadInput();
+		}
+		
+		@Test(expected = ParseException.class)
+		public void functionMalformed() throws ParseException, IOException {
+			captureInput();
+			_("  function foo($arg,): x");
 			translateBadInput();
 		}
 		

@@ -30,15 +30,17 @@ public class With implements BlockType {
 	}
 	
 	private static abstract class WithBlock implements Block {
-		final String variableName;
+		final QName variableName;
 		final Query.Items query;
-		Collection<String> requiredVariables;
+		Collection<QName> requiredVariables;
 
 		WithBlock(Node def) throws RuleBaseException {
-			variableName = def.query().single("@some | @any | @distinct").value();
-			if (!variableName.startsWith("$"))  // TODO: verify variable name syntax
-				throw new RuleBaseException("illegal with block variable name '" + variableName + "'");
+			String varName = def.query().single("@some | @any | @distinct").value();
+			if (!varName.startsWith("$"))  // TODO: verify variable name syntax
+				throw new RuleBaseException("illegal with block variable name '" + varName + "'");
+			varName = varName.substring(1);
 			query = new Query.Items(def);
+			variableName = query.parseQName(varName);
 		}
 		
 		private class WithSeg extends Seg {
@@ -143,20 +145,20 @@ public class With implements BlockType {
 		public void parseAny() throws RuleBaseException {
 			WithAnySomeBlock block = define("<with any='$x'> //foo </with>");
 			assertTrue(block.optional);
-			assertEquals("$x", block.variableName);
+			assertEquals(new QName(null, "x", null), block.variableName);
 		}
 		
 		@Test
 		public void parseSome() throws RuleBaseException {
 			WithAnySomeBlock block = define("<with some='$x'> //foo </with>");
 			assertFalse(block.optional);
-			assertEquals("$x", block.variableName);
+			assertEquals(new QName(null, "x", null), block.variableName);
 		}
 
 		@Test
 		public void parseDistinct() throws RuleBaseException {
 			WithDistinctBlock block = define("<with distinct='$x'> //foo </with>");
-			assertEquals("$x", block.variableName);
+			assertEquals(new QName(null, "x", null), block.variableName);
 		}
 		
 		@Test(expected = RuleBaseException.class)
@@ -167,8 +169,8 @@ public class With implements BlockType {
 		@Test
 		public void resolveAny() throws RuleBaseException, TransformException {
 			WithAnySomeBlock block = define("<with any='$x'> $y/foo </with>");
-			block.requiredVariables = Collections.singletonList("$y");
-			dependOnUnverifiedVariables("$y");
+			block.requiredVariables = Collections.singletonList(new QName(null, "y", null));
+			dependOnUnverifiedVariables(new QName(null, "y", null));
 			thenCommit();
 			block.resolve(modBuilder);
 		}
@@ -186,16 +188,16 @@ public class With implements BlockType {
 		@Test
 		public void resolveDistinct() throws RuleBaseException, TransformException {
 			WithDistinctBlock block = define("<with distinct='$x'>$y/java:method/@name/string()</with>");
-			block.requiredVariables = Collections.singletonList("$y");
-			dependOnVariables("$y");
+			block.requiredVariables = Collections.singletonList(new QName(null, "y", null));
+			dependOnVariables(new QName(null, "y", null));
 			supplement();
 			setKey("start");
 			thenCommit();
-			dependOnVariables("$y");
+			dependOnVariables(new QName(null, "y", null));
 			supplement();
 			setKey("other");
 			thenCommit();
-			dependOnVariables("$y");
+			dependOnVariables(new QName(null, "y", null));
 			supplement();
 			setKey("end");
 			thenCommit();
@@ -208,7 +210,7 @@ public class With implements BlockType {
 		public void analyze() throws RuleBaseException, TransformException {
 			WithBlock block = define("<with any='$x'> $y/foo </with>");
 			setModGlobalScope(content.query());
-			bindVariable("$x", null);
+			bindVariable(new QName(null, "x", null), null);
 			block.createSeg(mod).analyze();
 		}
 		
@@ -216,7 +218,7 @@ public class With implements BlockType {
 		public void restoreAny() throws RuleBaseException, TransformException {
 			WithBlock block = define("<with any='$x'> //java:method </with>");
 			setModScope(content.query());
-			bindVariable("$x", content.query().all("//java:method"));
+			bindVariable(new QName(null, "x", null), content.query().all("//java:method"));
 			block.createSeg(mod).restore();
 		}
 
@@ -231,7 +233,7 @@ public class With implements BlockType {
 		public void restoreDistinct() throws TransformException, RuleBaseException {
 			WithBlock block = define("<with distinct='$x'>//java:method/@name/string()</with>");
 			setModData("<distinct-value type='xs:string'>start</distinct-value>");
-			bindVariable("$x", content.query().single("'start'"));
+			bindVariable(new QName(null, "x", null), content.query().single("'start'"));
 			block.createSeg(mod).restore();
 		}
 		
