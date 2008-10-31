@@ -76,7 +76,7 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 			else throw new RuntimeException("Block of unknown kind: " + block);
 			
 			mockery.checking(new Expectations() {{
-				allowing(modBuilder).dependOn(with(emptyCollectionOf(String.class)));
+				allowing(modBuilder).dependOn(with(emptyCollectionOf(QName.class)));
 			}});
 			
 			return block;
@@ -209,20 +209,20 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		}});
 	}
 	
-	public void dependOnVariables(final String... varNames) throws TransformException {
+	public void dependOnVariables(final QName... varNames) throws TransformException {
 		internalDependOnVariables(false, varNames);
 	}
 	
-	public void dependOnUnverifiedVariables(final String... varNames) throws TransformException {
+	public void dependOnUnverifiedVariables(final QName... varNames) throws TransformException {
 		internalDependOnVariables(true, varNames);
 	}
 	
-	private void internalDependOnVariables(final boolean unverified, final String[] varNames) throws TransformException {
+	private void internalDependOnVariables(final boolean unverified, final QName[] varNames) throws TransformException {
 		if (varNames.length == 0) return;
 		mockery.checking(new Expectations() {{
 			Sequence seq = mockery.sequence("modBuilder pre-commit dependOnVariables");
 			DependencyModifier dependencyModifier = mockery.mock(Mod.Builder.DependencyModifier.class, "dependencyModifier_" + ++counter);
-			one(modBuilder).dependOn(with(new Matchers.CollectionMatcher<String>(varNames)));
+			one(modBuilder).dependOn(with(new Matchers.CollectionMatcher<QName>(varNames)));
 			will(returnValue(dependencyModifier)); inSequence(seq);
 			if (unverified) {
 				one(dependencyModifier).unverified();
@@ -287,9 +287,9 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		}});
 	}
 	
-	public void bindVariable(final String name, final Resource value) throws TransformException {
+	public void bindVariable(final QName name, final Resource value) throws TransformException {
 		mockery.checking(new Expectations() {{
-			one(mod).bindVariable(name,value);
+			one(mod).bindVariable(name, value);
 		}});
 	}
 	

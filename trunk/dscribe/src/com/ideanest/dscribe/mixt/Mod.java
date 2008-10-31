@@ -28,7 +28,7 @@ public class Mod {
 	final Mod parent;
 	
 	private boolean restored;
-	private Set<String> boundVariables;
+	private Set<QName> boundVariables;
 	private List<Node> references;
 	private Seg seg;
 	private Node node;
@@ -68,12 +68,12 @@ public class Mod {
 		};
 	}
 	
-	Mod binder(String varName) {
+	Mod binder(QName varName) {
 		if (boundVariables != null && boundVariables.contains(varName)) return this;
 		return parent.binder(varName);
 	}
 	
-	Map<String, Resource> variableBindings() {
+	Map<QName, Resource> variableBindings() {
 		return parent.variableBindings();
 	}
 
@@ -98,11 +98,11 @@ public class Mod {
 		return qs.clone(new NamespaceMap(), Collections.unmodifiableMap(variableBindings()));
 	}
 	
-	public void bindVariable(String name, Resource value) throws TransformException {
-		Map<String, Resource> variableBindings = variableBindings();
+	public void bindVariable(QName name, Resource value) throws TransformException {
+		Map<QName, Resource> variableBindings = variableBindings();
 		if (variableBindings.containsKey(name)) throw new TransformException("cannot rebind variable " + name);
 		variableBindings.put(name, value);
-		if (boundVariables == null) boundVariables = new TreeSet<String>();
+		if (boundVariables == null) boundVariables = new TreeSet<QName>();
 		boundVariables.add(name);
 	}
 	
@@ -410,7 +410,7 @@ public class Mod {
 		private <T extends DependencyModifier> T dependOn(Mod ancestor, T depMod) {
 			if (!(ancestor.rule == parent.rule && ancestor.stage <= parent.stage)) throw new IllegalArgumentException("given mod is not an ancestor: " + ancestor);
 			// TODO: catch more non-ancestor mods?
-			Map<String,Object> varMap = Collections.emptyMap();
+			Map<QName,Object> varMap = Collections.emptyMap();
 			depMod.addAll(ancestor.node().query().clone(MOD_NAMESPACE, varMap)
 					.unordered("dependency[@kind='unverified']/@doc").values().asList());
 			return depMod;
@@ -422,12 +422,12 @@ public class Mod {
 		 * as well as on the parent documents of any persistent nodes that are bound to the variables.
 		 * The dependency is assumed to be verifiable by default.
 		 *
-		 * @param variables the names of the variables to depend on, '$' prefixes included
+		 * @param variables the names of the variables to depend on
 		 * @return a dependency modifier that lets you mark this dependency as unverified
 		 */
-		public DependencyModifier dependOn(Collection<String> variables) {
+		public DependencyModifier dependOn(Collection<QName> variables) {
 			DependencyModifier depMod = new DependencyModifier();
-			for (String varName : variables) {
+			for (QName varName : variables) {
 				Resource value = parent.variableBindings().get(varName);
 				Collection<XMLDocument> docs = null;
 				if (value instanceof Node) {
@@ -585,7 +585,7 @@ public class Mod {
 		protected QueryService resolutionScope;
 		protected XMLDocument doc1;
 		protected String doc1Name;
-		protected Map<String, Resource> parentModBindings = new TreeMap<String, Resource>();
+		protected Map<QName, Resource> parentModBindings = new TreeMap<QName, Resource>();
 		protected Folder workspace;
 		
 		@Before public void setupContext() throws IllegalArgumentException, IllegalAccessException {
@@ -712,16 +712,17 @@ public class Mod {
 		}
 		
 		@Test public void dependOnVariables() throws Exception {
-			parentModBindings.put("a", doc1.query().single("'not a node'"));
-			parentModBindings.put("b", doc1.query().single("<inmem/>"));
-			parentModBindings.put("c", doc1.root());
+			final QName a = new QName(null, "a", null), b = new QName(null, "b", null), c = new QName(null, "c", null);
+			parentModBindings.put(a, doc1.query().single("'not a node'"));
+			parentModBindings.put(b, doc1.query().single("<inmem/>"));
+			parentModBindings.put(c, doc1.root());
 			final Mod ancestor1 = createAncestor(1), ancestor2 = createAncestor(2), ancestor3 = createAncestor(3);
 			mockery.checking(new Expectations() {{
-				allowing(parentMod).binder("a");  will(returnValue(ancestor1));
-				allowing(parentMod).binder("b");  will(returnValue(ancestor2));
-				allowing(parentMod).binder("c");  will(returnValue(ancestor3));
+				allowing(parentMod).binder(a);  will(returnValue(ancestor1));
+				allowing(parentMod).binder(b);  will(returnValue(ancestor2));
+				allowing(parentMod).binder(c);  will(returnValue(ancestor3));
 			}});
-			builder.dependOn(Arrays.asList("a", "b", "c"));
+			builder.dependOn(Arrays.asList(a, b, c));
 			assertEquals(new TreeSet<String>(Arrays.asList(doc1Name, "d1u.xml", "d2u.xml", "d3u.xml")), builder.dependentDocNames);
 			assertEquals(Collections.emptySet(), builder.unverifiedDocNames);
 			assertEquals(Collections.emptySet(), builder.affectedNodeIds);
@@ -729,12 +730,13 @@ public class Mod {
 		}
 		
 		@Test public void dependOnVariables2() throws Exception {
-			parentModBindings.put("a", doc1.query().all("(<inmem/>, //*[@xml:id])"));
+			final QName a = new QName(null, "a", null);
+			parentModBindings.put(a, doc1.query().all("(<inmem/>, //*[@xml:id])"));
 			final Mod ancestor1 = createAncestor(1);
 			mockery.checking(new Expectations() {{
-				allowing(parentMod).binder("a");  will(returnValue(ancestor1));
+				allowing(parentMod).binder(a);  will(returnValue(ancestor1));
 			}});
-			builder.dependOn(Arrays.asList("a"));
+			builder.dependOn(Arrays.asList(a));
 			assertEquals(new TreeSet<String>(Arrays.asList(doc1Name, "d1u.xml")), builder.dependentDocNames);
 			assertEquals(Collections.emptySet(), builder.unverifiedDocNames);
 			assertEquals(Collections.emptySet(), builder.affectedNodeIds);
@@ -742,12 +744,13 @@ public class Mod {
 		}
 		
 		@Test public void dependOnVariables3() throws Exception {
-			parentModBindings.put("a", doc1);
+			final QName a = new QName(null, "a", null);
+			parentModBindings.put(a, doc1);
 			final Mod ancestor1 = createAncestor(1);
 			mockery.checking(new Expectations() {{
-				allowing(parentMod).binder("a");  will(returnValue(ancestor1));
+				allowing(parentMod).binder(a);  will(returnValue(ancestor1));
 			}});
-			builder.dependOn(Arrays.asList("a"));
+			builder.dependOn(Arrays.asList(a));
 			assertEquals(new TreeSet<String>(Arrays.asList(doc1Name, "d1u.xml")), builder.dependentDocNames);
 			assertEquals(Collections.emptySet(), builder.unverifiedDocNames);
 			assertEquals(Collections.emptySet(), builder.affectedNodeIds);
@@ -971,25 +974,28 @@ public class Mod {
 		}
 		
 		@Test public void binder() {
+			final QName a = new QName(null, "a", null);
 			mockery.checking(new Expectations() {{
-				one(parentMod).binder("$a");  will(returnValue(parentMod));
+				one(parentMod).binder(a);  will(returnValue(parentMod));
 			}});
 			Mod mod = new Mod(parentMod);
-			assertSame(parentMod, mod.binder("$a"));
+			assertSame(parentMod, mod.binder(a));
 		}
 		
 		@Test public void bindVariable1() throws TransformException {
+			final QName a = new QName(null, "a", null);
 			Mod mod = new Mod(parentMod);
-			mod.bindVariable("$a", doc1);
-			assertSame(mod, mod.binder("$a"));
-			assertEquals(Collections.singleton("$a"), mod.boundVariables);
+			mod.bindVariable(a, doc1);
+			assertSame(mod, mod.binder(a));
+			assertEquals(Collections.singleton(a), mod.boundVariables);
 		}
 		
 		@Test(expected = TransformException.class)
 		public void bindVariable2() throws TransformException {
-			parentModBindings.put("$a", doc1);
+			final QName a = new QName(null, "a", null);
+			parentModBindings.put(a, doc1);
 			Mod mod = new Mod(parentMod);
-			mod.bindVariable("$a", doc1);
+			mod.bindVariable(a, doc1);
 		}
 
 		@Test public void variableBindings() throws TransformException {
@@ -998,8 +1004,9 @@ public class Mod {
 		}
 		
 		@Test public void prepScopeClone() {
+			final QName a = new QName(null, "a", null);
 			Item value = doc1.query().single("//e1");
-			parentModBindings.put("$a", value);
+			parentModBindings.put(a, value);
 			Mod mod = new Mod(parentMod);
 			QueryService scope = mod.prepScopeClone(modStore.query());
 			assertEquals(new NamespaceMap(), scope.namespaceBindings());

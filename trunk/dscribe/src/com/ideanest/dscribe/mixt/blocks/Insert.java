@@ -34,7 +34,7 @@ public class Insert implements BlockType {
 		private static final String DIGEST_TYPE = "MD5";
 		
 		private final Query.Items query;
-		private Collection<String> requiredVariables;
+		private Collection<QName> requiredVariables;
 		private final boolean inOrder;
 		private final int priority;
 		
@@ -314,7 +314,7 @@ public class Insert implements BlockType {
 			setModGlobalScope(content.query());
 			Seg seg = block.createSeg(mod);
 			seg.analyze();
-			assertThat(block.requiredVariables, is(collection("$src")));
+			assertThat(block.requiredVariables, is(collection(new QName(null, "src", null))));
 		}
 		
 		@Test public void restore() throws RuleBaseException, TransformException {

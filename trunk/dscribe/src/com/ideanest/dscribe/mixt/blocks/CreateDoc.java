@@ -28,7 +28,7 @@ public class CreateDoc implements BlockType {
 	
 	private static class CreateDocBlock implements LinearBlock {
 		private final Query.Text query;
-		private Collection<String> requiredVariables;
+		private Collection<QName> requiredVariables;
 		
 		CreateDocBlock(Node def) throws RuleBaseException {
 			query = def.query().exists("node()") ? new Query.Text(def) : null;
@@ -160,7 +160,7 @@ public class CreateDoc implements BlockType {
 			CreateDocBlock block = define("<create-doc>{$x}-{$y}</create-doc>");
 			setModGlobalScope(content.query());
 			block.createSeg(mod).analyze();
-			assertThat(block.requiredVariables, is(collection("$x", "$y")));
+			assertThat(block.requiredVariables, is(collection(new QName(null, "x", null), new QName(null, "y", null))));
 		}
 		
 		@Test public void verifyWorks() throws RuleBaseException, TransformException {

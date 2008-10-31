@@ -36,7 +36,7 @@ public class Sort implements BlockType {
 	private static abstract class SortBlock implements LinearBlock {
 		final int priority;
 		final Query.Items query;
-		private Collection<String> requiredVariables;
+		private Collection<QName> requiredVariables;
 		
 		SortBlock(Node def) throws RuleBaseException {
 			Item priorityItem = def.query().optional("@priority");
@@ -368,7 +368,7 @@ public class Sort implements BlockType {
 				one(mockBlock).resolveOrder(modBuilder, m2); inSequence(seq2);
 				modBuilderPriors.add(seq1);  modBuilderPriors.add(seq2);
 			}});
-			block.requiredVariables = Arrays.asList(new String[] {"$a", "$b"});
+			block.requiredVariables = Arrays.asList(new QName[] {new QName(null, "a", null), new QName(null, "b", null)});
 			dependOnNearest(NodeTarget.class, false, new NodeTarget() {
 				public ItemList targets() throws TransformException {
 					return content.query().all("/id('m1 m2')");
@@ -376,7 +376,7 @@ public class Sort implements BlockType {
 			});
 			order("m1");
 			order("m2");
-			dependOnVariables("$a", "$b");
+			dependOnVariables(new QName(null, "a", null), new QName(null, "b", null));
 			thenCommit();
 			block.resolve(modBuilder);
 		}
@@ -386,7 +386,7 @@ public class Sort implements BlockType {
 			setModGlobalScope(content.query());
 			Seg seg = block.createSeg(mod);
 			seg.analyze();
-			assertThat(block.requiredVariables, is(collection("$src")));
+			assertThat(block.requiredVariables, is(collection(new QName(null, "src", null))));
 		}
 	}
 	

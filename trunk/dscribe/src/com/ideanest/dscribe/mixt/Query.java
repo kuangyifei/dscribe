@@ -22,6 +22,10 @@ public abstract class Query {
 		}
 	}
 	
+	public QName parseQName(String qname) {
+		return QName.parse(qname, namespaceMap);
+	}
+	
 	protected final QueryService prep(QueryService qs) {
 		qs.namespaceBindings().replaceWith(namespaceMap);
 		return qs;
