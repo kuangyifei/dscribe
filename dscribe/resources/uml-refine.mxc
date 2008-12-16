@@ -1,0 +1,64 @@
+namespace uml http://ideanest.com/dscribe/ns/uml
+namespace a http://ideanest.com/dscribe/ns/actions
+namespace attr http://ideanest.com/dscribe/ns/attribute-overrides
+namespace u http://ideanest.com/dscribe/ns/uml-refine-util
+
+function u:scope($action):
+	if ($action/@scope='diagram') then /id($action/@diagram) else /
+
+function u:specificity($action):
+	(if ($action/@targetSelector = 'by-id') then 2
+		else if ($action/@location != 'any') then 1 else 0) +
+	(if ($action/@scope = 'diagram') then 1 else 0)
+
+function u:actionProperties($action):
+	(
+		attribute action {$action/@xml:id},
+		attribute specificity {u:specificity($action)},
+		attribute serial {$action/@serial},
+		if ($action/@override) then attribute override {} else ()
+	)
+
+
+rule deconflict candidate actions
+	for all $candidates: /a:candidates
+	with some $c0: $candidates/a:*
+	with distinct $key: $c0/u:key/@value
+	with some $c1: $c0[u:key/@value = $key]
+	with some $minserial: max((0, $c1[@override]/@serial))
+	with some $c2: $c1[@serial >= $minserial]
+	with some $minspecificity: max((0, $c2/@specificity))
+	with some $c3: $c2[@specificity >= $minspecificity]
+	with some $highserial: max($c3/@serial)
+	for each target: /a:triggers
+	insert: $c3[@serial = $highserial]
+
+rule derive keys for set-property actions
+	for each $action: /a:candidates/a:set-property
+	for each target: $action
+	insert: element u:key {attribute value {concat("set-property-", $action/@target, "-", $action/@attr)}}
+
+rule apply set-property actions
+	for each $action: /a:triggers/a:set-property
+	for each target: /id($action/@target)
+	insert: element attr:override {attribute {$action/@attr} {$action/@value}}
+
+
+rule apply delete-attribute actions
+	for each $action:	/a:triggers/a:delete-attribute
+	for each $attribute:
+		u:scope($action)/
+		(if ($action/@targetSelector='by-id') then id($action/@selection)
+			else if ($action/@targetSelector='by-origin') then descendant::uml:attribute[depicts=$action/@origin]
+			else if ($action/@targetSelector='by-name') then descendant::uml:attribute[name=$action/@name]
+			else if ($action/@targetSelector='by-type') then descendant::uml:attribute[type=$action/@type]
+			else ())/ 
+		(if ($action/@location='in-class-name') then .[ancestor::uml:class/name=$action/@className] else .)
+	for each target:	/a:candidates
+	insert:
+		element a:set-property {
+			attribute target {$attribute/@xml:id},
+			attribute attr {'visible'},
+			attribute value {'false'},
+			u:actionProperties($action)
+		}

@@ -1,0 +1,230 @@
+<canvas width='100%' height = '100%'>
+	<include href = 'weightprints.lzx'/>
+	
+	<vbox spacing = '10' x = '${(parent.width - this.width) / 2}' y = '25' width = '750' height = '${parent.height - 2 * this.y}'>
+	
+	<view width = '100%' height = '150'>
+		<vbox width = '${parent.width - 170}' spacing = '10'>
+			<text fontsize = '24'>Weightprints</text>
+			<text fontsize = '12' multiline = 'true' width = '100%'>
+				A weightprint is a multi-faceted evaluation of impediments to adoption due to a software development
+				tool's design.  The larger the weightprint, the heavier the tool, and the less likely it is to be adopted.
+				Only the tool's design is considered; factors such as usefulness, reliability and support need to be accounted
+				for separately.  The assumed context is a small team of competent developers, not necessarily co-located,
+				using modern programming languages and IDEs, with good network connectivity and communication
+				practices.
+			</text>
+		</vbox>
+		<weightprint x = '${parent.width - this.width}' width = '150' height = '150'
+				weights = '${[hurdles.DC.weight, hurdles.OB.weight, hurdles.MM.weight, hurdles.UI.weight, hurdles.IS.weight]}'
+				hurdleNames = '${["DC", "OB", "MM", "UI", "IS"]}'
+				spreadJitter = '0'>
+			<attribute name = 'hurdles' value = '$once{parent.parent.hurdles}'/>
+		</weightprint>
+	</view>
+	
+	<tabslider name = 'hurdles' width = '100%' height = '${parent.height - parent.subviews[0].height - 10}' spacing = '2' slideduration = '200' defaultselection = '0'>
+		<hurdle title = 'Disdain for Code' name = 'DC'
+				incomplete = '${!dc_den.value || !dc_des.value}'
+				synth = '${Math.max(dc_den.value, dc_des.value)}'>
+			<hurdlequestion>
+				Does the tool demonstrate a lack of respect towards source code information,
+				through disregard or rough treatment?
+			</hurdlequestion>
+			<hurdlerationale>
+				Source code (and attendant information) is still at the center of software development.
+				Disdaining the code is a sure way to irritate a developer in the trenches who knows that, at
+				the end of the day, his pay cheque and/or reputation depend on the source code.
+			</hurdlerationale>
+			<factor name = 'dc_den' title = 'Code Denigration'>
+				<factorquestion>
+					Does the tool give precedence to source code information?  Other sources of information
+					that are rightfully independent of source code changes are allowed, but source code
+					information must be used wherever possible.
+				</factorquestion>
+				<factoroption value = '5'>Ignores source code information.</factoroption>
+				<factoroption value = '4'>Uses both source code information and other information, but does not attempt to reconcile them.</factoroption>
+				<factoroption value = '3'>Uses both source code information and other information and tries to reconcile them, but does not automatically give priority to the former when they disagree.</factoroption>
+				<factoroption value = '2'>Prioritizes source code information over all other sources of information, or it is impossible for other sources to conflict with source code information.</factoroption>
+				<factoroption value = '1'>Relies exclusively on source code information.</factoroption>
+			</factor>
+			<factor name = 'dc_des' title = 'Code Destruction'>
+				<factorquestion>
+					Does the tool respect the contents and format of existing source code if it decides to modify it?
+					After all, if source code information is the primary artifact, it follows that the tool must also
+					treat it with respect, minimizing any unsupervised or tool-specific modifications to it.
+				</factorquestion>
+				<factoroption value = '5'>Considers source code to be a secondary and expendable artifact generated from an independent primary representation.</factoroption>
+				<factoroption value = '4'>Can regenerate code while preserving custom code fragments in specially marked areas, but destroys any changes outside of those areas (limited round-tripping).</factoroption>
+				<factoroption value = '3'>Performs reconciliation of modified source code and non-source-code material that allows for preservation of all source code changes (full round-tripping).</factoroption>
+				<factoroption value = '2'>Does not generate code, at most inserting non-executable tags or markers into the code to help reconciliation.</factoroption>
+				<factoroption value = '1'>Either does not modify source code, or only modifies it at the user's explicit request to satisfy a user need (e.g. refactoring).</factoroption>
+			</factor>
+		</hurdle>
+		<hurdle title = 'Obtrusiveness' name = 'OB'
+				incomplete = '${!ob_g.value || !ob_c.value || !ob_d.value || !ob_p.value}'
+				synth = '${(ob_g.value + ob_c.value + ob_d.value - 1 + ob_p.value) / 3}'>
+			<hurdlequestion>
+				How much of the user's attention does the tool command, and how does it go about obtaining it?
+			</hurdlequestion>
+			<hurdlerationale>
+				Obtrusive tools that require a lot of attention from the user have a higher (apparent) usage
+				cost and are more likely to draw the user's ire.
+			</hurdlerationale>
+			<factor name = 'ob_g' title = 'Input Gluttony'>
+				<factorquestion>
+					What extra input does the tool need from developers over and above what would be
+					necessary to manually perform the same task?  Information that is part of or automatically
+					derived from the assumed context is considered to be "input" for "free".
+				</factorquestion>
+				<factoroption value = '5'>Regularly requires extra information above what would be required to perform the task manually (i.e. with only the tools assumed in the context).</factoroption>
+				<factoroption value = '4'>Requires just as much extra information as performing the task manually would require (i.e. no automation benefit) every time the task is performed.</factoroption>
+				<factoroption value = '3'>Requires somewhat less extra information over time.  May initially require just as much or more extra information but is able to reuse it as the project evolves, resulting in reduced information needs over time relative to performing the task manually.</factoroption>
+				<factoroption value = '2'>Requires significantly less extra information over time.</factoroption>
+				<factoroption value = '1'>Requires no extra information, inferring it automatically from other sources.</factoroption>
+			</factor>
+			<factor name = 'ob_c' title = 'Conspicuousness'>
+				<factorquestion>
+					Does the tool's UI integrate seamlessly into the assumed context?
+				</factorquestion>
+				<factoroption value = '5'>Requires the exclusive use of a stand-alone custom UI.</factoroption>
+				<factoroption value = '3'>Integrates its own UI within a context tool as a major mode.  Activating the tool sacrifices most of the host's screen real-estate, so that the tool effectively takes over the host.  Full-page Flash interfaces and full-screen modeling IDE plug-ins fall into this category.</factoroption>
+				<factoroption value = '2'>Integrates its own UI discreetly within a context tool, co-existing with other tools.  For example, adds a new small view to an IDE, or a new plug-in to the browser that is employed within larger HTML pages.</factoroption>
+				<factoroption value = '1'>Does not require a UI, or integrates smoothly with existing interaction methods according to their properties (e.g., availability, invasiveness, speed, nature of the interaction, etc.).  The primary UI must be something that the developer already uses (e.g., e-mail, browser, system tray, an existing view within an IDE), which may in turn embed or link to secondary UIs.</factoroption>
+			</factor>
+			<factor name = 'ob_d' title = 'Disruption'>
+				<factorquestion>
+					Does the tool interrupt the user for any reason?  An interruption is a blocking request for a decision or further information.
+				</factorquestion>
+				<factoroption value = '3'>Interrupts the user and blocks work within many tools.</factoroption>
+				<factoroption value = '2'>Interrupts the user and blocks work within the tool only.</factoroption>
+				<factoroption value = '1'>Never interrupts the user in a blocking fashion.</factoroption>
+			</factor>
+			<factor name = 'ob_p' title = 'Passivity'>
+				<factorquestion>
+					Does the tool actively participate in performing its primary task, or does it merely react to the user's explicit commands?
+				</factorquestion>
+				<factoroption value = '5'>Primary functionality is directly and entirely driven by user commands.  The tool is purely synchronously reactive.</factoroption>
+				<factoroption value = '3'>Primary functionality is partially automated, but requires regular guidance from the developer (possibly learning from each interaction).</factoroption>
+				<factoroption value = '2'>Primary functionality is highly automated as below, but requires synchronous guidance from the developer in abnormal circumstances, or requires the developer to start it up manually.</factoroption>
+				<factoroption value = '1'>Primary functionality is highly automated.  Work proceeds continuously in the background without requiring synchronous guidance from the developer.  The tool is proactive in achieving its goals and anticipating the developer's demands.</factoroption>
+			</factor>
+		</hurdle>
+		<hurdle title = 'Manual Management' name = 'MM'
+				incomplete = '${!mm_i.value || !mm_c.value || !mm_h.value || !mm_s.value || !mm_f.value}'
+				synth = '${(mm_i.value + mm_c.value + mm_h.value - Math.min(mm_s.value - 1, max_standards_discount)) / 3 * mm_f.value}'>
+			<attribute name = 'effort_product' value = '${mm_i.value * mm_c.value * mm_h.value}'/>
+			<attribute name = 'max_standards_discount' value = '${effort_product == 1 ? 0 : effort_product &lt;= 5 ? 1 : effort_product &lt;= 25 ? 2 : 3}'/>
+			<hurdlequestion>
+				How much manual administrative effort is required to set up and maintain the tool?
+			</hurdlequestion>
+			<hurdlerationale>
+				Tools that require a lot of effort to set up and maintain are less likely to be tried out by
+				developers on their own initiative, and are more difficult to get taken over by a support
+				organization (if such even exists).
+			</hurdlerationale>
+			<factor name = 'mm_i' title = 'Installation Effort'>
+				<factorquestion>
+					How easy is it to install the tool?  The rating of this factor also implies the uninstallation effort, so it's not measured separately.
+				</factorquestion>
+				<factoroption value = '5'>Requires manual installation, does not package all required components, or must be built from source.</factoroption>
+				<factoroption value = '3'>Installation must be initiated manually (e.g., start a setup program, drop a file into a directory), but proceeds automatically thereafter.</factoroption>
+				<factoroption value = '1'>No installation is necessary at all (e.g., the tool is preinstalled on a public server and accessed with a web browser).</factoroption>
+			</factor>
+			<factor name = 'mm_c' title = 'Configuration Effort'>
+				<factorquestion>
+					How easy is it to configure (and reconfigure) a tool for the developer's specific environment?
+				</factorquestion>
+				<factoroption value = '5'>Requires extensive manual configuration with no hand-holding, possibly with reference to user manuals.  Changes in the environment that invalidate the configuration are not detected gracefully, and must be corrected by the developer.</factoroption>
+				<factoroption value = '3'>Requires some simple configuration, requesting commonly know information from the user using a guided process and providing reasonable default values and validation.  Changes in the environment that invalidate the configuration are detected and brought to the attention of the developer.</factoroption>
+				<factoroption value = '1'>The tool is completely self-configuring, and automatically reconfigures itself in reaction to changes in its environment.</factoroption>
+			</factor>
+			<factor name = 'mm_h' title = 'Healing Effort'>
+				<factorquestion>
+					How easy is it to diagnose problems with the tool and apply fixes?
+				</factorquestion>
+				<factoroption value = '5'>Error diagnosis is unassisted by the tool (e.g., the developer gets a stack trace or memory dump at best), and updates must be noticed, located and applied manually by the developer.</factoroption>
+				<factoroption value = '3'>The tool logs its run-time events and offers a separate know-ledge base where previously encountered problems (and poten-tial solutions) are recorded.  Updates must be initiated by the developer, but can be applied mostly automatically, and do not destroy the tool's configuration.</factoroption>
+				<factoroption value = '1'>The tool monitors its run-time events and diagnoses any problems that occur.  It can also locate and apply the appropriate fix procedures, and automatically keeps itself up-to-date without destroying its configuration.</factoroption>
+			</factor>
+			<factor name = 'mm_s' title = 'Disregard of Standards'>
+				<factorquestion>
+					Does the tool follow the platform standards in its installation, configuration and healing aspects?
+				</factorquestion>
+				<factoroption value = '1'>The tool does not follow established standards in any aspect.</factoroption>
+				<factoroption value = '2'>The tool follows established standards in one of its aspects.</factoroption>
+				<factoroption value = '3'>The tool follows established standards in two of its aspects.</factoroption>
+				<factoroption value = '4'>The tool follows established standards in all three of its aspects.</factoroption>
+			</factor>
+			<factor name = 'mm_f' title = 'Large Footprint'>
+				<factorquestion>
+					What is the minimum number of separate applications required to get the tool set up?  This will often correspond to the number of separate machines needed.
+				</factorquestion>
+				<factoroption value = '2'>The tool has at least two separate application components and the administrative functions cannot be centralized.</factoroption>
+				<factoroption value = '1'>The tool has only one application component, or it has multiple components but allows administrative functions to be centralized.</factoroption>
+			</factor>
+		</hurdle>
+		<hurdle title = 'Uptake Inertia' name = 'UI'
+				incomplete = '${!ui_a.value || !ui_v.value || !ui_s.value || !ui_l.value || !ui_f.value}'
+				synth = '${Math.sqrt((ui_a.value - ui_v.value - ui_s.value + 2) * (3 + ui_l.value - ui_f.value))}'>
+			<hurdlequestion>
+				How difficult is it to get people to use the tool effectively?
+			</hurdlequestion>
+			<hurdlerationale>
+				Tools that have a steep and tall ramp-up curve may never get a chance to show off their true
+				usefulness, either because the developers give up before they can use them effectively, or because
+				their reputation precedes them and the developers refuse to even try them out.
+			</hurdlerationale>
+			<factor name = 'ui_a' title = 'Adoption Scope'>
+				<factorquestion>
+					How widely does the tool have to be adopted before it's reasonably useful?
+				</factorquestion>
+				<factoroption value = '5'>Useful only if the whole team (or a functional subset) adopts it.</factoroption>
+				<factoroption value = '4'>Useful only if adopted by at least two developers.</factoroption>
+				<factoroption value = '3'>Useful for a single developer.</factoroption>
+			</factor>
+			<factor name = 'ui_v' title = 'Virality'>
+				<factorquestion>
+					Does the tool encourage and facilitate its own propagation?  This can take the form of offering to send invitations to people who are not yet using it, acquiring contact information of potential users, or directly embedding the tool in related messages.
+				</factorquestion>
+				<factoroption value = '1'>Does not have viral properties or is strictly a single-user tool.</factoroption>
+				<factoroption value = '2'>Has viral properties and takes advantage of multiple users.</factoroption>
+			</factor>
+			<factor name = 'ui_s' title = 'Synergy'>
+				<factorquestion>
+					Does the tool's usefulness increase super-linearly with the number of users?  Note that a tool could be useful for a single developer yet still have synergistic effects.
+				</factorquestion>
+				<factoroption value = '1'>Has no synergistic effects as number of users increases.</factoroption>
+				<factoroption value = '2'>Has some synergistic effects as number of users increases.</factoroption>
+			</factor>
+			<factor name = 'ui_l' title = 'Learning Effort'>
+				<factorquestion>
+					How hard is it to learn how to use the tool effectively?  Assume a full-time commitment and no previous experience outside that assumed in the context.
+				</factorquestion>
+				<factoroption value = '4'>Extensive study or classes necessary, more than a week.</factoroption>
+				<factoroption value = '2'>Some study necessary, one day to one week.</factoroption>
+				<factoroption value = '1'>Only minor exploration necessary, one day or less.</factoroption>
+			</factor>
+			<factor name = 'ui_f' title = 'Frequency of Use'>
+				<factorquestion>
+					How often would the tool typically be used?
+				</factorquestion>
+				<factoroption value = '1'>Sporadically.</factoroption>
+				<factoroption value = '2'>Regularly.</factoroption>
+				<factoroption value = '3'>Every day.</factoroption>
+			</factor>
+		</hurdle>
+		<hurdle title = 'Isolation' name = 'IS' incomplete = 'true' synth = '0'>
+			<hurdlequestion>
+				To what degree is the tool closed to adaptation and interoperation?
+			</hurdlequestion>
+			<hurdlerationale>
+				No tool stands alone, and if a tool can't play nice with others, adapt to the team's specific environment,
+				and guarantee that it won't hold its users' data hostage, then it will find a cold welcome among developers.
+				xxx TBD: Extensibility, Data Format Openness, Interoperability?, Compatibility? xxx
+			</hurdlerationale>
+		</hurdle>
+	</tabslider>
+	
+	</vbox>
+</canvas>

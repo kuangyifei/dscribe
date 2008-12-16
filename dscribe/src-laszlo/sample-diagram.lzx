@@ -21,6 +21,7 @@
 							<uml_var><uml_name>y</uml_name><uml_type>Point</uml_type></uml_var>
 						</uml_args>
 						<uml_type>int</uml_type>
+						<attr_override visible='false'/>
 					</uml_operation>
 				</uml_compartment>
 			</uml_class>

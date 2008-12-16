@@ -3,27 +3,29 @@ package com.ideanest.dscribe.mixt;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Iterator;
-
 import org.exist.fluent.*;
 import org.junit.Test;
 
 public abstract class Query {
 	private final String query;
-	private final NamespaceMap namespaceMap = new NamespaceMap();
+	private final NamespaceMap namespaceMap;
 	
 	private Query(Node def, String query) throws RuleBaseException {
 		if (query.trim().isEmpty()) throw new RuleBaseException("query string is empty");
 		this.query = query;
-		for (Iterator<String> it = def.query().all(
-				"for $prefix in in-scope-prefixes($_1) return ($prefix, namespace-uri-for-prefix($prefix, $_1))", def).values().iterator(); it.hasNext(); ) {
-			String prefix = it.next(), namespace = it.next();
-			if (!NamespaceMap.isReservedPrefix(prefix)) namespaceMap.put(prefix, namespace);
-		}
+		this.namespaceMap = def.inScopeNamespaces();
 	}
 	
 	public QName parseQName(String qname) {
 		return QName.parse(qname, namespaceMap);
+	}
+	
+	public NamespaceMap namespaceBindings() {
+		return namespaceMap;
+	}
+	
+	public String contentsAsString() {
+		return query;
 	}
 	
 	protected final QueryService prep(QueryService qs) {
@@ -46,7 +48,7 @@ public abstract class Query {
 	private static String serializeContents(Node node) {
 		StringBuilder buf = new StringBuilder();
 		for (Item item : node.query().all("node()")) buf.append(item);
-		return buf.toString();
+		return buf.toString().replace("&quot;", "\"").replace("&apos;", "'").replace("&gt;", ">").replace("&lt;", "<").replace("&amp;", "&");
 	}
 
 	@Override public boolean equals(Object o) {

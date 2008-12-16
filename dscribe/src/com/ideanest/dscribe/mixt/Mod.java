@@ -90,7 +90,11 @@ public class Mod {
 	 * @return a clone of the given query service with variables from previous blocks bound and namespace map cleared
 	 */
 	public QueryService scope(QueryService qs) {
-		if (qs == null) qs = workspace().query();
+		if (qs == null) {
+			qs = globalScope();
+		} else {
+			qs.importSameModulesAs(globalScope());
+		}
 		return parent.prepScopeClone(qs);
 	}
 	
@@ -213,9 +217,9 @@ public class Mod {
 		}
 	}
 	
-	void analyze() throws TransformException {
+	QueryService.QueryAnalysis analyze() throws TransformException {
 		LOG.debug("analyzing " + this);
-		seg.analyze();
+		return seg.analyze();
 	}
 	
 	@Override public String toString() {
@@ -439,7 +443,17 @@ public class Mod {
 				} else if (value instanceof XMLDocument) {
 					docs = Collections.singleton((XMLDocument) value);
 				} else if (value instanceof ItemList) {
-					docs = ((ItemList) value).nodes().documents();
+					docs = new ArrayList<XMLDocument>();
+					for (Item item : ((ItemList) value)) {
+						if (item instanceof Node) {
+							try {
+								docs.add(((Node) item).document());
+							} catch (UnsupportedOperationException e) {
+								// node may be in-memory, in which case there's no doc to depend on -- that's fine
+							}
+						}
+					}
+					if (docs.isEmpty()) docs = null;
 				}
 				if (docs != null) dependOn(docs, depMod);
 				dependOn(parent.binder(varName), depMod);

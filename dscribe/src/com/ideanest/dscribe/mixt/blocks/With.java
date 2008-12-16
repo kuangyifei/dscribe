@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.util.*;
 
 import org.exist.fluent.*;
+import org.exist.fluent.QueryService.QueryAnalysis;
 import org.junit.Test;
 
 import com.ideanest.dscribe.mixt.*;
@@ -46,9 +47,11 @@ public class With implements BlockType {
 		private class WithSeg extends Seg {
 			WithSeg(Mod mod) {super(mod);}
 			
-			@Override public void analyze() throws TransformException {
-				requiredVariables = query.analyze(mod.globalScope()).requiredVariables();
+			@Override public QueryAnalysis analyze() throws TransformException {
+				QueryAnalysis analysis = query.analyze(mod.globalScope());
+				requiredVariables = analysis.requiredVariables();
 				mod.bindVariable(variableName, null);
+				return analysis;
 			}
 		}
 	}

@@ -1,20 +1,19 @@
-declare function scope($action) {
+function scope($action):
 	if ($action/@scope='diagram') then /id($action/@diagram) else /
-}
 
-declare function specificity($action) {
+
+function specificity($action):
 	(if ($action/@targetSelector = 'by-id') then 2
 		else if ($action/@location != 'any') then 0) +
 	(if ($action/@scope = 'diagram') then 1 else 0)
 
-declare function actionProperties($action) {
+function actionProperties($action):
 	(
 		attribute action {$action/@xml:id},
 		attribute specificity {specificity($action)},
 		attribute serial {$action/@serial},
 		if ($action/@override) then attribute override {} else ()
 	)
-}
 
 
 to deconflict candidate actions
@@ -32,11 +31,12 @@ to deconflict candidate actions
 
 to derive keys for set attribute actions
 	for each $action: /a:candidates/a:set-attribute
-	set: attribute key {concat($action/name(), ".", $action/@target, ".", $action/@attr)}
+	set: attribute key {concat($action/name(), "-", $action/@target, "-", $action/@attr)}
 
 to apply set-attribute actions
 	for each $action: /a:triggers/a:set-attribute
-	set: attribute {$action/@attr} {$action/@value}
+	for each target: /id($action/@target)
+	insert: element attr:override {attribute {$action/@attr} {$action/@value}}
 
 
 ------ Delete Attribute
@@ -90,7 +90,7 @@ to apply convert-accessors-to-attributes
 to derive keys for convert-accessors-to-attributes-helper actions
 	for each $action: /a:candidates/a:convert-accessors-to-attributes-helper
 	for each target: $action
-	set: attribute key {concat($action/name(), ".", $action/@getter, ".", $action/@setter)}
+	set: attribute key {concat($action/name(), "-", $action/@getter, "-", $action/@setter)}
 
 to apply convert-accessors-to-attributes-helper
 	for each $action: /a:triggers/a:convert-accessors-to-attributes-helper
