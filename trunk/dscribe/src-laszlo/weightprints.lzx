@@ -1,0 +1,244 @@
+<library>
+
+	<class name = 'hurdle' extends = 'tabelement' headerheight = '26'>
+		<attribute name = 'title' type = 'string' required = 'true'/>
+		<attribute name = 'synth' type = 'number' required = 'true'/>
+		<attribute name = 'incomplete' type = 'boolean' value = 'true' required = 'true'/>
+		<attribute name = 'weight' type = 'number' value = '${incomplete ? 0 : Math.max(1, Math.min(5, this.synth))}'/>
+		<attribute name = 'defaultplacement' type = 'string' value = 'contents'/>
+		<view placement = 'header' width = '100%' height = '100%' fontsize = '14'>
+			<drawview width = '100%' height = '100%'>
+				<handler name = 'oncontext'>
+					this.clear();
+					this.beginPath();
+					this.rect(0, 0, this.width, this.height);
+					var g = this.createLinearGradient(0, 0, 0, this.height);
+					g.addColorStop(0, 0xFFF6E3);
+					g.addColorStop(1, 0xF0DB8A);
+					this.fillStyle = g;
+					this.fill();
+				</handler>
+			</drawview>
+			<text x = '2' y = '1' text = '${classroot.title}'/>
+			<text x = '${classroot.width - this.width - 2}' y = '1'
+					text = '${classroot.name + ": " + (classroot.incomplete ? "?" : (parseInt(classroot.weight) == classroot.weight ? classroot.weight : parseInt(classroot.weight + 1)))}'/>
+		</view>
+		<vbox name = 'contents' spacing = '10' width = '${immediateparent.width - 5 - (parent.scrollbar.visible ? parent.scrollbar.width : 0)}'/>
+		<vscrollbar name = 'scrollbar' visible = '${this.scrollable}'/>
+	</class>
+	
+	<class name = 'hurdlequestion' extends = 'text' width = '${immediateparent.width}' multiline = 'true' fontsize = '12'/>
+	<class name = 'hurdlerationale' extends = 'text' width = '${immediateparent.width}' multiline = 'true'/>
+	
+	<class name = 'factor' width = '100%' extends = 'vbox' spacing = '2'>
+		<attribute name = 'title' type = 'string' required = 'true'/>
+		<attribute name = 'defaultplacement' type = 'string' value = 'contents'/>
+		<attribute name = 'value' value = '${this.contents.values.value}'/>
+		<text name = 'titleStrip' width = '100%' multiline = 'true' height = '18' fontsize = '12'
+			text = '${"&lt;div align=&apos;center&apos;&gt;&lt;i&gt;" + classroot.title + "&lt;/i&gt;&lt;/div&gt;"}'/>
+		<view bgcolor = '0x000000' width = '100%' height = '1'/>
+		<view height = '3'/>
+		<hbox name = 'contents' width = '100%' spacing = '10'>
+			<view name = 'question' width = '30%'/>
+			<radiogroup name = 'values' width = '${immediateparent.width - this.x}'
+				defaultselection = 'null' y = '2'/>
+		</hbox>
+		<method name = 'determinePlacement' args = 'child, placement, args'>
+			if (!child) return this;
+			if (child.constructor.tagname == 'factorquestion') return this.contents.question;
+			if (child.constructor.tagname == 'factoroption') return this.contents.values;
+			return this.contents;
+		</method>
+	</class>
+	
+	<class name = 'factorquestion' extends = 'text' width = '100%' multiline = 'true'/>
+	<class name = 'factoroption' extends = 'radiobutton' width = '100%'>
+		<text name = '_mltitle' multiline = 'true' bgcolor = '${parent.selected ? 0xffffe0 : 0xffffff}'
+			x = '17' y = '${classroot.text_y}' width = '${parent.width - this.x}' text = '${parent.text}'/>
+		<handler name = 'oninit'>
+			this._title.destroy();
+			this._title = this._mltitle;
+		</handler>
+	</class>
+	
+	<script>
+		function Point(x, y) {
+			this.x = x;
+			this.y = y;
+		};
+		
+		Point.prototype.plus = function(that) {
+			return new Point(this.x + that.x, this.y + that.y);
+		};
+		
+		Point.prototype.reflectedIn = function(pivot) {
+			return new Point(2 * pivot.x - this.x, 2 * pivot.y - this.y);
+		};
+		
+		Point.prototype.toString = function() {
+			return this.x + ', ' + this.y;
+		};
+		
+		Point.polar = function(r, t) {
+			return new Point(r * Math.cos(t), -r * Math.sin(t));
+		};
+	</script>
+	
+	<class name = 'animweight' extends = 'node'>
+		<attribute name = 'weight' type = 'number'/>
+		<attribute name = 'targetWeight' type = 'number'/>
+	</class>
+	
+	<class name = 'weightprint' extends = 'drawview'>
+		<attribute name = 'weights' type = 'expression'/>
+		<attribute name = 'hurdleNames' type = 'expression'/>
+		<attribute name = 'sizeFactor' type = 'number' value = '9'/>
+		<attribute name = 'spreadFactor' type = 'number' value = '20'/>
+		<attribute name = 'spreadJitter' type = 'number' value = '3'/>
+		<attribute name = 'spreadExponent' type = 'number' value = '1.4'/>
+		<attribute name = 'innerSpread' type = 'number' value = '5'/>
+		<attribute name = 'fx' value = '${this.width / 130}'/>
+		<attribute name = 'fy' value = '${this.height / 130}'/>
+		<attribute name = 'cx' value = '${this.width / 2}'/>
+		<attribute name = 'cy' value = '${this.height / 2}'/>
+		<attribute name = 'unassignedWeight' type = 'number' value = '1'/>
+		<attribute name = 'animWeights' type = 'expression' value = 'null'/>
+		
+		<animatorgroup repeat = 'Infinity' attribute = 'unassignedWeight' duration = '3000' process = 'sequential'>
+			<animator from = '1' to = '5'/>
+			<animator from = '5' to = '1'/>
+		</animatorgroup>
+		
+		<handler name = 'oncontext' method = 'redraw'/>
+		<handler name = 'onfx' method = 'redraw'/>
+		<handler name = 'onfy' method = 'redraw'/>
+		<handler name = 'oncx' method = 'redraw'/>
+		<handler name = 'oncy' method = 'redraw'/>
+		<handler name = 'onunassignedWeight' method = 'redraw'/>
+		
+		<handler name = 'onhurdleNames' method = 'buildLabels'/>
+		
+		<handler name = 'onweights'><![CDATA[
+			if (!this.animWeights) this.animWeights = new Array(this.weights.length);
+			for (var i = 0; i < this.weights.length; i++) {
+				if (!this.weights[i]) continue;
+				var animWeight = this.animWeights[i];
+				if (!animWeight) {
+					this.animWeights[i] = animWeight = new lz.animweight(this);
+					animWeight.targetWeight = this.weights[i];
+					animWeight.anim = new lz.animator(animWeight, {
+						attribute: 'weight',
+						from: this.unassignedWeight,
+						to: this.weights[i],
+						duration: 1000,
+						start: true
+					});
+				} else if (animWeight.targetWeight != this.weights[i]) {
+					animWeight.targetWeight = this.weights[i];
+					animWeight.anim.stop();
+					animWeight.anim.setAttribute('from', animWeight.weight);
+					animWeight.anim.setAttribute('to', this.weights[i]);
+					animWeight.anim.doStart();
+				}
+			}
+			this.redraw(null);
+		]]></handler>
+
+		<method name = 'buildLabels' args = '_'><![CDATA[
+			while (this.subviews.length) this.subviews[0].destroy();
+			var inc = Math.PI / this.hurdleNames.length;
+			for (var i = 0; i < this.hurdleNames.length; i++) {
+				var angle = Math.PI / 2 - 2 * i * inc;
+				var pos = Point.polar(this.sizeFactor * 6.4, angle);
+				new lz.text(this, {
+					text: this.hurdleNames[i],
+					x: pos.x * this.fx + this.cx - 10,
+					y: pos.y * this.fy + this.cy - 8,
+					fgcolor: 0xd3d3d3,
+					bgcolor: 0xffffff
+				});
+			}
+			]]></method>
+		
+		<method name = 'redraw' args = '_'><![CDATA[
+			if (!(this.weights && this.weights.length)) return;
+			if (!this.context) return;
+			
+			var inc = Math.PI / this.weights.length;
+
+			this.clear();
+			
+			this.beginPath();
+			var dash = inc / 8;
+			for (var a = 0 - dash / 2; a < Math.PI * 2 - dash / 2; a += dash * 2) {
+				this.arc(this.cx, this.cy, this.sizeFactor * 6.2 * fx, a, a + dash, false);
+			}
+			this.strokeStyle = 0xd3d3d3;
+			this.lineWidth = 1;
+			this.stroke();			
+			
+			this.beginPath();
+			for (var i = 0; i < this.weights.length; i++) {
+				var angle = Math.PI / 2 - 2 * i * inc;
+				for (var j = 2; j <= 5; j++) {
+					this.move(Point.polar(this.sizeFactor * j, angle).plus(Point.polar(0.75, angle + Math.PI / 2)));
+					this.line(Point.polar(this.sizeFactor * j, angle).plus(Point.polar(0.75, angle - Math.PI / 2)));
+				}
+			}
+			this.strokeStyle = 0xd3d3d3;
+			this.lineWidth = 1;
+			this.stroke();
+			
+			this.beginPath();
+			
+			var prevLo = Point.polar(this.sizeFactor, Math.PI / 2 + inc);
+			var prevLoCtrl = Point.polar(this.innerSpread, Math.PI + inc).plus(prevLo);
+			this.move(prevLo);
+			
+			for (var i = 0; i < this.weights.length; i++) {
+				var weight = this.weights[i] ? this.animWeights[i].weight : this.unassignedWeight;
+				var angle = Math.PI / 2 - 2 * i * inc;
+				var hi = Point.polar(this.sizeFactor * weight, angle);
+				var hiCtrl = Point.polar(
+						(this.spreadFactor + (Math.random() - 0.5) * this.spreadJitter * 2)
+						* Math.pow(weight, this.spreadExponent) / weights.length,
+						angle + Math.PI / 2).plus(hi);
+				var lo = Point.polar(this.sizeFactor, angle - inc);
+				var loCtrl = Point.polar(this.innerSpread, angle - inc + Math.PI / 2).plus(lo);
+				var flippedPrevLoCtrl = prevLoCtrl.reflectedIn(prevLo);
+				this.bezier(flippedPrevLoCtrl, hiCtrl, hi);
+				var flippedHiCtrl = hiCtrl.reflectedIn(hi);
+				this.bezier(flippedHiCtrl, loCtrl, lo);
+				prevLo = lo;
+				prevLoCtrl = loCtrl;
+			}
+			
+			this.closePath();
+			this.strokeStyle = 0x000000;
+			this.lineWidth = 4;
+			this.stroke();
+			var gradient = this.createRadialGradient(this.cx, this.cy, 0, this.cx, this.cy, this.cx);
+			gradient.addColorStop(0.15, 0xffff00);
+			gradient.addColorStop(0.85, 0x008000);
+			this.fillStyle = gradient;
+			this.fill();
+		]]></method>
+		
+		<method name = 'bezier' args = 'ctrl1, ctrl2, pt'>
+			this.bezierCurveTo(
+					ctrl1.x * this.fx + this.cx, ctrl1.y * this.fy + this.cy,
+					ctrl2.x * this.fx + this.cx, ctrl2.y * this.fy + this.cy,
+					pt.x * this.fx + this.cx, pt.y * this.fy + this.cy);
+		</method>
+		
+		<method name = 'move' args = 'pt'>
+			this.moveTo(pt.x * this.fx + this.cx, pt.y * this.fy + this.cy);
+		</method>
+		
+		<method name = 'line' args = 'pt'>
+			this.lineTo(pt.x * this.fx + this.cx, pt.y * this.fy + this.cy);
+		</method>
+	</class>
+	
+</library>
+

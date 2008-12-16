@@ -16,6 +16,7 @@ import org.junit.*;
 import org.junit.runner.RunWith;
 
 import com.ideanest.dscribe.mixt.blocks.*;
+import com.ideanest.dscribe.mixt.test.Matchers;
 
 
 public class Engine {
@@ -41,7 +42,7 @@ public class Engine {
 	private final Map<String,Rule> ruleMap = new HashMap<String,Rule>();
 	private final List<Rule> rules = new ArrayList<Rule>();
 	
-	private final Folder workspace;
+	private final Folder workspace, modulespace;
 	private final QueryService globalScope;
 	private final QueryService utilQuery;
 	private final Node modStore;
@@ -57,11 +58,16 @@ public class Engine {
 		modCountFormatter = Counter.english("mod", "mods", null),
 		affectedCountFormatter = Counter.english("affected element", "affected elements", null);
 	
-	public Engine(Resource rulespace, Resource prevrulespace, Folder workspace, Node modStore) throws RuleBaseException {
+	public Engine(Folder rulespace, Resource prevrulespace, Folder workspace, Node modStore) throws RuleBaseException {
 		LOG.debug("initializing engine");
 		
 		this.workspace = workspace;
 		this.workspace.namespaceBindings().put("mod", Engine.MOD_NS);
+		
+		// TODO: putting modulespace into a shared rulespace would blow up concurrent engine runs
+		this.modulespace = rulespace.children().create("modules");
+		for (Document doc : this.modulespace.documents()) doc.delete();
+		
 		utilQuery = workspace.database().query();
 		// Need to clone the workspace to avoid wiping out namespace bindings of the folder's shared query service.
 		globalScope = workspace.cloneWithoutNamespaceBindings().query();
@@ -76,9 +82,10 @@ public class Engine {
 		
 		this.sortController = new SortController(this, modifiedDocs.anchor());
 
+		Collection<QName> namesOfModifiedFunctions = parseFunctions(rulespace, prevrulespace);
 		invalidateIncompatibleBlocks(prevrulespace);
 		assignRuleIds(rulespace, prevrulespace);
-		parseRules(rulespace, prevrulespace);
+		parseRules(rulespace, prevrulespace, namesOfModifiedFunctions);
 		
 		LOG.debug("withdrawing mods of obsolete rules");
 		withdrawMods(modStore.query().unordered("for $mods in mods where not(exists($_1/id($mods/@rule))) return $mods", rulespace));
@@ -95,6 +102,7 @@ public class Engine {
 		this.workspace = workspace;
 		utilQuery = workspace.database().query();
 		globalScope = workspace.cloneWithoutNamespaceBindings().query();
+		this.modulespace = workspace.database().createFolder("/modules-temp");
 		if (modStore != null) {
 			modStore.namespaceBindings().clear();
 			modStore.namespaceBindings().put("", Engine.MOD_NS);
@@ -103,13 +111,150 @@ public class Engine {
 		this.modStore = modStore;
 		sortController = new SortController(this, modifiedDocs.anchor());
 	}
+	
+	private static class PrevFunctionInfo {
+		final QName name;
+		final Query.Items query;
+		final String args;		
+		PrevFunctionInfo(Node def) throws RuleBaseException {
+			this.query = new Query.Items(def);
+			this.name = query.parseQName(def.query().single("@name").value());
+			this.args = def.query().optional("@args").valueWithDefault("");
+		}
+	}
+	
+	private static class FunctionInfo extends PrevFunctionInfo {
+		private final Collection<QName> referencedFunctionNames;
+		private final Collection<FunctionInfo> referencedFunctions = new ArrayList<FunctionInfo>();
+		private boolean modified;
+		
+		FunctionInfo(Node def) throws RuleBaseException {
+			super(def);
+			if (!query.namespaceBindings().equals(def.query().single("..").node().inScopeNamespaces())) {
+				throw new RuleBaseException("function " + name + " must not declare additional namespace bindings");
+			}
+			this.referencedFunctionNames = query.analyze(def.database().query()).requiredFunctions();
+		}
+		
+		void initModified(Map<QName, PrevFunctionInfo> prevFunctions) {
+			PrevFunctionInfo prevFnInfo = prevFunctions.get(name);
+			this.modified = !(prevFnInfo != null && args.equals(prevFnInfo.args) && query.equals(prevFnInfo.query));
+		}
+		
+		void resolveReferencedFunctions(Map<QName, FunctionInfo> functions) {
+			for (QName refName : referencedFunctionNames) {
+				FunctionInfo refFnInfo = functions.get(refName);
+				if (refFnInfo != null) referencedFunctions.add(refFnInfo);
+			}
+		}
+		
+		boolean propagateModified() {
+			if (!this.modified) {
+				for (FunctionInfo refFnInfo : referencedFunctions) {
+					if (refFnInfo.modified) {
+						modified = true;
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+		
+		boolean isModified() {
+			return modified;
+		}
+		
+		void appendTo(StringBuilder source) {
+			source.append("declare function " + name.getTag() + "(" + args + ") {\n");
+			source.append(query.contentsAsString());
+			source.append("\n};\n");
+		}
+		
+		void appendModuleHeaderTo(StringBuilder source) throws RuleBaseException {
+			// TODO: should escape characters when writing out namespaces
+			if (name.getPrefix() == null || name.getPrefix().isEmpty()) {
+				throw new RuleBaseException("function namespace " + name.getNamespaceURI() + " must be assigned to a prefix");
+			}
+			source.append("module namespace " + name.getPrefix() + " = '" + name.getNamespaceURI() + "';\n");
+			for (Map.Entry<String, String> entry : query.namespaceBindings().getCombinedMap().entrySet()) {
+				if (entry.getValue().equals(name.getNamespaceURI())) continue;
+				if (entry.getKey().isEmpty()) {
+					source.append("declare default element namespace '" + entry.getValue() + "';\n");					
+				} else {
+					source.append("declare namespace " + entry.getKey() + " = '" + entry.getValue() + "';\n");
+				}
+			}
+		}
+	}
+	
+	private Set<QName> parseFunctions(Resource rulespace, Resource prevrulespace) throws RuleBaseException {
+		LOG.debug("parsing functions");
+		
+		Map<QName, FunctionInfo> functions = new TreeMap<QName, FunctionInfo>();
+		for (Node def : rulespace.query().all("//function").nodes()) {
+			FunctionInfo fnInfo = new FunctionInfo(def);
+			if (functions.containsKey(fnInfo.name)) {
+				throw new RuleBaseException("function overloading not yet supported: " + fnInfo.name.getTag());
+			}
+			functions.put(fnInfo.name, fnInfo);
+		}
+		
+		assembleFunctionModules(functions);		
+		Set<QName> namesOfModifiedFunctions = analyzeModifiedFunctions(prevrulespace, functions);
+		
+		LOG.debug("parsed " + functions.size() + " functions");
+		return namesOfModifiedFunctions;
+	}
+	
+	private void assembleFunctionModules(Map<QName, FunctionInfo> functions) throws RuleBaseException {
+		Map<String, StringBuilder> moduleSources = new TreeMap<String, StringBuilder>();
+		for (FunctionInfo fnInfo : functions.values()) {
+			final String namespaceURI = fnInfo.name.getNamespaceURI();
+			StringBuilder source = moduleSources.get(namespaceURI);
+			if (source == null) {
+				source = new StringBuilder();
+				moduleSources.put(namespaceURI, source);
+				fnInfo.appendModuleHeaderTo(source);
+			}
+			fnInfo.appendTo(source);
+		}
+		for (StringBuilder source : moduleSources.values()) {
+			Document doc = modulespace.documents().load(Name.generate(".xq"), Source.blob(source.toString()));
+			globalScope.importModule(doc);
+		}
+	}
+	
+	private Set<QName> analyzeModifiedFunctions(Resource prevrulespace, Map<QName, FunctionInfo> functions) throws RuleBaseException {
+		Map<QName, PrevFunctionInfo> prevFunctions = new HashMap<QName, PrevFunctionInfo>();
+		for (Node def : prevrulespace.query().unordered("//function").nodes()) {
+			PrevFunctionInfo prevFnInfo = new PrevFunctionInfo(def);
+			prevFunctions.put(prevFnInfo.name, prevFnInfo);
+		}
+		
+		for (FunctionInfo fnInfo : functions.values()) {
+			fnInfo.initModified(prevFunctions);
+			fnInfo.resolveReferencedFunctions(functions);
+		}
+		
+		boolean changed;
+		do {
+			changed = false;
+			for (FunctionInfo fnInfo : functions.values()) changed |= fnInfo.propagateModified();
+		} while (changed);
+		
+		Set<QName> namesOfModifiedFunctions = new TreeSet<QName>();
+		for (FunctionInfo fnInfo : functions.values()) {
+			if (fnInfo.isModified()) namesOfModifiedFunctions.add(fnInfo.name);
+		}
+		return namesOfModifiedFunctions;
+	}
 
-	private void parseRules(Resource rulespace, Resource prevrulespace) throws RuleBaseException {
+	private void parseRules(Resource rulespace, Resource prevrulespace, Collection<QName> namesOfModifiedFunctions) throws RuleBaseException {
 		LOG.debug("parsing rules");
 		ItemList ruleItems = rulespace.query().all("//rule");
 		for (Node ruleDef : ruleItems.nodes()) {
 			Node prevDef = prevrulespace.query().optional("/id($_1/@xml:id)", ruleDef).node();
-			Rule rule = new Rule(ruleDef, prevDef, this, modifiedDocs.anchor());
+			Rule rule = new Rule(ruleDef, prevDef, this, modifiedDocs.anchor(), namesOfModifiedFunctions);
 			ruleMap.put(rule.id, rule);
 			rules.add(rule);
 		}
@@ -213,6 +358,9 @@ public class Engine {
 
 	Folder workspace() {return workspace;}
 	QueryService globalScope() {return globalScope;}
+	QueryService customScope(Collection<? extends Resource> context) {
+		return globalScope.database().query(context).importSameModulesAs(globalScope);
+	}
 	QueryService utilQuery() {return utilQuery;}
 	Node modStore() {return modStore;}
 	public Stats stats() {return stats;}
@@ -418,6 +566,85 @@ public class Engine {
 			assertFalse(Engine.isSameVersionAs(db.getFolder("/")));
 		}
 		
+		@Test public void analyzeModifiedFunctions() throws RuleBaseException {
+			String ns_x = "http://example.com", ns_y = "http://ideanest.com";
+			rulespace.documents().load(Name.generate(), Source.xml(
+					"<rules xmlns='" + Engine.RULES_NS + "' xmlns:x='" + ns_x + "' xmlns:y='" + ns_y + "'>" +
+					"	<function name = 'x:f1'> /foo </function>" +
+					"	<function name = 'x:f2' args = '$a'> /bar[@a=$a] </function>" +
+					"	<function name = 'x:f3'> x:f1() </function>" +
+					"	<function name = 'x:f4'> /foo </function>" +
+					"	<function name = 'x:f5'> /foo </function>" +
+					"	<function name = 'x:f6'> x:f4() </function>" +
+					"	<function name = 'x:f7'> x:f6() </function>" +
+					"	<function name = 'x:f8'> /foo </function>" +
+					"	<function name = 'x:f9' args = '$a, $b'> /bar[@a=$a][@b=$b] </function>" +
+					"</rules>"
+			));
+			prevrulespace.documents().load(Name.generate(), Source.xml(
+					"<rules xmlns='" + Engine.RULES_NS + "' xmlns:x='" + ns_x + "' xmlns:y='" + ns_y + "'>" +
+					"	<function name = 'x:f1'> /foo </function>" +
+					"	<function name = 'x:f2' args = '$a'> /bar[@a=$a] </function>" +
+					"	<function name = 'x:f3'> x:f1() </function>" +
+					"	<function name = 'x:f4'> /bar </function>" +
+					"	<function name = 'x:f6'> x:f4() </function>" +
+					"	<function name = 'x:f7'> x:f6() </function>" +
+					"	<function name = 'y:f8'> /foo </function>" +
+					"	<function name = 'x:f9' args = '$b, $a'> /bar[@a=$a][@b=$b] </function>" +
+					"</rules>"
+			));
+			Collection<FunctionInfo> defs = new ArrayList<Engine.FunctionInfo>();
+			for (Node node : rulespace.query().all("//function").nodes()) {
+				defs.add(new FunctionInfo(node));
+			}
+			Map<QName, FunctionInfo> functions = new TreeMap<QName, Engine.FunctionInfo>();
+			for (FunctionInfo fnInfo : defs) functions.put(fnInfo.name, fnInfo);
+			Engine engine = new Engine(workspace, null);
+			assertThat(
+					engine.analyzeModifiedFunctions(prevrulespace, functions),
+					Matchers.collection(
+							new QName(ns_x, "f4", null), new QName(ns_x, "f5", null), new QName(ns_x, "f6", null),
+							new QName(ns_x, "f7", null), new QName(ns_x, "f8", null), new QName(ns_x, "f9", null)));
+		}
+		
+		@Test public void assembleFunctionModules() throws RuleBaseException {
+			String ns_x = "http://example.com", ns_y = "http://ideanest.com";
+			rulespace.documents().load(Name.generate(), Source.xml(
+					"<rules xmlns='" + Engine.RULES_NS + "' xmlns:x='" + ns_x + "' xmlns:y='" + ns_y + "'>" +
+					"	<function name = 'x:f1'> /foo </function>" +
+					"	<function name = 'y:f8'> /foo </function>" +
+					"	<function name = 'x:f9' args = '$b, $a'> /bar[@a=$a][@b=$b] </function>" +
+					"</rules>"
+			));
+			Collection<FunctionInfo> defs = new ArrayList<Engine.FunctionInfo>();
+			for (Node node : rulespace.query().all("//function").nodes()) {
+				defs.add(new FunctionInfo(node));
+			}
+			Map<QName, FunctionInfo> functions = new TreeMap<QName, Engine.FunctionInfo>();
+			for (FunctionInfo fnInfo : defs) functions.put(fnInfo.name, fnInfo);
+			Engine engine = new Engine(workspace, null);
+			engine.assembleFunctionModules(functions);
+			Collection<String> modules = new ArrayList<String>();
+			for (Document doc : engine.modulespace.documents()) modules.add(doc.contentsAsString());
+			assertThat(modules, Matchers.collection(
+					"module namespace x = '" + ns_x + "';\n" +
+						"declare default element namespace '" + Engine.RULES_NS + "';\n" +
+						"declare namespace y = '" + ns_y + "';\n" +
+						"declare function x:f1() {\n" +
+						" /foo \n" +
+						"};\n" +
+						"declare function x:f9($b, $a) {\n" +
+						" /bar[@a=$a][@b=$b] \n" +
+						"};\n",
+					"module namespace y = '" + ns_y + "';\n" +
+						"declare default element namespace '" + Engine.RULES_NS + "';\n" +
+						"declare namespace x = '" + ns_x + "';\n" +
+						"declare function y:f8() {\n" +
+						" /foo \n" +
+						"};\n"
+			));
+		}
+		
 		@Test public void parseRules() throws RuleBaseException, IllegalArgumentException, IllegalAccessException {
 			rulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
@@ -426,7 +653,7 @@ public class Engine {
 			));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + Engine.MOD_NS + "'/>")).root();
 			Engine engine = new Engine(workspace, modStore);
-			engine.parseRules(rulespace, prevrulespace);
+			engine.parseRules(rulespace, prevrulespace, new ArrayList<QName>());
 			assertEquals(1, engine.rules.size());
 			assertSame(engine.rules.get(0), engine.ruleMap.get("r1"));
 			assertEquals(0, firstDifferentStage.get(engine.rules.get(0)));

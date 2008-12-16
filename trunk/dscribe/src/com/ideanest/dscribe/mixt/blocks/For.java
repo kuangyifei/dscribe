@@ -7,6 +7,7 @@ import static org.junit.Assert.*;
 import java.util.*;
 
 import org.exist.fluent.*;
+import org.exist.fluent.QueryService.QueryAnalysis;
 import org.junit.Test;
 
 import com.ideanest.dscribe.mixt.*;
@@ -137,9 +138,11 @@ public class For implements BlockType {
 				if (variableName != null) mod.bindVariable(variableName, value);
 			}
 			
-			@Override public void analyze() throws TransformException {
-				requiredVariables = query.analyze(mod.globalScope()).requiredVariables();
+			@Override public QueryAnalysis analyze() throws TransformException {
+				QueryAnalysis analysis = query.analyze(mod.globalScope());
+				requiredVariables = analysis.requiredVariables();
 				bindVariable(null);
+				return analysis;
 			}
 			
 		}

@@ -6,6 +6,7 @@ import static org.junit.Assert.*;
 import java.util.*;
 
 import org.exist.fluent.*;
+import org.exist.fluent.QueryService.QueryAnalysis;
 import org.jmock.*;
 import org.junit.Test;
 
@@ -75,8 +76,10 @@ public class Sort implements BlockType {
 		
 		private class SortSeg extends Seg {
 			SortSeg(Mod mod) {super(mod);}
-			@Override public void analyze() throws TransformException {
-				requiredVariables = query.analyze(mod.globalScope()).requiredVariables();
+			@Override public QueryAnalysis analyze() throws TransformException {
+				QueryAnalysis analysis = query.analyze(mod.globalScope());
+				requiredVariables = analysis.requiredVariables();
+				return analysis;
 			}
 		}
 	}

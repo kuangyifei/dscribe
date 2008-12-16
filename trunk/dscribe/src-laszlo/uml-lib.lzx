@@ -7,7 +7,23 @@
 
 <resource name = 'iconDelete' src = 'icons/delete_obj.gif'/>
 
-<class name = 'uml_diagram' showhandcursor = 'false' width = '${immediateparent.width}' height = '${immediateparent.height}'>
+<class name = 'attr_override' extends = 'state' applied='true'>
+	<attribute name = 'visible' type = 'boolean'/>
+</class>
+
+<class name = 'uml_view'>
+	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
+	<method name = 'determinePlacement' args = 'child, placement, args'><![CDATA[
+		if (child && child.constructor.tagname.startsWith('uml_')) {
+			return super.determinePlacement(child, placement, args);
+		} else {
+			return this;
+		}
+	]]></method>
+</class>
+
+<class name = 'uml_diagram'
+		showhandcursor = 'false' width = '${immediateparent.width}' height = '${immediateparent.height}'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'title' type = 'string'/>
 	<attribute name = 'xml_id' type = 'string'/>
@@ -21,7 +37,7 @@
 	</method>
 </class>
 
-<class name = 'uml_class'
+<class name = 'uml_class' extends = 'uml_view'
 		onmousedown = 'dragger.apply()'
 		onmouseup = 'dragger.remove()'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
@@ -73,7 +89,7 @@
     ]]></method>
 </class>
 
-<class name = 'uml_blockname'>
+<class name = 'uml_blockname' extends = 'uml_view'>
 	<attribute name = 'text' type = 'text'/>
 	<attribute name = 'xml_id' type = 'string'/>
 	<rollovertext name = 'contents'
@@ -87,7 +103,7 @@
 		side = 'right'/>
 </class>
 
-<class name = 'uml_compartment'>
+<class name = 'uml_compartment' extends = 'uml_view'>
 	<attribute name = 'kind' type = 'string'/>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'xml_id' type = 'string'/>
@@ -96,7 +112,7 @@
 	<faderect target = '$once{parent.contents}' side = 'right'/>
 </class>
 
-<class name = 'uml_member'
+<class name = 'uml_member' extends = 'uml_view'
 		width = '${immediateparent.width}' clip = 'true' opacity = '0.5'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'xml_id' type = 'string'/>

@@ -9,6 +9,7 @@ import java.security.*;
 import java.util.*;
 
 import org.exist.fluent.*;
+import org.exist.fluent.QueryService.QueryAnalysis;
 import org.jmock.Expectations;
 import org.junit.Test;
 
@@ -124,8 +125,10 @@ public class Insert implements BlockType {
 			
 			InsertSeg(Mod mod) {super(mod);}
 			
-			@Override public void analyze() throws TransformException {
-				requiredVariables = query.analyze(mod.globalScope()).requiredVariables();
+			@Override public QueryAnalysis analyze() throws TransformException {
+				QueryAnalysis analysis = query.analyze(mod.globalScope());
+				requiredVariables = analysis.requiredVariables();
+				return analysis;
 			}
 			
 			@Override public void restore() throws TransformException {

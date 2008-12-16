@@ -16,7 +16,7 @@ public class CompactFormTranslator {
 	
 	private static final Pattern INDENT_PATTERN = Pattern.compile("^(\\s*)(.*)$");
 	private static final Pattern RULE_PATTERN = Pattern.compile("^rule (.*?)( \\[(.+)\\])?$");
-	private static final Pattern FUNCTION_PATTERN = Pattern.compile("^function (.*?)\\s*\\(\\s*(\\$\\w+\\s*(\\,\\s*\\$\\w+\\s*)*)?\\)\\s*$");
+	private static final Pattern FUNCTION_PATTERN = Pattern.compile("^function (.*?)\\s*\\(\\s*(\\$\\w+\\s*(\\,\\s*\\$\\w+\\s*)*)?\\)\\s*:");
 
 	private CompactFormTranslator() {}
 	
@@ -66,7 +66,7 @@ public class CompactFormTranslator {
 				}
 			}
 			if (inTextRun) {
-				buf.append(indent.substring(textIndent.length())).append(content).append("\n");
+				buf.append(indent.substring(textIndent.length())).append(escapeXMLChars(content)).append("\n");
 				needIndentedText = false;
 			} else {
 				int k = content.indexOf(':');
@@ -84,9 +84,9 @@ public class CompactFormTranslator {
 					boolean parseText = false;
 					if (keyword.equals("function")) {
 						if (indents.size() != 1) throw new ParseException("function definitions must be at outermost level, but found a nested one on line " + lineNumber + ":\n" + line, indent.length());
-						if (k == -1) throw new ParseException("function definitions must have text content on line " + lineNumber + ":\n" + line, indent.length());
-						Matcher functionMatcher = FUNCTION_PATTERN.matcher(content.substring(0, k));
-						if (!functionMatcher.matches()) throw new ParseException("function definition syntax doesn't match 'function <function name>(<arg1>, <arg2>, ...' on line " + lineNumber + ":\n" + line, indent.length());
+						Matcher functionMatcher = FUNCTION_PATTERN.matcher(content);
+						if (!functionMatcher.lookingAt()) throw new ParseException("function definition syntax doesn't match 'function <function name>(<arg1>, <arg2>, ...' on line " + lineNumber + ":\n" + line, indent.length());
+						k = functionMatcher.end() - 1;
 						buf.append("<rules:function");
 						buf.append(" name='").append(functionMatcher.group(1)).append("'");
 						if (functionMatcher.group(2) != null) buf.append(" args='").append(functionMatcher.group(2)).append("'");
@@ -118,7 +118,7 @@ public class CompactFormTranslator {
 						tags.addFirst(keyword);
 						if (specParts.length % 2 != 1) throw new ParseException("unpaired attribute on line " + lineNumber + ":\n" + line, indent.length());
 						for (int i=1; i<specParts.length; i+=2) {
-							buf.append(" " + specParts[i] + "='" + specParts[i+1] + "'");
+							buf.append(" " + specParts[i] + "='" + escapeXMLChars(specParts[i+1]) + "'");
 						}
 						buf.append(">");
 						parseText = true;
@@ -129,7 +129,7 @@ public class CompactFormTranslator {
 							inTextRun = true;
 							needIndentedText = true;
 						} else {
-							buf.append(text);
+							buf.append(escapeXMLChars(text));
 						}
 					}
 				}
@@ -139,6 +139,10 @@ public class CompactFormTranslator {
 		while (tags.size() > 0) buf.append("</rules:" + tags.removeFirst() + ">");
 		buf.append("</rules:rules>");
 		return Source.xml(buf.toString());
+	}
+	
+	private static String escapeXMLChars(String raw) {
+		return raw.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("'", "&apos;").replace("\"", "&quot;");
 	}
 	
 	@Deprecated @DatabaseTestCase.ConfigFile("test/conf.xml")
@@ -207,6 +211,16 @@ public class CompactFormTranslator {
 			captureOutput();
 			_("<rules:rules xmlns:rules='" + Engine.RULES_NS + "'>");
 			_("	<rules:function name='foo' args='$a1, $a2'>x</rules:function>");
+			_("</rules:rules>");
+			translateAndCheck();
+		}
+		
+		@Test public void functionDeclarationQName() throws IOException, ParseException {
+			captureInput();
+			_("function bar:foo($a1, $a2): x");
+			captureOutput();
+			_("<rules:rules xmlns:rules='" + Engine.RULES_NS + "'>");
+			_("	<rules:function name='bar:foo' args='$a1, $a2'>x</rules:function>");
 			_("</rules:rules>");
 			translateAndCheck();
 		}
@@ -311,11 +325,11 @@ public class CompactFormTranslator {
 		@Test public void blockWithInlineText() throws IOException, ParseException {
 			captureInput();
 			_("rule do something or other [r1]");
-			_("	for: foo bar bar : is blah");
+			_("	for: foo bar bar : is < blah");
 			captureOutput();
 			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something or other'>");
-			_("		<rules:for>foo bar bar : is blah</rules:for>");
+			_("		<rules:for>foo bar bar : is &lt; blah</rules:for>");
 			_("	</rules:rule>");
 			_("</rules:rules>");
 			translateAndCheck();
@@ -328,7 +342,7 @@ public class CompactFormTranslator {
 			captureOutput();
 			_("<rules:rules xmlns:rules='"+ Engine.RULES_NS + "'>");
 			_("	<rules:rule xml:id='r1' name='do something or other'>");
-			_("		<rules:insert><bar/></rules:insert>");
+			_("		<rules:insert>&lt;bar/&gt;</rules:insert>");
 			_("	</rules:rule>");
 			_("</rules:rules>");
 			translateAndCheck();

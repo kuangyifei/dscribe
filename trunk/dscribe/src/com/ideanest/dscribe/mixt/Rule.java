@@ -10,7 +10,6 @@ import java.util.*;
 import org.apache.log4j.Logger;
 import org.exist.fluent.*;
 import org.exist.storage.DBBroker;
-import org.hamcrest.*;
 import org.jmock.*;
 import org.jmock.integration.junit4.*;
 import org.jmock.lib.legacy.ClassImposteriser;
@@ -81,11 +80,11 @@ public class Rule {
 	private Set<Document> touched = new HashSet<Document>();
 	private final Accumulator.Locator<XMLDocument> modifiedDocsLocator;
 	private int firstDifferentStage;
-	private final Mod rootMod;
+	private final Node rootModNode;
 
 	private Shim self;  // for testing only
 
-	Rule(Node def, Node prevDef, Engine engine, Accumulator.Locator<XMLDocument> modifiedDocsLocator) throws RuleBaseException {
+	Rule(Node def, Node prevDef, Engine engine, Accumulator.Locator<XMLDocument> modifiedDocsLocator, Collection<QName> namesOfModifiedFunctions) throws RuleBaseException {
 		this.engine = engine;
 		this.modifiedDocsLocator = modifiedDocsLocator;
 		initDefaultShim();
@@ -101,13 +100,13 @@ public class Rule {
 		toString = buildToString(def.query().optional("@name").value());
 		LOG.debug("reading in " + this);
 		
-		rootMod = Mod.bootstrap(this);
-		rootMod.node().namespaceBindings().put("", Engine.MOD_NS);
-		firstDifferentStage = parseBlocks(def, prevDef);
+		rootModNode = self.rootMod().node();
+
+		firstDifferentStage = parseBlocks(def, prevDef, namesOfModifiedFunctions);
 		
 		if (firstDifferentStage < Integer.MAX_VALUE) {
 			LOG.info(this + " has changed starting at stage " + firstDifferentStage + ", withdrawing affected mods");
-			engine.withdrawMods(rootMod.node().query().unordered(".//mod[xs:integer(@stage) >= $_1]", firstDifferentStage));
+			engine.withdrawMods(rootModNode.query().unordered(".//mod[xs:integer(@stage) >= $_1]", firstDifferentStage));
 		}
 	}
 
@@ -116,8 +115,8 @@ public class Rule {
 		this.engine = engine;
 		this.modifiedDocsLocator = modifiedDocsLocator;
 		this.id = "r1";
+		rootModNode = null;
 		toString = "rule[r1]";
-		this.rootMod = null;
 		initDefaultShim();
 	}
 
@@ -161,33 +160,39 @@ public class Rule {
 	 * @param def this rule's definition node, of which the block definitions are the children
 	 * @param prevDef the previous version of the rule's definition block; cannot be <code>null</code>, but
 	 * 		can be an inexistent node
+	 * @param namesOfModifiedFunctions names of any custom functions whose definitions might have
+	 * 		changed since the last run
 	 * @return the index of the first block whose definition differs from the previous version, or
 	 * 		<code>Integer.MAX_VALUE</code> if both versions of the rule are exactly the same
 	 * @throws RuleBaseException if unable to instantiate a block from its definition at any point
 	 */
-	private int parseBlocks(Node def, Node prevDef) throws RuleBaseException {
+	private int parseBlocks(Node def, Node prevDef, Collection<QName> namesOfModifiedFunctions) throws RuleBaseException {
 		int firstDiff = Integer.MAX_VALUE;
 		try {
 			Mod mod = self.rootMod();
 			Iterator<Node> prevBlocksIterator = prevDef.query().all("* except alias").nodes().iterator();
 			for (Node blockDef : def.query().all("* except alias").nodes()) {
 				
+				Block block = defineBlock(blockDef);
+				mod = mod.deriveChild(block, block instanceof KeyBlock ? "fakeKey" : null);		// a bogus key, just to make the mod believable
+				QueryService.QueryAnalysis analysis = mod.analyze();
+
 				if (firstDiff == Integer.MAX_VALUE) {
 					Node prevBlockDef = prevBlocksIterator.hasNext() ? prevBlocksIterator.next() : null;
-					if (prevBlockDef == null || !equalBlocks(blockDef, prevBlockDef)) {
+					if (prevBlockDef == null || !equalBlocks(blockDef, prevBlockDef)
+							|| !Collections.disjoint(analysis.requiredFunctions(), namesOfModifiedFunctions)) {
 						if (LOG.isDebugEnabled()) {
 							LOG.debug(
 									this + " blocks differ at stage " + blocks.size() + ";\n" +
 									"--- current block:\n" + blockDef + " with ns prefixes " + blockDef.query().all("in-scope-prefixes(.)") + "\n" +
-									"--- previous block:\n" + prevBlockDef + (prevBlockDef == null ? "" : " with ns prefixes " + prevBlockDef.query().all("in-scope-prefixes(.)")));
+									"--- previous block:\n" + prevBlockDef + (prevBlockDef == null ? "" : " with ns prefixes " + prevBlockDef.query().all("in-scope-prefixes(.)")) + "\n" +
+									"--- required functions:\n" + analysis.requiredFunctions() + "\n" +
+									"--- modified functions:\n" + namesOfModifiedFunctions);
 						}
 						firstDiff = blocks.size();
 					}
 				}
 				
-				Block block = defineBlock(blockDef);
-				mod = mod.deriveChild(block, block instanceof KeyBlock ? "fakeKey" : null);		// a bogus key, just to make the mod believable
-				mod.analyze();
 				blocks.add(block);
 				
 			}
@@ -282,7 +287,7 @@ public class Rule {
 			try {
 				self.verifyMods(modifiedDocs);
 				touched.addAll(modifiedDocs);
-				touchedScope = engine.globalScope().database().query(touched);
+				touchedScope = engine.customScope(touched);
 			} catch (TransformException e) {
 				// inconsistent state, rule withdrawn, do global processing after all
 			}
@@ -306,7 +311,7 @@ public class Rule {
 		LOG.debug(this + " restoring mods in progress at stage " + stage);
 		boolean mustRestore = blocks.get(stage + 1) instanceof KeyBlock;
 		if (stage == -1) {
-			if (mustRestore || !self.rootMod().node().query().exists("mod")) mods.add(self.rootMod());
+			if (mustRestore || !rootModNode.query().exists("mod")) mods.add(self.rootMod());
 			return;
 		}
 		
@@ -347,6 +352,8 @@ public class Rule {
 	}
 
 	private Mod bootstrapMod() {
+		Mod rootMod = Mod.bootstrap(this);
+		rootMod.node().namespaceBindings().put("", Engine.MOD_NS);
 		return rootMod;
 	}
 	
@@ -366,7 +373,7 @@ public class Rule {
 		
 		Collection<String> modifiedDocsNames = convertDocsToNames(modifiedDocs);
 		
-		ItemList modsToVerify = rootMod.node().query().unordered(
+		ItemList modsToVerify = rootModNode.query().unordered(
 				".//mod[dependency/@doc=$_1]", modifiedDocsNames);
 		if (modsToVerify.size() == 0) {
 			LOG.debug("no mods to verify");
@@ -487,8 +494,7 @@ public class Rule {
 			Rule rule = new Rule(
 					makeRule("xml:id='r1' name='myrule'", "<create-doc>foobar</create-doc>"),
 					makeRule("xml:id='r1' name='myrule'", "<create-doc>foobar</create-doc>"),
-					engine,
-					null);
+					engine, null, new ArrayList<QName>());
 			assertThat(rule.toString(), containsString("r1"));
 			assertThat(rule.toString(), containsString("myrule"));
 		}
@@ -497,8 +503,7 @@ public class Rule {
 			Rule rule = new Rule(
 					makeRule("xml:id='r1'", "<create-doc>foobar</create-doc>"),
 					makeRule("xml:id='r1'", "<create-doc>foobar</create-doc>"),
-					engine,
-					null);
+					engine, null, new ArrayList<QName>());
 			assertThat(rule.toString(), containsString("r1"));
 		}
 		
@@ -509,8 +514,7 @@ public class Rule {
 			new Rule(
 					makeRule("xml:id='r1'", "<create-doc>foo</create-doc>"),
 					makeRule("xml:id='r1'", "<create-doc>bar</create-doc>"),
-					engine,
-					null);
+					engine, null, new ArrayList<QName>());
 		}
 
 		@Test public void diffDefsStage2() throws RuleBaseException {
@@ -520,8 +524,7 @@ public class Rule {
 			new Rule(
 					makeRule("xml:id='r1'", "<create-doc>foo</create-doc><with some='$x'>foo</with><insert>goo</insert>"),
 					makeRule("xml:id='r1'", "<create-doc>foo</create-doc><with some='$x'>foo</with>"),
-					engine,
-					null);
+					engine, null, new ArrayList<QName>());
 		}
 	}
 	
@@ -557,7 +560,20 @@ public class Rule {
 			mockery.checking(new Expectations() {{
 				allowing(rule.engine).modStore(); will(returnValue(modStore));
 			}});
-		}	
+			try {
+				Field field = Rule.class.getDeclaredField("rootModNode");
+				field.setAccessible(true);
+				field.set(rule, modStore.query().single("//mods").node());
+			} catch (SecurityException e) {
+				throw new RuntimeException(e);
+			} catch (IllegalArgumentException e) {
+				throw new RuntimeException(e);
+			} catch (NoSuchFieldException e) {
+				throw new RuntimeException(e);
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			}
+		}
 
 		protected Node modNodeAt(int stage) {
 			return modStore.query().single("//mod[@stage=$_1]", stage).node();
@@ -737,21 +753,19 @@ public class Rule {
 		
 		@Before public void overrideMockShim() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
 			initEmptyModStore();
-			Field rule_rootMod = Rule.class.getDeclaredField("rootMod");
-			rule_rootMod.setAccessible(true);
-			rule_rootMod.set(rule, Mod.bootstrap(rule));
 			rule.initDefaultShim();
 		}
 		
 		@Test(expected = RuleBaseException.class)
 		public void badBlock() throws RuleBaseException {
-			rule.parseBlocks(makeRule("<foo/>"), db.query().optional("inexistent").node());
+			rule.parseBlocks(makeRule("<foo/>"), db.query().optional("inexistent").node(), new ArrayList<QName>());
 		}
 		
 		@Test public void noPrevDef1() throws RuleBaseException {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for>"),
-					db.query().optional("inexistent").node());
+					db.query().optional("inexistent").node(),
+					new ArrayList<QName>());
 			assertEquals(0, firstDiff);
 			assertEquals(1, rule.blocks.size());
 		}
@@ -759,7 +773,8 @@ public class Rule {
 		@Test public void noPrevDef2() throws RuleBaseException {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><insert> <operation/> </insert>"),
-					db.query().optional("inexistent").node());
+					db.query().optional("inexistent").node(),
+					new ArrayList<QName>());
 			assertEquals(0, firstDiff);
 			assertEquals(2, rule.blocks.size());
 		}
@@ -767,7 +782,8 @@ public class Rule {
 		@Test public void prevUnknownBlock() throws RuleBaseException {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for>"),
-					makeRule("<foo each='$x'> //method </foo>"));
+					makeRule("<foo each='$x'> //method </foo>"),
+					new ArrayList<QName>());
 			assertEquals(0, firstDiff);
 			assertEquals(1, rule.blocks.size());
 		}
@@ -775,7 +791,8 @@ public class Rule {
 		@Test public void samePrevDef1() throws RuleBaseException {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for>"),
-					makeRule("<for each='$x'> //method </for>"));
+					makeRule("<for each='$x'> //method </for>"),
+					new ArrayList<QName>());
 			assertEquals(Integer.MAX_VALUE, firstDiff);
 			assertEquals(1, rule.blocks.size());
 		}
@@ -783,7 +800,8 @@ public class Rule {
 		@Test public void samePrevDef2() throws RuleBaseException {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><insert> <operation/> </insert>"),
-					makeRule("<for each='$x'> //method </for><insert> <operation/> </insert>"));
+					makeRule("<for each='$x'> //method </for><insert> <operation/> </insert>"),
+					new ArrayList<QName>());
 			assertEquals(Integer.MAX_VALUE, firstDiff);
 			assertEquals(2, rule.blocks.size());
 		}
@@ -791,7 +809,8 @@ public class Rule {
 		@Test public void lastBlockDiff() throws RuleBaseException {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><insert> <operation/> </insert>"),
-					makeRule("<for each='$x'> //method </for><insert> <op/> </insert>"));
+					makeRule("<for each='$x'> //method </for><insert> <op/> </insert>"),
+					new ArrayList<QName>());
 			assertEquals(1, firstDiff);
 			assertEquals(2, rule.blocks.size());
 		}
@@ -799,7 +818,8 @@ public class Rule {
 		@Test public void middleBlockDiff() throws RuleBaseException {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with><insert> <operation/> </insert>"),
-					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with><insert> <operation/> </insert>"));
+					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with><insert> <operation/> </insert>"),
+					new ArrayList<QName>());
 			assertEquals(1, firstDiff);
 			assertEquals(3, rule.blocks.size());
 		}
@@ -807,7 +827,8 @@ public class Rule {
 		@Test public void twoBlocksDiff() throws RuleBaseException {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with><insert> <operation/> </insert>"),
-					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with><insert> <op/> </insert>"));
+					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with><insert> <op/> </insert>"),
+					new ArrayList<QName>());
 			assertEquals(1, firstDiff);
 			assertEquals(3, rule.blocks.size());
 		}
@@ -815,7 +836,8 @@ public class Rule {
 		@Test public void prevDefLonger() throws RuleBaseException {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with>"),
-					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with><insert> <operation/> </insert>"));
+					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with><insert> <operation/> </insert>"),
+					new ArrayList<QName>());
 			assertEquals(2, firstDiff);
 			assertEquals(2, rule.blocks.size());
 		}
@@ -823,11 +845,49 @@ public class Rule {
 		@Test public void prevDefShorter() throws RuleBaseException {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with><insert> <operation/> </insert>"),
-					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with>"));
+					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with>"),
+					new ArrayList<QName>());
 			assertEquals(2, firstDiff);
 			assertEquals(3, rule.blocks.size());
 		}
 		
+		@Test public void noPrevDefModifiedFunction() throws RuleBaseException {
+			int firstDiff = rule.parseBlocks(
+					makeRule("<for each='$x' xmlns:z='http://example.com'> z:foo(//method) </for>"),
+					db.query().optional("inexistent").node(),
+					Arrays.asList(new QName[]{new QName("http://example.com", "foo", "e")}));
+			assertEquals(0, firstDiff);
+			assertEquals(1, rule.blocks.size());
+		}
+		
+		@Test public void samePrevDefModifiedFunction() throws RuleBaseException {
+			int firstDiff = rule.parseBlocks(
+					makeRule("<for each='$x'> //method </for><insert xmlns:z='http://example.com'> <operation x='{z:value()}'/> </insert>"),
+					makeRule("<for each='$x'> //method </for><insert xmlns:z='http://example.com'> <operation x='{z:value()}'/> </insert>"),
+					Arrays.asList(new QName[]{new QName("http://example.com", "value", "e")}));
+			assertEquals(1, firstDiff);
+			assertEquals(2, rule.blocks.size());
+		}
+		
+		@Test public void samePrevDefUnmodifiedFunction() throws RuleBaseException {
+			int firstDiff = rule.parseBlocks(
+					makeRule("<for each='$x'> //method </for><insert xmlns:z='http://example.com'> <operation x='{z:value()}'/> </insert>"),
+					makeRule("<for each='$x'> //method </for><insert xmlns:z='http://example.com'> <operation x='{z:value()}'/> </insert>"),
+					Arrays.asList(new QName[]{}));
+			assertEquals(Integer.MAX_VALUE, firstDiff);
+			assertEquals(2, rule.blocks.size());
+		}
+		
+		@Test public void middleBlockDiffLastBlockModifiedFunction() throws RuleBaseException {
+			int firstDiff = rule.parseBlocks(
+					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with> <insert xmlns:z='http://example.com'> <operation x='{z:value()}'/> </insert>"),
+					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with> <insert xmlns:z='http://example.com'> <operation x='{z:value()}'/> </insert>"),
+					Arrays.asList(new QName[]{new QName("http://example.com", "value", "e")}));
+			assertEquals(1, firstDiff);
+			assertEquals(3, rule.blocks.size());
+		}
+		
+
 	}
 
 	@Deprecated
@@ -1171,36 +1231,7 @@ public class Rule {
 			queryServicePrepareContext.setAccessible(true);
 		}
 		
-		private class QueryServiceDocsMatcher extends BaseMatcher<QueryService> {
-			private final Set<String> expectedNames;
-			public QueryServiceDocsMatcher(Set<String> expectedNames) {
-				this.expectedNames = expectedNames;
-			}
-			@SuppressWarnings("unchecked")
-			public boolean matches(Object item) {
-				try {
-					queryServicePrepareContext.invoke(item, (Object) null);
-					Set<String> actualNames = new TreeSet<String>();
-					for (Iterator<org.exist.dom.DocumentImpl> it = ((org.exist.dom.DocumentSet) queryServiceDocs.get(item)).getDocumentIterator(); it.hasNext(); ) {
-						String path = it.next().getURI().toString();
-						if (path.startsWith("/db")) path = path.substring(3);
-						actualNames.add(path);
-					}
-					return expectedNames.equals(actualNames);
-				} catch (IllegalArgumentException e) {
-					throw new RuntimeException(e);
-				} catch (IllegalAccessException e) {
-					throw new RuntimeException(e);
-				} catch (InvocationTargetException e) {
-					throw new RuntimeException(e);
-				}
-			}
-			public void describeTo(Description description) {
-				description.appendText("QueryService docs matching ").appendValue(expectedNames);
-			}
-		}
-		
-		private Matcher<QueryService> qsDocsMatcher;
+		private QueryService touchedScope;
 		private Sequence seq;
 		private List<Mod> prevMods;
 		
@@ -1231,11 +1262,10 @@ public class Rule {
 				}
 			}});
 			if (!doGlobalProcessing && verifySuccessful) {
-				Set<String> docNames = new TreeSet<String>();
-				for (Document doc : modifiedDocs) docNames.add(doc.path());
-				qsDocsMatcher = new QueryServiceDocsMatcher(docNames);
-			} else {
-				qsDocsMatcher = Expectations.aNull(QueryService.class);
+				touchedScope = db.getFolder("/").query();
+				mockery.checking(new Expectations() {{
+					one(rule.engine).customScope(modifiedDocs);  will(returnValue(touchedScope));
+				}});
 			}
 		}
 		
@@ -1249,7 +1279,7 @@ public class Rule {
 			}
 			mockery.checking(new Expectations() {{
 				one(rule.self).restoreModsAtStage(prevMods, stage-1); inSequence(seq);
-				one(rule.self).resolveModsAtStage(with(equal(prevMods)), with(equal(stage)), with(qsDocsMatcher));
+				one(rule.self).resolveModsAtStage(prevMods, stage, touchedScope);
 				will(returnValue(nextMods));
 			}});
 			prevMods = nextMods;

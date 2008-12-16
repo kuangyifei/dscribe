@@ -1,5 +1,7 @@
 package com.ideanest.dscribe.mixt;
 
+import org.exist.fluent.QueryService;
+
 
 public abstract class Seg {
 	
@@ -9,7 +11,7 @@ public abstract class Seg {
 		this.mod = mod;
 	}
 
-	public void analyze() throws TransformException {}
+	public QueryService.QueryAnalysis analyze() throws TransformException {return null;}
 	public void restore() throws TransformException {}
 	public void verify() throws TransformException {}
 

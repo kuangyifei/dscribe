@@ -62,8 +62,10 @@ public class CreateDoc implements BlockType {
 				name = mod.supplementQuery().single("docname").value();
 			}
 			
-			@Override public void analyze() {
-				requiredVariables = query.analyze(mod.globalScope()).requiredVariables();
+			@Override public QueryService.QueryAnalysis analyze() {
+				QueryService.QueryAnalysis analysis = query.analyze(mod.globalScope());
+				requiredVariables = analysis.requiredVariables();
+				return analysis;
 			}
 			
 			@Override public void verify() throws TransformException {

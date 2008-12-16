@@ -43,8 +43,12 @@
 </class>
 
 <class name = 'mixt_for' extends = 'block'>
-	<attribute name = 'each' type = 'string' required = 'true'/>
+	<attribute name = 'each' type = 'string'/>
+	<attribute name = 'all' type = 'string'/>
 	<method name = 'recompute' args = 'baseMod, env'>
+		if (this.each) recomputeEach(baseMod, env); else recomputeAll(baseMod, env);
+	</method>
+	<method name = 'recomputeEach' args = 'baseMod, env'>
 		var newRefs = {};
 		this.runQuery(env).forEach(function(node) {
 			if (node.xml_id) {
@@ -68,8 +72,60 @@
 			new lz.mod_mod(baseMod, {references: [newRefs[key]], key: key});
 		}
 	</method>
+	<method name = 'recomputeAll' args = 'baseMod, env'><![CDATA[
+		var newRefs = this.runQuery(env);
+		newRefs.sort(function(a, b) {return a.xml_id == b.xml_id ? 0 : a.xml_id < b.xml_id ? -1 : 1;});
+		if (baseMod.subnodes && baseMod.subNodes.length) {
+			if (newRefs.equals(baseMod.subnodes[0].references)) return;
+			baseMod.subnodes[0].destroy();
+		}
+		new lz.mod_mod(baseMod, {references: newRefs});
+	]]></method>
 	<method name = 'bind' args = 'mod, env'>
-		env.pushVar(this.each, mod.references);
+		env.pushVar(this.each ? this.each : this.all, mod.references);
+	</method>
+</class>
+
+<class name = 'mixt_with' extends = 'block'>
+	<attribute name = 'some' type = 'string'/>
+	<attribute name = 'any' type = 'string'/>
+	<attribute name = 'distinct' type = 'string'/>
+	<handler name = 'oninit'>
+		this.varName = this.some ? this.some : this.any ? this.any : this.distinct;
+	</handler>
+	<method name = 'recompute' args = 'baseMod, env'>
+		if (this.distinct) recomputeDistinct(baseMod, env); else recomputeBlind(baseMod, env);
+	</method>
+	<method name = 'recomputeBlind' args = 'baseMod, env'><![CDATA[
+		var values = this.runQuery(env);
+		if (baseMod.subnodes && baseMod.subNodes.length) {
+			if (values.equals(baseMod.subnodes[0].values)) return;
+			baseMod.subnodes[0].destroy();
+		}
+		if (this.some && !values.length) return;
+		new lz.mod_mod(baseMod, {values: values});
+	]]></method>
+	<method name = 'recomputeDistinct' args = 'baseMod, env'><![CDATA[
+	    values = {};
+		this.runQuery(env).forEach(function(val) {values[val] = true;});
+		if (baseMod.subnodes) {
+			var oldMods = baseMod.subnodes.slice();
+			oldMods.forEach(function(oldMod) {
+				var oldValue = oldMod.values[0];
+				if (values[oldValue]) {
+					delete values[oldValue];
+				} else {
+					oldMod.destroy();
+				}
+			});
+		}
+		for (var key in values) {
+			var encodedKey = 
+			new lz.mod_mod(baseMod, {values: [values[key]], key: encodedKey});
+		}
+	]]></method>
+	<method name = 'bind' args = 'mod, env'>
+		env.pushVar(this.varName, mod.values);
 	</method>
 </class>
 
@@ -141,6 +197,7 @@
 	<attribute name = 'key' type = 'string'/>
 	<attribute name = 'references' type = 'expression'/>
 	<attribute name = 'affected' type = 'expression'/>
+	<attribute name = 'values' type = 'expression'/>
 	<attribute name = 'checksum' type = 'string'/>
 	<attribute name = 'mayHaveChanged' value = 'true' type = 'boolean'/>
 	<attribute name = 'descendantsMayHaveChanged' value = 'false' type = 'boolean'/>

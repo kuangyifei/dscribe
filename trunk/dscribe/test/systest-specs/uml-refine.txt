@@ -1,0 +1,56 @@
+## load rules resources/uml-refine.mxc
+
+## load file diagram.xml
+<diagram xmlns='http://ideanest.com/dscribe/ns/uml' xml:id='d1' id='d1'>
+	<class depicts='j1' xml:id='c1'>
+		<name xml:id='c1n'>HelloWorld</name>
+		<compartment kind='attribute' xml:id='c1a'>
+			<attribute depicts='j2' xml:id='c1a1'>
+				<name xml:id='c1a1n'>msg</name>
+			</attribute>
+		</compartment>
+		<compartment kind='operation' xml:id='c1o'>
+			<operation depicts='j3' xml:id='c1o1'/>
+			<operation depicts='j4' xml:id='c1o2'><name xml:id='c1o2n'>sayHello</name></operation>
+			<operation depicts='j5' xml:id='c1o3'><name xml:id='c1o3n'>main</name></operation>
+		</compartment>
+	</class>
+</diagram>
+
+## load file action-candidates.xml
+<a:candidates xmlns:a='http://ideanest.com/dscribe/ns/actions'>
+</a:candidates>
+
+## load file action-triggers.xml
+<triggers xmlns='http://ideanest.com/dscribe/ns/actions'>
+	<delete-attribute xml:id='act01' serial='123'
+		targetSelector='by-id' location='any' scope='diagram'
+		selection='c1a1' diagram='d1' origin='j2' name='msg' className='HelloWorld'/>
+</triggers>
+
+#### run 1
+
+## check file action-candidates.xml
+<a:candidates xmlns:a='http://ideanest.com/dscribe/ns/actions' xml:id='_'>
+	<a:set-property target='c1a1' attr='visible' value='false' action='act01' specificity='3' serial='123' xml:id='_'>
+		<u:key xmlns:u='http://ideanest.com/dscribe/ns/uml-refine-util' value='set-property-c1a1-visible' xml:id='_'/>
+	</a:set-property>
+</a:candidates>
+
+## check file diagram.xml
+<diagram xmlns='http://ideanest.com/dscribe/ns/uml' xml:id='d1' id='d1'>
+	<class depicts='j1' xml:id='c1'>
+		<name xml:id='c1n'>HelloWorld</name>
+		<compartment kind='attribute' xml:id='c1a'>
+			<attribute depicts='j2' xml:id='c1a1'>
+				<name xml:id='c1a1n'>msg</name>
+				<override xmlns='http://ideanest.com/dscribe/ns/attribute-overrides' visible='false' xml:id='_'/>
+			</attribute>
+		</compartment>
+		<compartment kind='operation' xml:id='c1o'>
+			<operation depicts='j3' xml:id='c1o1'/>
+			<operation depicts='j4' xml:id='c1o2'><name xml:id='c1o2n'>sayHello</name></operation>
+			<operation depicts='j5' xml:id='c1o3'><name xml:id='c1o3n'>main</name></operation>
+		</compartment>
+	</class>
+</diagram>
