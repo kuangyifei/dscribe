@@ -36,7 +36,7 @@ rule deconflict candidate actions
 rule derive keys for set-property actions
 	for each $action: /a:candidates/a:set-property
 	for each target: $action
-	insert: element u:key {attribute value {concat("set-property-", $action/@target, "-", $action/@attr)}}
+	insert: element u:key {attribute value {string-join(("set-property", $action/@target, $action/@attr), "-")}}
 
 rule apply set-property actions
 	for each $action: /a:triggers/a:set-property
