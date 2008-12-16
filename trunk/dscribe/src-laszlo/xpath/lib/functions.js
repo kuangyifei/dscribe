@@ -148,6 +148,42 @@ id: {
 		}
 		return result.length > 1 ? s.nodeCombine([result], function(p) {return p[0];}, context.env) : result;
 	}
+},
+
+max: {
+	args: [atom.sequence()],
+	bounded: true,
+	fn: function(context, arg) {
+		if (arg.length == 0) return [];
+		var max = arg[0].numberValue();
+		for (var i = 1; i < arg.length; i++) {
+			var n = arg[i].numberValue();
+			if (n > max) max = n;
+		}
+		return [max];
+	}
+},
+
+min: {
+	args: [atom.sequence()],
+	bounded: true,
+	fn: function(context, arg) {
+		if (arg.length == 0) return [];
+		var min = arg[0].numberValue();
+		for (var i = 1; i < arg.length; i++) {
+			var n = arg[i].numberValue();
+			if (n < min) min = n;
+		}
+		return [min];
+	}
+},
+
+'string-join': {
+	args: [string.sequence(), string.optional()],
+	bounded: true,
+	fn: function(context, parts, separator) {
+		return [parts.join(separator ? separator : '')];
+	}
 }
 
 }};

@@ -15,13 +15,16 @@
 	<handler name = 'oninit'><![CDATA[
 		setAttribute('text', this.text.replace('&apos;', "'", 'g').replace('&quot;', '"', 'g'));
 		this.setAttribute('query', XPath.parse(this.text));
+		if (this.query) this.setAttribute('text', null);
+	]]></handler>
+	
+	<method name = 'analyze' args = 'env'>
 		if (this.query) {
-			this.setAttribute('text', null);
-			var analysis = XPath.analyze(this.query);
+			var analysis = XPath.analyze(this.query, env);
 			analysis.referencedNodeNames.forEach(function(name) {
 				this.callAncestor('listenNodeChanged', delegate, name);}, this);
 		}
-	]]></handler>
+	</method>
 	
 	<method name = 'handleChange' args = 'unused'>
 		setAttribute('mayBeChanging', true);
@@ -182,11 +185,48 @@
 	</method>
 </class>
 
+<class name = 'mixt_function' extends = 'node'>
+	<attribute name = 'name' type = 'token' required = 'true'/>
+	<attribute name = 'args' type = 'string'/>
+	<attribute name = 'text' type = 'text'/>
+	<attribute name = 'query' type = 'expression'/>
+	<attribute name = 'arglist' type = 'expression'/>
+	<handler name = 'oninit'><![CDATA[
+		this.setAttribute('text', this.text.replace('&apos;', "'", 'g').replace('&quot;', '"', 'g'));
+		this.setAttribute('query', XPath.parse(this.text));
+		this.arglist = this.args ? this.args.split(',') : [];
+		for (var i = 0; i < this.arglist.length; i++) this.arglist[i] = this.arglist[i].strip();
+		var self = this;
+		parent.functions[this.name] = {
+			args: this.arglist.map(function() {return XPath.ArgumentConstraints.item.sequence();}),
+			fn: function(context) {
+				var fnargs = arguments.slice(1);
+				for (var i = 0; i < self.arglist.length; i++) {
+					context.env.pushVar(self.arglist[i], fnargs[i]);
+				}
+				var r = self.query.eval(context);
+				for (var i = 0; i < self.arglist.length; i++) context.env.popVar();
+				return r;
+			}
+		};
+	]]></handler>
+</class>
+
 <class name = 'mixt_rules' extends = 'node'>
 	<attribute name = 'map' value = '{}' type = 'expression'/>
+	<attribute name = 'functions' value = '{}' type = 'expression'/>
 	<handler name = 'oninit'>
 		this.subnodes.forEach(function(rule) {map[rule.xml_id] = rule;});
 	</handler>
+	<method name = 'analyze' args = 'env'>
+		this.subnodes.forEach(function(rule) {
+			if (rule.subnodes) {
+				rule.subnodes.forEach(function(block) {
+					block.analyze(env);
+				});
+			}
+		});
+	</method>
 	<method name = 'trackXmlId' args = 'node, value'/>
 </class>
 
@@ -297,6 +337,8 @@
 		this.modstore.connectRules(this.rules.map);
 		this.env = new XPath.Environment(this.xmlContainer.subnodes);
 		this.env.varsStack = [];
+		this.env.functions = this.rules.functions;
+		this.rules.analyze(env);
 	]]></handler>
 	<handler reference = 'xmlContainer' name = 'onanynodechanged'>
 		this.setAttribute('changesMade', true);
