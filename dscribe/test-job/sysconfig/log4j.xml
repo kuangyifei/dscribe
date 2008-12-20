@@ -5,37 +5,30 @@
 
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
 
-    <!-- writes log messages to the console. It outputs file name,
-	     method name and line number of the caller. This is slow,
-		 so just use it for debugging. -->
     <appender name="console" class="org.apache.log4j.ConsoleAppender">
       <layout class="org.apache.log4j.PatternLayout">
         <param name="ConversionPattern" value="%d{HH:mm:ss} [%t] %p (%F:%L %M) - %m\n"/>
       </layout>
     </appender>
 
-    <category name="org.exist" additivity="false">
+    <category name="org.exist">
         <priority value="warn"/>
-        <appender-ref ref="console"/>
     </category>
 
-    <category name="org.dbxml" additivity="false">
+    <category name="org.dbxml">
         <priority value="warn"/>
-        <appender-ref ref="console"/>
     </category>
 
-	<category name="com.ideanest.reef" additivity="false">
+	<category name="com.ideanest.dscribe">
 		<priority value="info"/>
-		<appender-ref ref="console"/>
 	</category>
 
-	<category name="com.ideanest.reef.job" additivity="false">
-		<priority value="info"/>
-		<appender-ref ref="console"/>
+	<category name="com.ideanest.dscribe.vcm">
+		<priority value="debug"/>
 	</category>
 
     <root>
-        <priority value="info"/>
+        <priority value="debug"/>
         <appender-ref ref="console"/>
     </root>
   </log4j:configuration>

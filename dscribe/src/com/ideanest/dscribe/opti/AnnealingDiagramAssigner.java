@@ -65,7 +65,7 @@ public class AnnealingDiagramAssigner extends TaskBase {
 		for (String calculatorClassName : taskDef.query().all("calculator/@class").values()) {
 			try {
 				Calculator calc = (Calculator) Class.forName(calculatorClassName).newInstance();
-				if (calc.getNamespaceBindings().get("rules") != null) throw new InvalidConfigurationException("calculator maps reserved namespace prefix 'rules'");
+				if (calc.getNamespaceBindings().get("mapping") != null) throw new InvalidConfigurationException("calculator maps reserved namespace prefix 'rules'");
 				calculators.add(calc);
 			} catch (Exception e) {
 				LOG.warn("failed to instantiate calculator class " + calculatorClassName, e);
@@ -74,7 +74,7 @@ public class AnnealingDiagramAssigner extends TaskBase {
 	}
 	
 	@Phase
-	public void preprules() {
+	public void elaborate() {
 		for (Calculator calc : calculators) new AssignmentRun(calc, cycle()).run();
 	}
 	
@@ -159,7 +159,7 @@ public class AnnealingDiagramAssigner extends TaskBase {
 					new GeometricAnnealingStrategy(1000, 10, 0.9, 500));		// TODO: tweak parameters based on dataset size?
 			ass = sao.optimize(ass);
 			
-			emitRules(ass);
+			emitMappings(ass);
 		}
 		
 		private void initOrphans() {
@@ -201,8 +201,15 @@ public class AnnealingDiagramAssigner extends TaskBase {
 			}
 		}
 		
-		private void emitRules(Assignment ass) {
-			ElementBuilder<Node> builder = workspace.query().unordered("//mapping:mappings").get(0).node().append();
+		private void emitMappings(Assignment ass) {
+			ItemList mappings = workspace.query().unordered("//mapping:mappings");
+			ElementBuilder<?> builder;
+			if (mappings.isEmpty()) {
+				builder = workspace.documents().build(Name.adjust("diagram-mappings"))
+						.elem("mapping:mappings").end("mapping:mappings").commit().root().append();
+			} else {
+				builder = mappings.get(0).node().append();
+			}
 			for (Orphan orphan : orphans) {
 				Diagram diagram = ass.get(orphan);
 				if (diagram.id == null) {

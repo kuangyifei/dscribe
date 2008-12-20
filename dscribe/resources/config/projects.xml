@@ -1,16 +1,22 @@
-<group name="Global" xmlns="http://ideanest.com/reef/ns/config">
+<group name="Global" xmlns="http://ideanest.com/dscribe/ns/config">
 
-	<job type="project" name="Reef" enabled="false">
-		<schedule at="0 0/2 * * * ?"/>
+	<job type="project" name="dScribe" enabled="true">
+		<schedule at="0/30 * * * * ?"/>
 		<wipe if="empty($versions//notes:notes[@status='completed'])"/>
-		<filesystem dir="c:\code\projects\reef" quiet-period="PT3M">
+		<filesystem dir="c:\code\projects\dscribe" quiet-period="PT30S">
 			<exclude name="bin/"/>
 			<exclude name="build/"/>
+			<exclude name="test/"/>
+			<exclude name="test-job/"/>
 		</filesystem>
 		<agree-checkpoint/>
 		<java-extract-source/>
 		<java-resolve-types/>
 		<java-analyze-origin/>
+		<assign-diagrams>
+			<calculator class="com.ideanest.dscribe.java.PackageAssignmentCalculator"/>
+			<calculator class="com.ideanest.dscribe.java.ClassAssignmentCalculator"/>
+		</assign-diagrams>
 	</job>
 
 	<job type="project" name="Reef-CVS" min-run-interval="PT3M" enabled="false">
@@ -36,14 +42,14 @@
 		<agree-checkpoint/>
 	</job>
 	
-	<job type="chore" name="wipe temp dir">
+	<job type="chore" name="wipe temp dir" phases="update">
 		<schedule at="0 0 0/1 * * ?"/>
 		<wipe dir="$temp"/>
 	</job>
 	
 	<job name="update-config" phases="check agree update load expand schedule" debug-dump="true">
 		<schedule at="0 0/1 * * * ?"/>
-		<filesystem dir="../../../config" quiet-period="PT30S"/>
+		<filesystem dir="../../../config" quiet-period="PT5S"/>
 		<agree-checkpoint/>
 		<load-files/>
 		<schedule-jobs/>

@@ -54,7 +54,7 @@ public class TypeResolver extends TaskBase {
 	@Phase
 	public void elaborate() {
 		LOG.debug("resolving types");
-		ItemList docsWithUnresolvedTypes = resultStore.query().all("//unit[.//localType[not(sibling::type)]]");
+		ItemList docsWithUnresolvedTypes = resultStore.query().all("//unit[.//*[localType][not(type)]]");
 		if (docsWithUnresolvedTypes.size() == 0) {
 			LOG.info("all types already resolved");
 			return;

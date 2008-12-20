@@ -14,7 +14,7 @@ import com.ideanest.dscribe.mixt.test.BlockTestCase;
 public class With implements BlockType {
 
 	public QName xmlName() {
-		return new QName(Engine.RULES_NS, "with", null);
+		return new QName(Engine.MIXT_NS, "with", null);
 	}
 
 	public String version() {

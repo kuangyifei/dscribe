@@ -6,8 +6,8 @@ import org.apache.log4j.Logger;
 import org.quartz.*;
 import org.quartz.impl.DirectSchedulerFactory;
 
+import com.ideanest.dscribe.job.*;
 import com.ideanest.dscribe.job.Job;
-import com.ideanest.dscribe.job.QuartzCycle;
 
 public class Schedule {
 	
@@ -54,6 +54,14 @@ public class Schedule {
 			main.resetSchedule();
 		}
 		if (LOG.isDebugEnabled()) logSchedulerConfig();
+	}
+	
+	public void shutdown() {
+		try {
+			scheduler.shutdown(true);
+		} catch (SchedulerException e) {
+			LOG.error("failed to shutdown scheduler, continuing shutdown anyway", e);
+		}
 	}
 
 	public void ensureJob(Job job) throws SchedulerException {

@@ -246,7 +246,7 @@ public class Cycle {
 			throw e;
 			
 		} catch (Exception e) {
-			String msg = currentStep == null ? "job run error outside of any step" : "error performing step '" + currentStep.name() + "'";
+			String msg = currentStep == null ? "job run error outside of any step" : "error performing step: " + currentStep.name();
 			LOG.error(msg, e);
 			failed = true;
 			postponedDate = null;

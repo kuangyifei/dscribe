@@ -37,8 +37,9 @@ public class Main implements Runnable {
 		initLogging();
 		// warning:  logging not configured before this point! use at own risk
 		initDatabase();
+		listenToConsole();
 		initScheduler();
-		bootstrapConfig();		
+		bootstrapConfig();
 	}
 
 	private void checkCommandLine() {
@@ -82,6 +83,36 @@ public class Main implements Runnable {
 			LOG.fatal("Failed to initialize scheduler", e);
 			System.exit(2);
 		}
+	}
+	
+	private void listenToConsole() {
+		new Thread(new Runnable() {
+			public void run() {
+				Reader console = new InputStreamReader(System.in);
+				try {
+					while(true) {
+						switch (console.read()) {
+							case '\n':
+							case '\r':
+								break;
+							case 'h':
+								System.out.println("h - help");
+								System.out.println("q - quit");
+								break;
+							case 'q':
+							case -1:
+								throw new IOException();
+							default:
+								System.out.println("unkown command");
+						}
+					}
+				} catch (IOException e) {
+				}
+				schedule.shutdown();
+				Database.shutdown();
+				System.exit(0);
+			}
+		}).start();
 	}
 
 	private void bootstrapConfig() {
