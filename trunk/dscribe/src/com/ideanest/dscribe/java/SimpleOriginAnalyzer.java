@@ -61,7 +61,7 @@ public class SimpleOriginAnalyzer extends TaskBase {
 				changes.append().elem("change").attr("uidref", oldUid).attr("action", "delete").end("change").commit();
 			}
 		} else {
-			for (Node node : workspace.query().unordered("//(package|class|interface|field|constructor|method)").nodes()) {
+			for (Node node : workspace.query().unordered("//(package|class|interface|annotationinterface|field|constructor|method)").nodes()) {
 				setUid(node, null);
 			}
 		}

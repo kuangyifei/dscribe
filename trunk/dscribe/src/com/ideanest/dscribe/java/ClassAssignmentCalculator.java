@@ -1,6 +1,8 @@
 package com.ideanest.dscribe.java;
 
 
+import static org.junit.Assert.assertEquals;
+
 import java.util.*;
 
 import javax.xml.namespace.QName;
@@ -10,10 +12,13 @@ import org.junit.*;
 
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.opti.AnnealingDiagramAssigner;
-import static org.junit.Assert.*;
 
 public class ClassAssignmentCalculator implements AnnealingDiagramAssigner.Calculator {
 	
+	static final QName
+			JAVA_CLASS = new QName(Namespace.JAVA, "class"),
+			JAVA_INTERFACE = new QName(Namespace.JAVA, "interface");
+
 	private static final NamespaceMap NAMESPACE_BINDINGS = new NamespaceMap(
 			"", Namespace.JAVA
 	);
@@ -26,10 +31,10 @@ public class ClassAssignmentCalculator implements AnnealingDiagramAssigner.Calcu
 	
 	public double calculateCost(Node e1, Node e2) {
 		QName e1qname = e1.qname(), e2qname = e2.qname();
-		assert e1qname.equals(DiagramExtractor.JAVA_CLASS) || e1qname.equals(DiagramExtractor.JAVA_INTERFACE);
+		assert e1qname.equals(JAVA_CLASS) || e1qname.equals(JAVA_INTERFACE);
 		double cost = 0.0;
 		
-		if (e2qname.equals(DiagramExtractor.JAVA_CLASS) || e2qname.equals(DiagramExtractor.JAVA_INTERFACE)) {
+		if (e2qname.equals(JAVA_CLASS) || e2qname.equals(JAVA_INTERFACE)) {
 			// shared package and/or nesting
 			cost -= 300 * AnnealingDiagramAssigner.commonPrefixFraction(
 					e1.query().single("@fullName").value(),
@@ -130,7 +135,7 @@ public class ClassAssignmentCalculator implements AnnealingDiagramAssigner.Calcu
 		initContext("extends",			250.0, "..");
 		initContext("implements",	150.0, "..");
 		initContext("field",				50.0, ".");
-		initContext("method",			35.0, ".");
+		initContext("returns",			35.0, ".");
 		initContext("param",			25.0, "..");
 		initContext("throws",			2.0, "..");
 		// TODO: add type parameter dependencies?

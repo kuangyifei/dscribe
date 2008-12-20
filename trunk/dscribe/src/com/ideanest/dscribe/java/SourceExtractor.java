@@ -10,10 +10,9 @@ import org.exist.fluent.*;
 
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.job.TaskBase;
-import com.thoughtworks.qdox.parser.Builder;
-import com.thoughtworks.qdox.parser.ParseException;
-import com.thoughtworks.qdox.parser.impl.JFlexLexer;
-import com.thoughtworks.qdox.parser.impl.Parser;
+import com.thoughtworks.qdox.model.*;
+import com.thoughtworks.qdox.parser.*;
+import com.thoughtworks.qdox.parser.impl.*;
 import com.thoughtworks.qdox.parser.structs.*;
 
 /**
@@ -98,7 +97,7 @@ public class SourceExtractor extends TaskBase implements Builder {
 		
 		LOG.info(new MessageFormat(
 				"source extraction complete" +
-				"{0,choice,0#, no files analyzed|1#, 1 file analyzed|1<, {0,number,integer} files analyzed}" +
+				"{0,choice,0#, no files parsed|1#, 1 file parsed|1<, {0,number,integer} files parsed}" +
 				"{1,choice,0#|1# (1 file failed)|1< ({1,number,integer} files failed)}" +
 				"{2,choice,0#|1#, 1 file inherited|1<, {2,number,integer} files inherited}")
 				.format(new Object[]{
@@ -150,30 +149,31 @@ public class SourceExtractor extends TaskBase implements Builder {
 		return javadocBuilder;
 	}
 	
-	public void addPackage(String packageName) {
+	@Override public void addPackage(String packageName) {
 		builder.elem("packageref").text(packageName);
 		closeJavadoc();
 		builder.end("packageref");
 		this.namePrefix = packageName + '.';
 	}
 
-	public void addImport(String importName) {
+	@Override public void addImport(String importName) {
 		builder.elem("import").text(importName);
 		closeJavadoc();
 		builder.end("import");
 	}
 
-	public void addJavaDoc(String text) {
+	@Override public void addJavaDoc(String text) {
 		javadoc().elem("comment").text(text).end("comment");
 	}
 
-	public void addJavaDocTag(TagDef def) {
+	@Override public void addJavaDocTag(TagDef def) {
 		javadoc().elem("tag").attr("name", def.name).text(def.text).end("tag");
 	}
 
-	@SuppressWarnings("unchecked")
+	@Override @SuppressWarnings("unchecked")
 	public void beginClass(ClassDef def) {
-		builder.elem(def.type)
+
+		builder.elem(def.type.equals(ClassDef.ANNOTATION_TYPE) ? "annotationinterface" : def.type)
 			.attr("name", def.name)
 			.attr("implName", namePrefix + def.name)
 			.attr("fullName", (namePrefix + def.name).replace('$', '.'))
@@ -192,15 +192,15 @@ public class SourceExtractor extends TaskBase implements Builder {
 		}
 	}
 	
-	public void endClass() {
+	@Override public void endClass() {
 		javadocBuilder = null;
-		builder.end("interface", "class");
+		builder.end("interface", "annotationinterface", "class");
 		int lastSeparatorIndex = namePrefix.lastIndexOf('$', namePrefix.length()-2);
 		if (lastSeparatorIndex == -1) lastSeparatorIndex = namePrefix.lastIndexOf('.', namePrefix.length()-2);
 		if (lastSeparatorIndex == -1) namePrefix = ""; else namePrefix = namePrefix.substring(0, lastSeparatorIndex+1);
 	}
 	
-	public void addField(FieldDef def) {
+	@Override public void addField(FieldDef def) {
 		builder.elem("field")
 			.attr("name", def.name)
 			.attr("line", Integer.toString(def.lineNumber))
@@ -210,7 +210,7 @@ public class SourceExtractor extends TaskBase implements Builder {
 		builder.end("field");
 	}
 
-	@SuppressWarnings("unchecked")
+	@Override @SuppressWarnings("unchecked")
 	public void addMethod(MethodDef def) {
 		String elemName = def.constructor ? "constructor" : "method";
 		builder.elem(elemName);
@@ -231,6 +231,14 @@ public class SourceExtractor extends TaskBase implements Builder {
 		builder.end(elemName);
 	}
 
+	@Override public void addAnnotation(Annotation annotation) {
+		// TODO: handle annotations
+	}
+
+	@Override public Type createType(String name, int dimensions) {
+		return new Type(name, dimensions);
+	}
+	
 	private static String flatten(Collection<?> a) {
 		StringBuilder buf = new StringBuilder();
 		for (Iterator<?> it = a.iterator(); it.hasNext();) {
@@ -254,8 +262,4 @@ public class SourceExtractor extends TaskBase implements Builder {
 			.end(elemName);
 	}
 
-	public void addAnnotation(AnnoDef annotation) {
-		// TODO: handle annotations
-	}
-	
 }

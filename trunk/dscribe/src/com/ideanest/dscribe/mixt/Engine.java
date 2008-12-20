@@ -22,7 +22,7 @@ import com.ideanest.dscribe.mixt.test.Matchers;
 public class Engine {
 	public static final String RECORD_NS = "http://ideanest.com/dscribe/ns/record";
 	public static final String MOD_NS = "http://ideanest.com/dscribe/ns/mod";
-	public static final String RULES_NS = "http://ideanest.com/dscribe/ns/rules";
+	public static final String MIXT_NS = "http://ideanest.com/dscribe/ns/mixt";
 
 	static final Logger LOG = Logger.getLogger(Engine.class);
 	private static final String VERSION = "1";
@@ -76,9 +76,9 @@ public class Engine {
 		modStore.namespaceBindings().put("", Engine.MOD_NS);
 		modStore.namespaceBindings().put("mod", Engine.MOD_NS);
 		
-		rulespace.namespaceBindings().put("", Engine.RULES_NS);
-		prevrulespace.namespaceBindings().put("", Engine.RULES_NS);
-		prevrulespace.namespaceBindings().put("record", Engine.RULES_NS);
+		rulespace.namespaceBindings().put("", Engine.MIXT_NS);
+		prevrulespace.namespaceBindings().put("", Engine.MIXT_NS);
+		prevrulespace.namespaceBindings().put("record", Engine.MIXT_NS);
 		
 		this.sortController = new SortController(this, modifiedDocs.anchor());
 
@@ -291,7 +291,7 @@ public class Engine {
 		}
 	}
 	
-	private String acronymize(String name) {
+	private static String acronymize(String name) {
 		if (name.length() < 1) throw new IllegalArgumentException("name to acronymize is empty");
 		StringBuilder acronym = new StringBuilder();
 		StringTokenizer tokenizer = new StringTokenizer(name, "-_ .");
@@ -520,9 +520,9 @@ public class Engine {
 			workspace = db.createFolder("/workspace");
 			workspace.namespaceBindings().put("mod", Engine.MOD_NS);
 			rulespace = db.createFolder("/rulespace");
-			rulespace.namespaceBindings().put("", Engine.RULES_NS);
+			rulespace.namespaceBindings().put("", Engine.MIXT_NS);
 			prevrulespace = db.createFolder("/prevrulespace");
-			prevrulespace.namespaceBindings().put("", Engine.RULES_NS);
+			prevrulespace.namespaceBindings().put("", Engine.MIXT_NS);
 		}
 		
 		@Test public void invalidateIncompatibleBlocks() {
@@ -532,7 +532,7 @@ public class Engine {
 					"  <block-type class='com.ideanest.dscribe.mixt.blocks.With' version='" + new With().version() + "foo'/>" +
 					"</root>"));
 			db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<rules xmlns='" + Engine.RULES_NS + "'>" +
+					"<rules xmlns='" + Engine.MIXT_NS + "'>" +
 					"  <rule xml:id='r1'>" +
 					"    <for each='$x'>/foo</for>" +
 					"    <with some='$y'>$x/bar</with>" +
@@ -542,7 +542,7 @@ public class Engine {
 			Engine engine = new Engine(workspace, null);
 			engine.invalidateIncompatibleBlocks(db.getFolder("/"));
 			Node rule = db.getFolder("/").query()
-					.namespace("", Engine.RULES_NS)
+					.namespace("", Engine.MIXT_NS)
 					.namespace("record", Engine.RECORD_NS)
 					.single("/id('r1')").node();
 			assertFalse(rule.query().exists("for[@record:version-mismatch]"));
@@ -569,7 +569,7 @@ public class Engine {
 		@Test public void analyzeModifiedFunctions() throws RuleBaseException {
 			String ns_x = "http://example.com", ns_y = "http://ideanest.com";
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns='" + Engine.RULES_NS + "' xmlns:x='" + ns_x + "' xmlns:y='" + ns_y + "'>" +
+					"<rules xmlns='" + Engine.MIXT_NS + "' xmlns:x='" + ns_x + "' xmlns:y='" + ns_y + "'>" +
 					"	<function name = 'x:f1'> /foo </function>" +
 					"	<function name = 'x:f2' args = '$a'> /bar[@a=$a] </function>" +
 					"	<function name = 'x:f3'> x:f1() </function>" +
@@ -582,7 +582,7 @@ public class Engine {
 					"</rules>"
 			));
 			prevrulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns='" + Engine.RULES_NS + "' xmlns:x='" + ns_x + "' xmlns:y='" + ns_y + "'>" +
+					"<rules xmlns='" + Engine.MIXT_NS + "' xmlns:x='" + ns_x + "' xmlns:y='" + ns_y + "'>" +
 					"	<function name = 'x:f1'> /foo </function>" +
 					"	<function name = 'x:f2' args = '$a'> /bar[@a=$a] </function>" +
 					"	<function name = 'x:f3'> x:f1() </function>" +
@@ -610,7 +610,7 @@ public class Engine {
 		@Test public void assembleFunctionModules() throws RuleBaseException {
 			String ns_x = "http://example.com", ns_y = "http://ideanest.com";
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns='" + Engine.RULES_NS + "' xmlns:x='" + ns_x + "' xmlns:y='" + ns_y + "'>" +
+					"<rules xmlns='" + Engine.MIXT_NS + "' xmlns:x='" + ns_x + "' xmlns:y='" + ns_y + "'>" +
 					"	<function name = 'x:f1'> /foo </function>" +
 					"	<function name = 'y:f8'> /foo </function>" +
 					"	<function name = 'x:f9' args = '$b, $a'> /bar[@a=$a][@b=$b] </function>" +
@@ -628,7 +628,7 @@ public class Engine {
 			for (Document doc : engine.modulespace.documents()) modules.add(doc.contentsAsString());
 			assertThat(modules, Matchers.collection(
 					"module namespace x = '" + ns_x + "';\n" +
-						"declare default element namespace '" + Engine.RULES_NS + "';\n" +
+						"declare default element namespace '" + Engine.MIXT_NS + "';\n" +
 						"declare namespace y = '" + ns_y + "';\n" +
 						"declare function x:f1() {\n" +
 						" /foo \n" +
@@ -637,7 +637,7 @@ public class Engine {
 						" /bar[@a=$a][@b=$b] \n" +
 						"};\n",
 					"module namespace y = '" + ns_y + "';\n" +
-						"declare default element namespace '" + Engine.RULES_NS + "';\n" +
+						"declare default element namespace '" + Engine.MIXT_NS + "';\n" +
 						"declare namespace x = '" + ns_x + "';\n" +
 						"declare function y:f8() {\n" +
 						" /foo \n" +
@@ -647,7 +647,7 @@ public class Engine {
 		
 		@Test public void parseRules() throws RuleBaseException, IllegalArgumentException, IllegalAccessException {
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
 					"  <rule xml:id='r1' name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
@@ -661,7 +661,7 @@ public class Engine {
 		
 		@Test public void assignRuleIDs_generateFreshID() {
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
 					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"	<rule xml:id='r2' name='mysecondrule'/>" +
 					"</rules>"
@@ -675,13 +675,13 @@ public class Engine {
 		
 		@Test public void assignRuleIDs_copyPrevID() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
 					"  <rule xml:id='r1' name='myrule'/>" +
 					"  <rule xml:id='r2' name='some other rule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
 					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
@@ -692,13 +692,13 @@ public class Engine {
 		
 		@Test public void assignRuleIDs_matchAliasToName() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
 					"  <rule xml:id='r1' name='myrule'/>" +
 					"  <rule xml:id='r2' name='some other rule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
 					"  <rule name='foo'><alias name='myrule'/><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
@@ -709,13 +709,13 @@ public class Engine {
 		
 		@Test public void assignRuleIDs_matchNameToAlias() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
 					"  <rule xml:id='r1' name='foo'><alias name='myrule'/></rule>" +
 					"  <rule xml:id='r2' name='some other rule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
 					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
@@ -726,13 +726,13 @@ public class Engine {
 		
 		@Test public void assignRuleIDs_matchAliasToAlias() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
 					"  <rule xml:id='r1' name='foo'><alias name='myrule'/></rule>" +
 					"  <rule xml:id='r2' name='some other rule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
 					"  <rule name='bar'><alias name='myrule'/><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
@@ -743,13 +743,13 @@ public class Engine {
 		
 		@Test public void assignRuleIDs_multipleMatch() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
 					"  <rule xml:id='r1' name='foo'><alias name='myrule'/></rule>" +
 					"  <rule xml:id='r2' name='myrule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
 					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
@@ -762,7 +762,7 @@ public class Engine {
 		
 		@Test public void create() throws RuleBaseException, IllegalArgumentException {
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns= '" + Engine.RULES_NS + "'>" +
+					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
 					"  <rule xml:id='r1' name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
@@ -1081,4 +1081,45 @@ public class Engine {
 			};
 		}
 	}
+	
+	@Deprecated
+	public static class _TestAcronymize {
+		@Test public void test1() {
+			assertEquals("ast", Engine.acronymize("a-silly-test"));
+		}
+		@Test public void test2() {
+			assertEquals("ast", Engine.acronymize("A-silly-Test"));
+		}
+		@Test public void test3() {
+			assertEquals("st", Engine.acronymize("__stupid-test.5"));
+		}
+		@Test public void test4() {
+			assertEquals("bbb", Engine.acronymize("blah BoOh bee"));
+		}
+		@Test public void test5() {
+			assertEquals("", Engine.acronymize("1d 3g.98X-1_"));
+		}
+		@Test public void test6() {
+			assertEquals("ast", Engine.acronymize("ASillyTest"));
+		}
+		@Test public void test7() {
+			assertEquals("ast", Engine.acronymize("aSillyTest"));
+		}
+		@Test public void test8() {
+			assertEquals("avst", Engine.acronymize("AVerySillyTestIndeed"));
+		}
+		@Test public void test9() {
+			assertEquals("mmm", Engine.acronymize("$moneyMoneyMoney"));
+		}
+		@Test public void test10() {
+			assertEquals("sil", Engine.acronymize("sillytest"));
+		}
+		@Test public void test11() {
+			assertEquals("si", Engine.acronymize("si"));
+		}
+		@Test public void test12() {
+			assertEquals("st", Engine.acronymize("SillyTest"));
+		}
+	}
+
 }

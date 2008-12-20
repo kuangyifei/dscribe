@@ -19,7 +19,7 @@ import com.ideanest.dscribe.mixt.test.BlockTestCase;
 public class Insert implements BlockType {
 
 	public QName xmlName() {
-		return new QName(Engine.RULES_NS, "insert", null);
+		return new QName(Engine.MIXT_NS, "insert", null);
 	}
 	
 	public String version() {

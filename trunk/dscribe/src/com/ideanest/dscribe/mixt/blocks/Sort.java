@@ -21,7 +21,7 @@ public class Sort implements BlockType {
 	}
 
 	@Override public QName xmlName() {
-		return new QName(Engine.RULES_NS, "sort", null);
+		return new QName(Engine.MIXT_NS, "sort", null);
 	}
 
 	@AllowAttributes({"priority", "by", "as", "before", "after"})

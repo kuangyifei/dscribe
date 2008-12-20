@@ -70,7 +70,7 @@ public class SystemTest extends DatabaseTestCase {
 	@Before public void setUp() {
 		workspace = db.createFolder("/workspace");
 		rulespace = db.createFolder("/rulespace");
-		rulespace.namespaceBindings().put("", Engine.RULES_NS);
+		rulespace.namespaceBindings().put("", Engine.MIXT_NS);
 		transformer = new Transformer(workspace, rulespace);
 	}
 	

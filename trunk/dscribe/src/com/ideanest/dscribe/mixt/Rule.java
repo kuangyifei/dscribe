@@ -487,7 +487,7 @@ public class Rule {
 		
 		private Node makeRule(String attributes, String xml) {
 			return db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<rule " + attributes + " xmlns='" + Engine.RULES_NS + "'>" + xml + "</rule>")).root();
+					"<rule " + attributes + " xmlns='" + Engine.MIXT_NS + "'>" + xml + "</rule>")).root();
 		}
 		
 		@Test public void sameDefsWithName() throws RuleBaseException {
@@ -641,7 +641,7 @@ public class Rule {
 	public static class _UtilityTest extends _RuleTest {
 		private Node makeBlock(String xml) {
 			return db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<blocks xmlns='" + Engine.RULES_NS + "'>" + xml + "</blocks>")).root().query().single("*").node();
+					"<blocks xmlns='" + Engine.MIXT_NS + "'>" + xml + "</blocks>")).root().query().single("*").node();
 		}
 		
 		@Test public void defineBlockWorks() throws RuleBaseException {
@@ -737,7 +737,7 @@ public class Rule {
 					"  <block-type class='com.ideanest.dscribe.mixt.blocks.With' version='" + new With().version() + "foo'/>" +
 					"</root>"));
 			Collection<QName> badBlockNames = Rule.verifyBlockTypeVersions(doc);
-			NamespaceMap ns = new NamespaceMap("", Engine.RULES_NS);
+			NamespaceMap ns = new NamespaceMap("", Engine.MIXT_NS);
 			assertFalse("good version", badBlockNames.contains(QName.parse("for", ns)));
 			assertTrue("bad version", badBlockNames.contains(QName.parse("with", ns)));
 			assertTrue("missing record", badBlockNames.contains(QName.parse("insert", ns)));
@@ -748,7 +748,7 @@ public class Rule {
 	public static class _ParseBlocksTest extends _RuleTest {
 		private Node makeRule(String xml) {
 			return db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<rule xmlns='" + Engine.RULES_NS + "'>" + xml + "</rule>")).root();
+					"<rule xmlns='" + Engine.MIXT_NS + "'>" + xml + "</rule>")).root();
 		}
 		
 		@Before public void overrideMockShim() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {

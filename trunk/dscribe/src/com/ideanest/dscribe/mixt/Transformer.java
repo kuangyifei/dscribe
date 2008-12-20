@@ -26,7 +26,7 @@ public class Transformer {
 		if (workspace.contains(recordsRoot)) throw new IllegalArgumentException("workspace must not contain records root");
 		this.workspace = workspace.cloneWithoutNamespaceBindings();
 		this.rulespace = ruleRepository.cloneWithoutNamespaceBindings();
-		this.rulespace.namespaceBindings().put("", Engine.RULES_NS);
+		this.rulespace.namespaceBindings().put("", Engine.MIXT_NS);
 		createRecordspace();
 	}
 	
@@ -121,7 +121,7 @@ public class Transformer {
 		@Before public void setupTransformer() {
 			workspace = db.createFolder("/workspace");
 			rulespace = db.createFolder("/rulespace");
-			rulespace.namespaceBindings().put("", Engine.RULES_NS);
+			rulespace.namespaceBindings().put("", Engine.MIXT_NS);
 			recordspace = db.createFolder(Transformer.recordsRootPath() + workspace.path());
 			recordspace.namespaceBindings().put("", Engine.RECORD_NS);
 			recordspace.namespaceBindings().put("record", Engine.RECORD_NS);
@@ -182,12 +182,12 @@ public class Transformer {
 		@Test public void recordRun() {
 			Date date = new Date();
 			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns='" + Engine.RULES_NS + "'>" +
+					"<rules xmlns='" + Engine.MIXT_NS + "'>" +
 					"  <rule xml:id='r1'/>" +
 					"  <foo xmlns='" + Engine.RECORD_NS + "'/>" +
 					"</rules>"));
 			rulespace.children().create("subrules").documents().load(Name.generate(), Source.xml(
-					"<rules xmlns='" + Engine.RULES_NS + "' xmlns:rec='" + Engine.RECORD_NS + "'>" +
+					"<rules xmlns='" + Engine.MIXT_NS + "' xmlns:rec='" + Engine.RECORD_NS + "'>" +
 					"  <rule xml:id='r2' rec:bar='x'/>" +
 					"</rules>"));
 			transformer.recordRun(date);
@@ -198,11 +198,11 @@ public class Transformer {
 			assertTrue(lastRun.query().all("//block-type").size() >= 4);
 			assertTrue(lastRun.query().single("every $c in block-type satisfies $c[@class][@version]").booleanValue());
 			
-			assertEquals(2, recordspace.query().namespace("", Engine.RULES_NS).unordered("//rule").size());
-			assertTrue(recordspace.query().namespace("", Engine.RULES_NS).exists("//rule[@xml:id='r1']"));
+			assertEquals(2, recordspace.query().namespace("", Engine.MIXT_NS).unordered("//rule").size());
+			assertTrue(recordspace.query().namespace("", Engine.MIXT_NS).exists("//rule[@xml:id='r1']"));
 			assertTrue(recordspace.query().single("in-scope-prefixes($_1/id('r1')) = in-scope-prefixes($_2/id('r1'))", rulespace, recordspace).booleanValue());
 			assertFalse(recordspace.query().namespace("", Engine.RECORD_NS).exists("//foo"));
-			assertTrue(recordspace.query().namespace("", Engine.RULES_NS).exists("//rule[@xml:id='r2']"));
+			assertTrue(recordspace.query().namespace("", Engine.MIXT_NS).exists("//rule[@xml:id='r2']"));
 			assertTrue(recordspace.query().single("in-scope-prefixes($_1/id('r2')) = in-scope-prefixes($_2/id('r2'))", rulespace, recordspace).booleanValue());
 			assertFalse(recordspace.query().namespace("r", Engine.RECORD_NS).exists("/id('r2')/@r:bar"));
 		}
