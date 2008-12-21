@@ -379,7 +379,7 @@ public class Cycle {
 			}
 		}
 		
-		if (workspace != null) job.abortWorkspace();
+		if (workspace != null) job.abortWorkspace(failed);
 	}
 
 	private boolean checkNeedEarlyTrigger() throws SchedulerException {

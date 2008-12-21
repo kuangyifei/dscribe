@@ -1,4 +1,4 @@
-package com.ideanest.dscribe.mixt;
+package com.ideanest.dscribe.uml;
 
 import java.io.*;
 import java.text.ParseException;
@@ -9,6 +9,7 @@ import org.exist.fluent.*;
 
 import com.ideanest.dscribe.Namespace;
 import com.ideanest.dscribe.job.TaskBase;
+import com.ideanest.dscribe.mixt.*;
 
 public class TransformTask extends TaskBase {
 	

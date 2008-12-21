@@ -1,6 +1,6 @@
 <group name="Global" xmlns="http://ideanest.com/dscribe/ns/config">
 
-	<job type="project" name="dScribe" enabled="true">
+	<job type="project" name="dScribe" enabled="true" debug-dump="true">
 		<schedule at="0/30 * * * * ?"/>
 		<wipe if="empty($versions//notes:notes[@status='completed'])"/>
 		<filesystem dir="c:\code\projects\dscribe" quiet-period="PT30S">
