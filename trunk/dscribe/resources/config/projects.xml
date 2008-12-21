@@ -17,6 +17,7 @@
 			<calculator class="com.ideanest.dscribe.java.PackageAssignmentCalculator"/>
 			<calculator class="com.ideanest.dscribe.java.ClassAssignmentCalculator"/>
 		</assign-diagrams>
+		<!-- <mixt folder="rules" rules="../../../transforms"/> -->
 	</job>
 
 	<job type="project" name="Reef-CVS" min-run-interval="PT3M" enabled="false">

@@ -56,6 +56,10 @@ public class AnnealingDiagramAssigner extends TaskBase {
 	}
 	
 
+	private static final NamespaceMap NAMESPACE_BINDINGS = new NamespaceMap(
+			"mapping", Namespace.MAPPING
+	);
+	
 	private static final Logger LOG = Logger.getLogger(AnnealingDiagramAssigner.class);
 	private static final Random random = new Random();
 	
@@ -76,6 +80,13 @@ public class AnnealingDiagramAssigner extends TaskBase {
 	
 	@Phase
 	public void elaborate() {
+		cycle().inherit(cycle().prevspace(NAMESPACE_BINDINGS).query().unordered("//mapping:mappings").nodes().documents());
+		Folder workspace = cycle().workspace(NAMESPACE_BINDINGS);
+		if (!workspace.query().exists("//mapping:mappings")) {
+			workspace.documents().build(Name.adjust("diagram-mappings"))
+					.elem("mapping:mappings").end("mapping:mappings").commit();
+		}
+		
 		int numOrphans = 0, numNewDiagrams = 0;
 		for (Calculator calc : calculators) {
 			AssignmentRun assignmentRun = new AssignmentRun(calc, cycle());
@@ -177,7 +188,7 @@ public class AnnealingDiagramAssigner extends TaskBase {
 			SimulatedAnnealingOptimizer<Assignment> sao = new SimulatedAnnealingOptimizer<Assignment>(
 					new GeometricAnnealingStrategy(1000, 10, 0.95, 1000));		// TODO: tweak parameters based on dataset size?
 			ass = sao.optimize(ass);
-			LOG.debug("simulated annealing done, emitting mappings");
+			LOG.debug("simulated annealing done, final solution cost " + Math.round(ass.cost()));
 			
 			emitMappings(ass);
 			LOG.debug(new MessageFormat(
@@ -202,7 +213,7 @@ public class AnnealingDiagramAssigner extends TaskBase {
 		
 		private void initDiagrams() {
 			// find all diagrams that have at least one element of the desired kind already assigned
-			ItemList elements = workspace.query().let("workspace", workspace).presub().unordered(
+			ItemList elements = workspace.query().presub().unordered(
 					"let " +
 					"	$mappings := //mapping:java-element-to-diagram " +
 					"return " +
@@ -227,14 +238,7 @@ public class AnnealingDiagramAssigner extends TaskBase {
 		}
 		
 		private void emitMappings(Assignment ass) {
-			ItemList mappings = workspace.query().unordered("//mapping:mappings");
-			ElementBuilder<?> builder;
-			if (mappings.isEmpty()) {
-				builder = workspace.documents().build(Name.adjust("diagram-mappings"))
-						.elem("mapping:mappings").end("mapping:mappings").commit().root().append();
-			} else {
-				builder = mappings.get(0).node().append();
-			}
+			ElementBuilder<?> builder = workspace.query().unordered("//mapping:mappings").get(0).node().append();
 			for (Orphan orphan : orphans) {
 				Diagram diagram = ass.get(orphan);
 				if (diagram.id == null) {

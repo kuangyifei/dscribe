@@ -66,7 +66,7 @@ public class Rule {
 			final String lastVersion = record.query().namespace("record", Engine.RECORD_NS).optional(
 					"//record:block-type[@class=$_1]/@version", blockType.getClass().getName()).value();
 			if (!blockType.version().equals(lastVersion)) {
-				LOG.info("block " + blockType.xmlName() + " changed from version " + lastVersion + " to " + blockType.version());
+				LOG.debug("block " + blockType.xmlName() + " changed from version " + lastVersion + " to " + blockType.version());
 				badBlockNames.add(blockType.xmlName());
 			}
 		}
@@ -105,7 +105,7 @@ public class Rule {
 		firstDifferentStage = parseBlocks(def, prevDef, namesOfModifiedFunctions);
 		
 		if (firstDifferentStage < Integer.MAX_VALUE) {
-			LOG.info(this + " has changed starting at stage " + firstDifferentStage + ", withdrawing affected mods");
+			LOG.debug(this + " has changed starting at stage " + firstDifferentStage + ", withdrawing affected mods");
 			engine.withdrawMods(rootModNode.query().unordered(".//mod[xs:integer(@stage) >= $_1]", firstDifferentStage));
 		}
 	}
