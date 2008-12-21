@@ -21,5 +21,7 @@
 		<map tag="java-resolve-types" class="com.ideanest.dscribe.java.TypeResolver"/>
 		<map tag="java-analyze-origin" class="com.ideanest.dscribe.java.SimpleOriginAnalyzer"/>
 		<map tag="assign-diagrams" class="com.ideanest.dscribe.opti.AnnealingDiagramAssigner"/>
+		
+		<map tag="mixt" class="com.ideanest.dscribe.uml.TransformTask"/>
 	</mapping>
 </mapping>

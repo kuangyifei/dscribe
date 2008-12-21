@@ -1,7 +1,7 @@
 package com.ideanest.dscribe.uml;
 
 import java.io.*;
-import java.text.ParseException;
+import java.text.*;
 
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.DirectoryScanner;
@@ -53,6 +53,10 @@ public class TransformTask extends TaskBase {
 		}
 
 		// TODO: merge precedence data back into global configuration
+		
+		LOG.info(new MessageFormat(
+				"completed transformation after {0,choice,1#one iteration|1<{0,number,integer} iterations}")
+				.format(new Object[] {engine.stats().numCycles}));
 	}
 	
 	private void loadRules() throws FileNotFoundException, IOException, ParseException {
