@@ -21,6 +21,10 @@
 		<priority value="warn"/>
 	</category>
 	
+	<category name="com.ideanest.dscribe.opti.AnnealingDiagramAssigner">
+		<priority value="debug"/>
+	</category>
+	
 	<root>
 		<priority value="info"/>
 		<appender-ref ref="console"/>

@@ -2,6 +2,7 @@ package com.ideanest.dscribe.opti;
 
 import static org.junit.Assert.assertEquals;
 
+import java.text.MessageFormat;
 import java.util.*;
 
 import org.apache.log4j.Logger;
@@ -75,7 +76,18 @@ public class AnnealingDiagramAssigner extends TaskBase {
 	
 	@Phase
 	public void elaborate() {
-		for (Calculator calc : calculators) new AssignmentRun(calc, cycle()).run();
+		int numOrphans = 0, numNewDiagrams = 0;
+		for (Calculator calc : calculators) {
+			AssignmentRun assignmentRun = new AssignmentRun(calc, cycle());
+			assignmentRun.run();
+			numOrphans += assignmentRun.orphans.size();
+			numNewDiagrams += assignmentRun.numNewDiagrams;
+		}
+		LOG.info(new MessageFormat(
+				"diagram assignment completed, " +
+				"{0,choice,0#no new elements|1#one new element|1<{0,number,integer} new elements} assigned, " +
+				"{1,choice,0#no new diagrams|1#one new diagram|1<{1,number,integer} new diagrams} created")
+				.format(new Object[] {numOrphans, numNewDiagrams}));
 	}
 	
 	/**
@@ -139,6 +151,7 @@ public class AnnealingDiagramAssigner extends TaskBase {
 		private final List<Diagram> diagrams = new ArrayList<Diagram>();
 		private final List<Orphan> orphans = new ArrayList<Orphan>();
 		private SymmetricTable orphanClashes;
+		private int numNewDiagrams;
 		
 		AssignmentRun(Calculator plugin, Cycle job) {
 			this.plugin = plugin;
@@ -148,18 +161,30 @@ public class AnnealingDiagramAssigner extends TaskBase {
 		}
 		
 		public void run() {
+			LOG.debug("assigning " + plugin.getElementQueryFragment() + " to diagrams");
 			initOrphans();
 			if (orphans.size() == 0) return;
 			initDiagrams();
 			// clear out nodes, no need to cache them any more
 			for (Orphan orphan : orphans) orphan.node = null;
+			LOG.debug(new MessageFormat(
+					"parameters initialized ({0,choice,1#1 orphan|1<{0,number,integer} orphans}, " +
+					"{1,choice,0#0 existing diagrams|1#1 existing diagram|1<{1,number,integer} existing diagrams}), " +
+					"starting simulated annealing")
+					.format(new Object[] {orphans.size(), diagrams.size() - orphans.size()}));
 			
 			Assignment ass = new Assignment();
 			SimulatedAnnealingOptimizer<Assignment> sao = new SimulatedAnnealingOptimizer<Assignment>(
-					new GeometricAnnealingStrategy(1000, 10, 0.9, 500));		// TODO: tweak parameters based on dataset size?
+					new GeometricAnnealingStrategy(1000, 10, 0.95, 1000));		// TODO: tweak parameters based on dataset size?
 			ass = sao.optimize(ass);
+			LOG.debug("simulated annealing done, emitting mappings");
 			
 			emitMappings(ass);
+			LOG.debug(new MessageFormat(
+					"assignment of {2} completed: " +
+					"{0,choice,0#no new elements|1#one new element|1<{0,number,integer} new elements} assigned, " +
+					"{1,choice,0#no new diagrams|1#one new diagram|1<{1,number,integer} new diagrams} created")
+					.format(new Object[] {orphans.size(), numNewDiagrams, plugin.getElementQueryFragment()}));
 		}
 		
 		private void initOrphans() {
@@ -213,6 +238,7 @@ public class AnnealingDiagramAssigner extends TaskBase {
 			for (Orphan orphan : orphans) {
 				Diagram diagram = ass.get(orphan);
 				if (diagram.id == null) {
+					numNewDiagrams++;
 					diagram.id = job.generateUid("d");
 					builder.elem("mapping:create-diagram")
 						.attr("xml:id", job.generateUid("m"))
@@ -345,7 +371,7 @@ public class AnnealingDiagramAssigner extends TaskBase {
 			private double crowdingCost(int numExtraElements) {
 				assert numExtraElements > 0;
 				// TODO: take into consideration amount of space actually left on diagram, if available
-				return Math.expm1(Math.abs(numFixedElements + numExtraElements - 5))*100;
+				return Math.expm1(Math.abs(numFixedElements + numExtraElements - 10))*50;
 			}
 		}
 		

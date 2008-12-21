@@ -1,7 +1,6 @@
 package com.ideanest.dscribe.job;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 import javax.xml.datatype.Duration;
@@ -113,14 +112,15 @@ public class Job {
 	
 	void commitWorkspace() {
 		debugDump();
-		if (root.documents().contains(CLEAN_CYCLE_MARKER_DOC_NAME)) root.documents().get(CLEAN_CYCLE_MARKER_DOC_NAME).delete();
 		root.children().get(WORKSPACE_FOLDER_NAME).move(root, Name.overwrite(PREVSPACE_FOLDER_NAME));
+		if (root.documents().contains(CLEAN_CYCLE_MARKER_DOC_NAME)) root.documents().get(CLEAN_CYCLE_MARKER_DOC_NAME).delete();
 		if (root.children().contains(ABORTSPACE_FOLDER_NAME)) root.children().get(ABORTSPACE_FOLDER_NAME).delete();
 	}
 	
-	void abortWorkspace() {
+	void abortWorkspace(boolean makeNextCycleClean) {
 		debugDump();
 		root.children().get(WORKSPACE_FOLDER_NAME).move(root, Name.overwrite(ABORTSPACE_FOLDER_NAME));
+		if (!makeNextCycleClean && root.documents().contains(CLEAN_CYCLE_MARKER_DOC_NAME)) root.documents().get(CLEAN_CYCLE_MARKER_DOC_NAME).delete();
 	}
 	
 	private void debugDump() {
