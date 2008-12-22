@@ -244,7 +244,7 @@ public class Cycle {
 
 		} catch (JobExecutionException e) {
 			throw e;
-			
+		
 		} catch (Exception e) {
 			String msg = currentStep == null ? "job run error outside of any step" : "error performing step: " + currentStep.name();
 			LOG.error(msg, e);
@@ -269,6 +269,8 @@ public class Cycle {
 				notifyAll();
 			}
 			Database.flush();
+			LOG.info("running post-task database consistency check");
+			Database.checkConsistency();
 			myThread.setName(oldThreadName);
 			
 			if (schedulePaused) config.schedule().resume();

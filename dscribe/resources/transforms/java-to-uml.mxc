@@ -1,39 +1,56 @@
 namespace	java	http://ideanest.com/dscribe/ns/java
 namespace	uml	http://ideanest.com/dscribe/ns/uml
-namespace map	http://ideanest.com/dscribe/ns/map
+namespace map	http://ideanest.com/dscribe/ns/mapping
+namespace u		http://ideanest.com/dscribe/ns/util
+
+function u:type($java):			($java/type/text(), $java/localType/text())[1]
+function u:depiction($java):	//uml:*[@depicts = $java/@xml:id]
 
 rule create diagram
 	for each $mapping:	//map:create-diagram
-	create-doc:				diagrams/{$mapping/@id}.xml
-	insert:					element uml:diagram {$mapping/@id, $mapping/@kind}
+	create-doc:				diagrams/{$mapping/@diagram}.xml
+	insert:					element uml:diagram {$mapping/@diagram, $mapping/@kind}
 
 rule copy class to diagram
 	for each $map:		//map:java-element-to-diagram
-	for one $jclass:		/id($map/@java-element)/self::java:class
-	for one target:		//uml:diagram[@id=$map/@diagram]
-	insert:
-		<uml:class depicts='{$jclass/@xml:id}'/>
+	for each $jclass:		/id($map/@java-element)/self::java:class
+	for each target:		//uml:diagram[@diagram=$map/@diagram]
+	insert:					<uml:class depicts='{$jclass/@xml:id}'/>
+
+rule copy class name
+	for each $jclass:		//java:class
+	for each target:		u:depiction($jclass)
+	insert:					<uml:blockname>{$jclass/@name}</uml:blockname>
 
 rule create class compartments
 	for each target:		//uml:class
 	insert in order:
-		(<uml:compartment kind='attribute'/>,
-		 <uml:compartment kind='operation'/>)
+		(<uml:compartment kind='attributes'/>,
+		 <uml:compartment kind='operations'/>)
 	sort after sibling:		* except uml:compartment
-
-rule copy name to depiction
-	for each $source:		//java:*[@name]
-	for each target:		//uml:*[@depicts=$source/@xml:id]
-	insert:					<uml:name>{$source/@name/string()}</uml:name>
 
 rule copy fields to attributes
 	for each $source:		//java:field
-	for one target:		//uml:class[@depicts=$source/../@xml:id]/uml:compartment[@kind='attribute']
-	insert:					<uml:attribute depicts='{$source/@xml:id}'/>
+	for each target:		u:depiction($source/..)/uml:compartment[@kind='attributes']
+	insert:
+		<uml:attribute depicts='{$source/@xml:id}'>
+			<uml:var><uml:name>{$source/@name}</uml:name><uml:type>{u:type($source)}</uml:type></uml:var>
+		</uml:attribute>
 	sort as corresponding:	$source
 
 rule copy method to operations
 	for each $source:		//java:method | //java:constructor
-	for one target:		//uml:class[@depicts=$source/../@xml:id]/uml:compartment[@kind='operation']
-	insert:					<uml:operation depicts='{$source/@xml:id}'/>
+	for each target:		u:depiction($source/..)/uml:compartment[@kind='operations']
+	insert:
+		<uml:operation depicts='{$source/@xml:id}'>
+			<uml:name>{$source/@name}</uml:name>
+			<uml:args>{
+				for $param in $source/param return
+					<uml:var>
+						<uml:name>{$param/@name}</uml:name>
+						<uml:type>{u:type($param)}</uml:type>
+					</uml:var>
+			}</uml:args>
+			<uml:type>{u:type($source)}</uml:type> 
+		</uml:operation>
 	sort as corresponding:	$source
