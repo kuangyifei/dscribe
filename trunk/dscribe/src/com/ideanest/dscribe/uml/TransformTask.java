@@ -56,7 +56,7 @@ public class TransformTask extends TaskBase {
 		
 		LOG.info(new MessageFormat(
 				"completed transformation after {0,choice,1#one iteration|1<{0,number,integer} iterations}")
-				.format(new Object[] {engine.stats().numCycles}));
+				.format(new Object[] {engine.stats().numCycles.value()}));
 	}
 	
 	private void loadRules() throws FileNotFoundException, IOException, ParseException {

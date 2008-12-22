@@ -1,8 +1,7 @@
 package com.ideanest.dscribe.job;
 
 import java.lang.annotation.*;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 
 import org.exist.fluent.Node;
 
@@ -72,6 +71,7 @@ public abstract class TaskBase implements Task {
 			getClass().getMethod(phase).invoke(this);
 		} catch (InvocationTargetException e) {
 			if (e.getCause() instanceof Exception) throw (Exception) e.getCause();
+			if (e.getCause() instanceof Error) throw (Error) e.getCause();
 			throw e;
 		}
 	}

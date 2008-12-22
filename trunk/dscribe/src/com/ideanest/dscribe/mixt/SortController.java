@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.lang.reflect.Field;
 import java.util.*;
 
+import org.apache.log4j.Logger;
 import org.exist.fluent.*;
 import org.jmock.*;
 import org.jmock.integration.junit4.*;
@@ -14,6 +15,7 @@ import org.junit.runner.RunWith;
 
 
 public class SortController {
+	private static final Logger LOG = Logger.getLogger(SortController.class);
 	private final Engine engine;
 	private final Accumulator.Locator<XMLDocument> modifiedDocsLocator;
 	private Set<XMLDocument> docsPending = new HashSet<XMLDocument>();
@@ -52,6 +54,7 @@ public class SortController {
 	}
 	
 	void executeEndOfCycle() throws TransformException {
+		LOG.debug("sorting nodes");
 		Set<XMLDocument> documentsChangedLastCycle = modifiedDocsLocator.catchUp();
 		processNodes(documentsChangedLastCycle);
 		processDocuments(documentsChangedLastCycle);
@@ -97,6 +100,7 @@ public class SortController {
 	}
 	
 	private void sort(Node node) throws TransformException {
+		LOG.debug("sorting node " + node.query().single("concat(name(), ' id=', @xml:id)").value());
 		OrderGraph graph = self.createGraph(node);
 		Rule prevRule = null;
 		int prevStage = -1;

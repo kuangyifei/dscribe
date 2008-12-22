@@ -126,12 +126,18 @@ public class Job {
 	private void debugDump() {
 		if (!debugDump) return;
 		try {
-			File debugDest = new File(config.tempdir(), "debug-dump-" + name());
+			File debugDest = new File(config.tempdir(), name() + "_debug-dump");
+			deleteDir(debugDest);
 			root.children().get(WORKSPACE_FOLDER_NAME).export(debugDest);
 			LOG.debug("dumped final workspace into '" + debugDest + "'");
 		} catch (IOException e) {
 			LOG.error("failed to dump workspace for debugging", e);
 		}
+	}
+	
+	private static void deleteDir(File dir) {
+		if (dir.isDirectory()) for (File child : dir.listFiles()) deleteDir(child);
+		dir.delete();
 	}
 	
 	public File workdir() {

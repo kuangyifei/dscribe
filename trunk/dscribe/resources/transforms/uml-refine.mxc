@@ -1,7 +1,7 @@
 namespace uml http://ideanest.com/dscribe/ns/uml
 namespace a http://ideanest.com/dscribe/ns/actions
 namespace attr http://ideanest.com/dscribe/ns/attribute-overrides
-namespace u http://ideanest.com/dscribe/ns/uml-refine-util
+namespace u http://ideanest.com/dscribe/ns/util
 
 function u:scope($action):
 	if ($action/@scope='diagram') then /id($action/@diagram) else /

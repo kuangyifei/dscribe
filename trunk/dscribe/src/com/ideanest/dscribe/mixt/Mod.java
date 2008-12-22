@@ -502,7 +502,8 @@ public class Mod {
 		 * @param node the node that's referenced by the mod being built
 		 */
 		public void reference(Node node) {
-			if (!parent.rule.engine.ensureWorkspaceNodeHasXmlId(node)) throw new IllegalArgumentException("referenced node doesn't have an xml:id: " + node);
+			if (!parent.rule.engine.ensureWorkspaceNodeHasXmlId(node))
+				throw new IllegalArgumentException("node referenced by " + parent.rule + " doesn't have an xml:id: " + node);
 			references.add(node);
 			dependOn(node.document());
 		}
