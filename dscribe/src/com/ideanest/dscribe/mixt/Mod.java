@@ -27,7 +27,7 @@ public class Mod {
 	final int stage;
 	final Mod parent;
 	
-	private boolean restored;
+	private boolean previouslyResolved;
 	private Set<QName> boundVariables;
 	private List<Node> references;
 	private Seg seg;
@@ -40,7 +40,7 @@ public class Mod {
 		this.rule = rule;
 		this.stage = -1;
 		this.parent = null;
-		this.restored = true;
+		this.previouslyResolved = true;
 		initDefaultShim();
 	}
 	
@@ -48,7 +48,7 @@ public class Mod {
 		this.rule = parent.rule;
 		this.stage = parent.stage+1;
 		this.parent = parent;
-		this.restored = false;
+		this.previouslyResolved = false;
 		initDefaultShim();
 	}
 	
@@ -142,8 +142,8 @@ public class Mod {
 		return parent.nearestAncestorOrSelfImplementing(clazz);
 	}
 	
-	Collection<Mod> resolveChildren(Block block, boolean lastBlock, QueryService touchedScope) throws TransformException {
-		QueryService scope = self.prepScopeClone((touchedScope == null || !restored) ? rule.engine.globalScope() : touchedScope);
+	int resolveChildren(Block block, boolean lastBlock, QueryService touchedScope) throws TransformException {
+		QueryService scope = self.prepScopeClone((touchedScope == null || !previouslyResolved) ? rule.engine.globalScope() : touchedScope);
 		
 		Builder modBuilder;
 		if (block instanceof KeyBlock) {
@@ -153,8 +153,13 @@ public class Mod {
 			modBuilder = new Mod.Builder(this, block, lastBlock, scope);
 			((LinearBlock) block).resolve(modBuilder);
 		}
-
-		return modBuilder.children;
+		
+		if (!previouslyResolved) {
+			node.update().delAttr("new").commit();
+			previouslyResolved = true;
+		}
+		
+		return modBuilder.childCount;
 	}
 	
 	Mod deriveChild(Block block, String key) {
@@ -176,6 +181,7 @@ public class Mod {
 		if (this.stage != storedStage)
 			throw new IllegalArgumentException("stage mismatch on node restore, given " + stage + ", stored " + storedStage);
 		
+		previouslyResolved = !node.query().exists("@new");
 		ItemList refNodes = node.query().all("reference");
 		if (refNodes.size() > 0) {
 			references = new ArrayList<Node>(refNodes.size());
@@ -191,7 +197,6 @@ public class Mod {
 		}
 		
 		seg.restore();
-		restored = true;
 	}
 	
 	private void setNode(Node myNode) {
@@ -260,7 +265,7 @@ public class Mod {
 		private List<Node> references, orders;
 		private ElementBuilder<org.w3c.dom.Node> supplement;
 		
-		private List<Mod> children = new ArrayList<Mod>(1);
+		int childCount;
 		
 		Builder(Mod parent, Block block, boolean lastBlock, QueryService scope) {
 			this.parent = parent;
@@ -309,26 +314,23 @@ public class Mod {
 		public void commit() throws TransformException {
 			try {
 				// TODO: if this is the last block, check for unverified dependencies in the whole chain
-				checkChildrenSize();
-				Mod mod = createChild();
-				mod.references = references;
+				checkChildCount();
+				childCount++;
 				
 				assert !parent.node().query().exists("mod[not(@xml:id)]");
-				// TODO: consider keeping child if we'll need to restore it in the next stage anyway
-				if (parent.node().query().exists("mod[@xml:id=$_1]", mod.key())) return;
-				
-				writeData(mod);
-				mod.seg = block.createSeg(mod);
-				mod.seg.restore();
-				children.add(mod);
+				String key = key();
+				if (!parent.node().query().exists("mod[@xml:id=$_1]", key)) writeMod(key);
 			} finally {
 				reset();
 			}
 		}
 
-		private void writeData(Mod mod) {
+		private void writeMod(String key) {
 			ElementBuilder<Node> builder = parent.node().append().namespace("", Engine.MOD_NS);
-			builder.elem("mod").attrIf(mod instanceof KeyMod, "xml:id", mod.key()).attr("stage", mod.stage);
+			builder.elem("mod")
+				.attrIf(!key.equals(parent.key()), "xml:id", key)
+				.attr("stage", parent.stage + 1)
+				.attr("new", "");
 			for (String docName : dependentDocNames) {
 				builder.elem("dependency")
 					.attr("kind", unverifiedDocNames.contains(docName) ? "unverified" : "verified")
@@ -352,15 +354,15 @@ public class Mod {
 				}
 			}
 			if (supplement != null) builder.node(supplement.commit());
-			mod.setNode(builder.end("mod").commit());
+			builder.end("mod").commit();
 		}
 		
-		void checkChildrenSize() throws TransformException {
-			if (!children.isEmpty()) throw new TransformException("linear block should resolve to at most one mod");
+		void checkChildCount() throws TransformException {
+			if (childCount > 0) throw new TransformException("linear block should resolve to at most one mod");
 		}
 		
-		Mod createChild() {
-			return new Mod(parent);
+		String key() {
+			return parent.key();
 		}
 		
 		public QueryService scope() {
@@ -659,9 +661,8 @@ public class Mod {
 			assertNull(builder.supplement);
 		}
 		
-		@Test public void createChild() {
-			Mod child = builder.createChild();
-			assertSame(parentMod, child.parent);
+		@Test public void key() {
+			assertSame("_r1.e13.", builder.key());
 		}
 		
 		@Test public void supplement() {
@@ -864,13 +865,10 @@ public class Mod {
 			assertThat(builder.generateId(0), not(equalTo(builder.generateId(1))));			
 		}
 		
-		@Test public void writeData() throws Exception {
-			final Node parentModNode = modStore.append().elem("mod").attr("stage", 2).end("mod").commit();
-			final Mod mod = mockery.mock(Mod.class, "childMod");
-			mod_stage.set(mod, 3);
+		@Test public void writeMod() throws Exception {
+			final Node parentModNode = modStore.append().elem("mod").attr("stage", 3).end("mod").commit();
 			mockery.checking(new Expectations() {{
-				allowing(parentMod).node();  will(returnValue(parentModNode));
-				allowing(mod).key();  will(returnValue(null));
+				allowing(parentMod).node(); will(returnValue(parentModNode));
 			}});
 
 			builder.dependentDocNames.add("d1v.xml");
@@ -883,7 +881,7 @@ public class Mod {
 			builder.supplement().elem("checksum").end("checksum").elem("foobar").end("foobar");
 			
 			Node targetNode = db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<mod xmlns='" + Engine.MOD_NS + "' stage='3'>" +
+					"<mod xmlns='" + Engine.MOD_NS + "' stage='4' new=''>" +
 					"	<dependency kind='unverified' doc='d1u.xml'/>" +
 					"	<dependency kind='verified' doc='d1v.xml'/>" +
 					"	<affected refid='e2'/>" +
@@ -893,7 +891,7 @@ public class Mod {
 					"</mod>"
 					)).root();
 			
-			builder.writeData(mod);
+			builder.writeMod("_r1.e13.");
 			
 			Node writtenNode = parentModNode.query().single("mod").node();
 			if (!db.query().single("deep-equal($_1, $_2)", targetNode, writtenNode).booleanValue()) {
@@ -914,22 +912,15 @@ public class Mod {
 		}
 		
 		@Test public void commitNewNode() throws TransformException {
-			final Seg seg = mockery.mock(Seg.class);
 			mockery.checking(new Expectations() {{
 				allowing(parentMod).node();  will(returnValue(modStore));
-				one(block).createSeg(with(any(Mod.class)));  will(returnValue(seg));
-				one(seg).restore();
 			}});
 			final Node refNode = doc1.query().single("//e1").node();
 			builder.references.add(refNode);
 			builder.commit();
-			assertEquals(1, builder.children.size());
-			Mod childMod = builder.children.get(0);
-			assertSame(seg, childMod.seg);
-			assertEquals(Collections.singletonList(refNode), childMod.references);
+			assertEquals(1, builder.childCount);
 			Node modNode = modStore.query().optional("mod[xs:integer(@stage)=4]").node();
 			assertTrue(modNode.extant());
-			assertEquals(modNode, childMod.node);
 			assertEquals(0, builder.dependentDocNames.size());
 			assertEquals(0, builder.unverifiedDocNames.size());
 			assertEquals(0, builder.affectedNodeIds.size());
@@ -943,7 +934,7 @@ public class Mod {
 				allowing(parentMod).node();  will(returnValue(modStore));
 			}});
 			builder.commit();
-			assertEquals(0, builder.children.size());
+			assertEquals(1, builder.childCount);
 			assertEquals(0, builder.dependentDocNames.size());
 			assertEquals(0, builder.unverifiedDocNames.size());
 			assertEquals(0, builder.affectedNodeIds.size());
@@ -959,7 +950,7 @@ public class Mod {
 			assertSame(rule, mod.rule);
 			assertEquals(-1, mod.stage);
 			assertNull(mod.parent);
-			assertTrue(mod.restored);
+			assertTrue(mod.previouslyResolved);
 		}
 		
 		@Test public void constructorFromParentMod() {
@@ -967,7 +958,7 @@ public class Mod {
 			assertSame(rule, mod.rule);
 			assertEquals(4, mod.stage);
 			assertSame(parentMod, mod.parent);
-			assertFalse(mod.restored);
+			assertFalse(mod.previouslyResolved);
 		}
 		
 		@Test public void createBootstrap() {
@@ -976,7 +967,7 @@ public class Mod {
 			assertSame(rule, mod.rule);
 			assertEquals(-1, mod.stage);
 			assertNull(mod.parent);
-			assertTrue(mod.restored);
+			assertTrue(mod.previouslyResolved);
 		}
 		
 		@Test public void bootstrapAppendChild() {
@@ -1174,64 +1165,52 @@ public class Mod {
 			}
 		}
 		
-		private static class SetModBuilderChildren implements Action {
-			private final List<Mod> children;
-			SetModBuilderChildren(Mod... children) {
-				this.children = Arrays.asList(children);
-			}
-			public Object invoke(Invocation invocation) throws Throwable {
-				((Mod.Builder) invocation.getParameter(0)).children.addAll(children);
-				return null;
-			}
-			public void describeTo(Description description) {
-				description.appendText("set mod builder children to ").appendValueList("[", ",", "]", children);
-			}
-		}
-		
 		@Test public void resolveChildren() throws TransformException {
 			final Mod mod = new Mod(parentMod);
+			mod.setNode(modStore.append()
+					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4).attr("new", "")
+					.end("mod").commit());
 			final LinearBlock linearBlock = mockery.mock(LinearBlock.class);
-			final Mod[] children = new Mod[] {new Mod(parentMod), new Mod(parentMod)};
 			mod.self = mockery.mock(Mod.Shim.class);
 			mockery.checking(new Expectations() {{
 				one(linearBlock).resolve(with(new CheckModBuilderParams<Mod.Builder>(mod, linearBlock, false, modStore.query())));
-				will(new SetModBuilderChildren(children));
 				one(mod.self).prepScopeClone(with(same(workspace.query())));
 				will(returnValue(modStore.query()));
 			}});
-			Collection<Mod> result = mod.resolveChildren(linearBlock, false, null);
-			assertEquals(Arrays.asList(children), result);
+			mod.resolveChildren(linearBlock, false, null);
+			assertTrue(mod.previouslyResolved);
+			assertFalse(mod.node.query().exists("@new"));
 		}
 
 		@Test public void resolveChildrenLastBlock() throws TransformException {
 			final Mod mod = new Mod(parentMod);
-			mod.restored = true;
+			mod.previouslyResolved = true;
 			final LinearBlock linearBlock = mockery.mock(LinearBlock.class);
-			final Mod[] children = new Mod[] {new Mod(parentMod), new Mod(parentMod)};
 			mod.self = mockery.mock(Mod.Shim.class);
 			mockery.checking(new Expectations() {{
 				one(linearBlock).resolve(with(new CheckModBuilderParams<Mod.Builder>(mod, linearBlock, true, workspace.query())));
-				will(new SetModBuilderChildren(children));
 				one(mod.self).prepScopeClone(with(same(modStore.query())));
 				will(returnValue(workspace.query()));
 			}});
-			Collection<Mod> result = mod.resolveChildren(linearBlock, true, modStore.query());
-			assertEquals(Arrays.asList(children), result);
+			mod.resolveChildren(linearBlock, true, modStore.query());
+			assertTrue(mod.previouslyResolved);
 		}
 
 		@Test public void resolveChildrenKeyBlock() throws TransformException {
 			final Mod mod = new Mod(parentMod);
+			mod.setNode(modStore.append()
+					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4).attr("new", "")
+					.end("mod").commit());
 			final KeyBlock keyBlock = mockery.mock(KeyBlock.class);
-			final Mod[] children = new Mod[] {new Mod(parentMod), new Mod(parentMod)};
 			mod.self = mockery.mock(Mod.Shim.class);
 			mockery.checking(new Expectations() {{
 				one(keyBlock).resolve(with(new CheckModBuilderParams<KeyMod.Builder>(mod, keyBlock, false, workspace.query())));
-				will(new SetModBuilderChildren(children));
 				one(mod.self).prepScopeClone(with(same(workspace.query())));
 				will(returnValue(workspace.query()));
 			}});
-			Collection<Mod> result = mod.resolveChildren(keyBlock, false, modStore.query());
-			assertEquals(Arrays.asList(children), result);
+			mod.resolveChildren(keyBlock, false, modStore.query());
+			assertTrue(mod.previouslyResolved);
+			assertFalse(mod.node.query().exists("@new"));
 		}
 		
 		@Test public void restoreChild() throws TransformException {
@@ -1265,14 +1244,14 @@ public class Mod {
 		@Test public void restoreNoReferences() throws TransformException {
 			final Mod mod = new Mod(parentMod);
 			mod.setNode(modStore.append()
-					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4)
+					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4).attr("new", "")
 					.end("mod").commit());
 			mod.seg = mockery.mock(Seg.class);
 			mockery.checking(new Expectations() {{
 				one(mod.seg).restore();  will(checkThatNamespaceBindingsAreEmpty(mod.supplementQuery().namespaceBindings()));
 			}});
 			mod.restore();
-			assertTrue(mod.restored);
+			assertFalse(mod.previouslyResolved);
 			assertTrue(mod.references().isEmpty());
 			assertEquals(Engine.MOD_NS, mod.node.namespaceBindings().get(""));
 		}
@@ -1297,7 +1276,7 @@ public class Mod {
 				one(mod.seg).restore();  will(checkThatNamespaceBindingsAreEmpty(mod.supplementQuery().namespaceBindings()));
 			}});
 			mod.restore();
-			assertTrue(mod.restored);
+			assertTrue(mod.previouslyResolved);
 			assertEquals(Collections.singletonList(doc1.root().query().single("e1").node()), mod.references());
 			assertEquals(Engine.MOD_NS, mod.node.namespaceBindings().get(""));
 		}

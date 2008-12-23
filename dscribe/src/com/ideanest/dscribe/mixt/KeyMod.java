@@ -75,14 +75,13 @@ public class KeyMod extends Mod {
 			return key.toString();
 		}
 		
-		@Override void checkChildrenSize() {
+		@Override void checkChildCount() {
 			// relax super limitations, don't check children size
 		}
 		
-		@Override KeyMod createChild() {
+		@Override String key() {
 			if (keySuffix == null) keySuffix = "-.";
-			String key = parent.key() + keySuffix;
-			return new KeyMod(parent, key);
+			return parent.key() + keySuffix;
 		}
 		
 		@Override void reset() {
@@ -104,17 +103,15 @@ public class KeyMod extends Mod {
 			assertNull(builder.keySuffix);
 		}
 		
-		@Test public void createChildNoKeys() {
-			Mod child = builder.createChild();
-			assertSame(parentMod, child.parent);
-			assertEquals("_r1.e13.-.", child.key());
+		@Test public void keyNoKeys() {
+			String key = builder.key();
+			assertEquals("_r1.e13.-.", key);
 		}
 		
-		@Test public void createChildRefKey() {
+		@Test public void keyRefKey() {
 			builder.referenceKey(doc1.query().single("//e1").node());
-			Mod child = builder.createChild();
-			assertSame(parentMod, child.parent);
-			assertEquals("_r1.e13.e1.", child.key());
+			String key = builder.key();
+			assertEquals("_r1.e13.e1.", key);
 		}
 		
 		@Test public void referenceKey() {
@@ -141,14 +138,8 @@ public class KeyMod extends Mod {
 		}
 
 		@Test public void commitTwice() throws TransformException {
-			final Seg seg1 = mockery.mock(Seg.class, "seg1");
-			final Seg seg2 = mockery.mock(Seg.class, "seg2");
 			mockery.checking(new Expectations() {{
 				allowing(parentMod).node();  will(returnValue(modStore));
-				exactly(2).of(block).createSeg(with(any(Mod.class)));
-					will(onConsecutiveCalls(returnValue(seg1), returnValue(seg2)));
-				one(seg1).restore();
-				one(seg2).restore();
 			}});
 			builder.commit();
 			builder.referenceKey(doc1.query().single("//e1").node());

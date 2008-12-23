@@ -24,7 +24,7 @@ rule copy fob name [r2]
 		<mod stage='1'>
 			<dependency doc='source.xml' kind='verified'/>
 			<docname xmlns=''>result-f.xml</docname>
-			<mod stage='2'>
+			<mod stage='2' new=''>
 				<dependency doc='source.xml' kind='verified'/>
 				<affected refid='_r1.f.2.'/>
 				<checksum xmlns='' digest-type='_'>_</checksum>
@@ -40,7 +40,7 @@ rule copy fob name [r2]
 			<dependency doc='result-f.xml' kind='verified'/>
 			<dependency doc='source.xml' kind='verified'/>
 			<reference doc='result-f.xml' refid='_r1.f.2.'/>
-			<mod stage='2'>
+			<mod stage='2' new=''>
 				<dependency doc='source.xml' kind='verified'/>
 				<affected refid='_r2.g.2.'/>
 				<checksum xmlns='' digest-type='_'>_</checksum>
@@ -71,5 +71,5 @@ update value //fob/@name with 'bye'
 
 ## check stats
 numBlocksVerified = 6
-numBlocksResolved = 1
+numBlocksResolved = 5
 numModsWithdrawn = 1

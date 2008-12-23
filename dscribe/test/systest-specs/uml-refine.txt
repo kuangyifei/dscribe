@@ -1,4 +1,4 @@
-## load rules resources/uml-refine.mxc
+## load rules resources/transforms/uml-refine.mxc
 
 ## load file diagram.xml
 <diagram xmlns='http://ideanest.com/dscribe/ns/uml' xml:id='d1' id='d1'>
@@ -33,7 +33,7 @@
 ## check file action-candidates.xml
 <a:candidates xmlns:a='http://ideanest.com/dscribe/ns/actions' xml:id='_'>
 	<a:set-property target='c1a1' attr='visible' value='false' action='act01' specificity='3' serial='123' xml:id='_'>
-		<u:key xmlns:u='http://ideanest.com/dscribe/ns/uml-refine-util' value='set-property-c1a1-visible' xml:id='_'/>
+		<u:key xmlns:u='http://ideanest.com/dscribe/ns/util' value='set-property-c1a1-visible' xml:id='_'/>
 	</a:set-property>
 </a:candidates>
 

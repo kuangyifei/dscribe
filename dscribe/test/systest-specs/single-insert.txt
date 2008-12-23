@@ -16,7 +16,7 @@ rule insert bar into foo [r1]
 	<mod xml:id='_r1.f.' stage='0'>
 		<dependency doc='source.xml' kind='verified'/>
 		<reference doc='source.xml' refid='f'/>
-		<mod stage='1'>
+		<mod stage='1' new=''>
 			<affected refid='_r1.f.1.'/>
 			<checksum xmlns='' digest-type='_'>_</checksum>
 		</mod>

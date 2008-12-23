@@ -20,7 +20,7 @@ rule insert bar into foo [r2]
 <mods xml:id='_r1.' rule='r1'>
 	<mod stage='0'>
 		<docname xmlns=''>result.xml</docname>
-		<mod stage='1'>
+		<mod stage='1' new=''>
 			<affected refid='_r1.1.'/>
 			<checksum xmlns='' digest-type='_'>_</checksum>
 		</mod>
@@ -33,7 +33,7 @@ rule insert bar into foo [r2]
 		<mod xml:id='_r2.f._r1.1..' stage='1'>
 			<dependency doc='result.xml' kind='verified'/>
 			<reference doc='result.xml' refid='_r1.1.'/>
-			<mod stage='2'>
+			<mod stage='2' new=''>
 				<affected refid='_r2.f._r1.1..2.'/>
 				<checksum xmlns='' digest-type='_'>_</checksum>
 			</mod>
