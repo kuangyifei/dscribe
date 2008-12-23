@@ -29,7 +29,7 @@ numElementsMoved = 0
 	<mod xml:id='_r1.b1.' stage='0'>
 		<dependency doc='source.xml' kind='verified'/>
 		<reference doc='source.xml' refid='b1'/>
-		<mod stage='1'>
+		<mod stage='1' new=''>
 			<dependency doc='source.xml' kind='verified'/>
 			<order refid='f' doc='source.xml'/>
 			<sort-value xmlns='' refid='b1'>aardvark</sort-value>
@@ -38,7 +38,7 @@ numElementsMoved = 0
 	<mod xml:id='_r1.b2.' stage='0'>
 		<dependency doc='source.xml' kind='verified'/>
 		<reference doc='source.xml' refid='b2'/>
-		<mod stage='1'>
+		<mod stage='1' new=''>
 			<dependency doc='source.xml' kind='verified'/>
 			<order refid='f' doc='source.xml'/>
 			<sort-value xmlns='' refid='b2'>clarity</sort-value>
@@ -47,7 +47,7 @@ numElementsMoved = 0
 	<mod xml:id='_r1.b3.' stage='0'>
 		<dependency doc='source.xml' kind='verified'/>
 		<reference doc='source.xml' refid='b3'/>
-		<mod stage='1'>
+		<mod stage='1' new=''>
 			<dependency doc='source.xml' kind='verified'/>
 			<order refid='f' doc='source.xml'/>
 			<sort-value xmlns='' refid='b3'>zzz</sort-value>

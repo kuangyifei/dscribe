@@ -122,9 +122,8 @@ public class Rule {
 
 	private interface Shim {
 		Mod rootMod();
+		int processStage(int stage, QueryService touchedScope) throws TransformException;
 		Mod restoreMod(Node modNode) throws TransformException;
-		void restoreModsAtStage(Collection<Mod> mods, int stage) throws TransformException;
-		Collection<Mod> resolveModsAtStage(Collection<Mod> mods, int stage, QueryService touchedScope) throws TransformException;
 		void verifyMods(Set<XMLDocument> modifiedDocs) throws TransformException;
 		void verifyModTree(ItemList modsToVerify, Collection<String> modifiedDocsNames) throws TransformException;
 	}
@@ -134,14 +133,11 @@ public class Rule {
 			public Mod rootMod() {
 				return Rule.this.bootstrapMod();
 			}
+			public int processStage(int stage, QueryService touchedScope) throws TransformException {
+				return Rule.this.processStage(stage, touchedScope);
+			}
 			public Mod restoreMod(Node modNode) throws TransformException {
 				return Rule.this.restoreMod(modNode);
-			}
-			public void restoreModsAtStage(Collection<Mod> mods, int stage) throws TransformException {
-				Rule.this.restoreModsAtStage(mods, stage);
-			}
-			public Collection<Mod> resolveModsAtStage(Collection<Mod> mods, int stage, QueryService touchedScope) throws TransformException {
-				return Rule.this.resolveModsAtStage(mods, stage, touchedScope);
 			}
 			public void verifyMods(Set<XMLDocument> modifiedDocs) throws TransformException {
 				Rule.this.verifyMods(modifiedDocs);
@@ -293,37 +289,44 @@ public class Rule {
 			}
 		}
 		touched = new HashSet<Document>();	// don't clear, old set still referenced by touchedScope
-		
-		Collection<Mod> mods = new ArrayList<Mod>();
-		
+				
+		int lastStageNumModsResolved = 0;
 		// The stage counter is the child stage that we'll be resolving at each iteration, based on stage-1.
 		for (int stage = 0; stage < blocks.size(); stage++) {
-			LOG.debug(this + " processing stage " + stage);
-			self.restoreModsAtStage(mods, stage - 1);
-			mods = self.resolveModsAtStage(mods, stage, touchedScope);
+			lastStageNumModsResolved = self.processStage(stage, touchedScope);
 		}
 		
-		engine.stats.numModsCompleted.increment(mods.size());
+		engine.stats.numModsCompleted.increment(lastStageNumModsResolved);
 		firstDifferentStage = Integer.MAX_VALUE;
 	}
 
-	private void restoreModsAtStage(Collection<Mod> mods, int stage) throws TransformException {
-		LOG.debug(this + " restoring mods in progress at stage " + stage);
-		boolean mustRestore = blocks.get(stage + 1) instanceof KeyBlock;
-		if (stage == -1) {
-			if (mustRestore || !rootModNode.query().exists("mod")) mods.add(self.rootMod());
-			return;
+	private int processStage(int stage, QueryService touchedScope) throws TransformException {
+		LOG.debug(this + " processing stage " + stage);
+		
+		int numResolved = 0;
+		final Block block = blocks.get(stage);
+		boolean lastBlock = stage == blocks.size() - 1;
+		QueryService stageScope = stage >= firstDifferentStage ? null : touchedScope;
+		boolean mustRestore = blocks.get(stage) instanceof KeyBlock;
+		
+		if (stage == 0) {
+			if (mustRestore || !rootModNode.query().exists("mod")) {
+				Mod mod = self.rootMod();
+				LOG.debug("resolving children of " + mod);
+				numResolved += mod.resolveChildren(block, lastBlock, stageScope);
+				engine.stats.numBlocksResolved.increment();
+			}
+		} else {
+			for (Node node : self.rootMod().node().query().unordered(
+					".//mod[xs:integer(@stage)=$_1]" + (mustRestore ? "" : "[not(mod)]"), stage - 1).nodes()) {
+				Mod mod = self.restoreMod(node);
+				LOG.debug("resolving children of " + mod);
+				numResolved += mod.resolveChildren(block, lastBlock, stageScope);
+				engine.stats.numBlocksResolved.increment();
+			}
 		}
 		
-		Set<String> modKeys = new HashSet<String>();
-		for (Mod mod : mods) modKeys.add(mod.key());
-		for (Node node : self.rootMod().node().query().unordered(
-				".//mod[xs:integer(@stage)=$_1]" + (mustRestore ? "" : "[not(mod)]"), stage).nodes()) {
-			if (modKeys.contains(node.query().single("ancestor-or-self::*[@xml:id][1]/@xml:id").value())) continue;
-			Mod mod = self.restoreMod(node);
-			mods.add(mod);
-			LOG.debug("restored " + mod);
-		}
+		return numResolved;
 	}
 
 	Mod restoreMod(Node node) throws TransformException {
@@ -335,20 +338,6 @@ public class Rule {
 		}
 		engine.stats.numModsRestored.increment();
 		return mod;
-	}
-
-	private Collection<Mod> resolveModsAtStage(Collection<Mod> mods, int stage, QueryService touchedScope) throws TransformException {
-		assert stage >= 0;
-		LOG.debug(this + " resolving mods at stage " + stage);
-		final Block block = blocks.get(stage);
-		boolean lastBlock = stage == blocks.size()-1;
-		Collection<Mod> nextStageMods = new ArrayList<Mod>();
-		for (Mod mod : mods) {
-			nextStageMods.addAll(mod.resolveChildren(block, lastBlock, (stage >= firstDifferentStage) ? null : touchedScope));
-		}
-		LOG.debug(this + " mods resolved: " + nextStageMods);
-		engine.stats.numBlocksResolved.increment(nextStageMods.size());
-		return nextStageMods;
 	}
 
 	private Mod bootstrapMod() {
@@ -952,128 +941,89 @@ public class Rule {
 			assertSame(mods.get(3), rule.restoreMod(modNodeAt(2)));
 			assertEquals(1, rule.engine.stats.numModsRestored.value());
 		}
-
-		@Test public void restoreModsAtRootStageNoKeyHasMod() throws TransformException {
+		
+		@Test public void processStageAtRootStageNoKeyHasMod() throws TransformException {
+			injectEngineCounter("numBlocksResolved");
+			final QueryService scope = modStore.query();
 			mockMod(KeyMod.class, "_r1.", -1);
-			List<Mod> nextStageMods = new ArrayList<Mod>();
-			rule.restoreModsAtStage(nextStageMods, -1);
-			assertTrue(nextStageMods.isEmpty());
+			assertEquals(0, rule.processStage(0, scope));
+			assertEquals(0, rule.engine.stats.numBlocksResolved.value());
 		}
 		
-		@Test public void restoreModsAtRootStageIsKeyHasMod() throws TransformException {
+		@Test public void processStageAtRootStageIsKeyHasMod() throws TransformException {
+			injectEngineCounter("numBlocksResolved");
+			final QueryService scope = modStore.query();
 			final KeyMod rootMod = mockMod(KeyMod.class, "_r1.", -1);
 			blocks.set(0, mockery.mock(KeyBlock.class, "b0k"));
 			rule.blocks.clear();  rule.blocks.addAll(blocks);
-			List<Mod> nextStageMods = new ArrayList<Mod>();
-			rule.restoreModsAtStage(nextStageMods, -1);
-			assertEquals(Collections.singletonList(rootMod), nextStageMods);
+			mockery.checking(new Expectations() {{
+				one(rootMod).resolveChildren(blocks.get(0), false, scope); will(returnValue(2));
+			}});
+			assertEquals(2, rule.processStage(0, scope));
+			assertEquals(1, rule.engine.stats.numBlocksResolved.value());
 		}
 		
-		@Test public void restoreModsAtRootStageNoKeyNoMod() throws TransformException {
+		@Test public void processStageAtRootStageNoKeyNoMod() throws TransformException {
+			injectEngineCounter("numBlocksResolved");
+			final QueryService scope = modStore.query();
 			final KeyMod rootMod = mockMod(KeyMod.class, "_r1.", -1);
 			modNodeAt(0).delete();
-			List<Mod> nextStageMods = new ArrayList<Mod>();
-			rule.restoreModsAtStage(nextStageMods, -1);
-			assertEquals(Collections.singletonList(rootMod), nextStageMods);
+			mockery.checking(new Expectations() {{
+				one(rootMod).resolveChildren(blocks.get(0), false, scope); will(returnValue(2));
+			}});
+			assertEquals(2, rule.processStage(0, scope));
+			assertEquals(1, rule.engine.stats.numBlocksResolved.value());
 		}
 		
-		@Test public void restoreModsAtRootStageIsKeyNoMod() throws TransformException {
+		@Test public void processStageAtRootStageIsKeyNoMod() throws TransformException {
+			injectEngineCounter("numBlocksResolved");
+			final QueryService scope = modStore.query();
 			final KeyMod rootMod = mockMod(KeyMod.class, "_r1.", -1);
 			blocks.set(0, mockery.mock(KeyBlock.class, "b0k"));
 			rule.blocks.clear();  rule.blocks.addAll(blocks);
 			modNodeAt(0).delete();
-			List<Mod> nextStageMods = new ArrayList<Mod>();
-			rule.restoreModsAtStage(nextStageMods, -1);
-			assertEquals(Collections.singletonList(rootMod), nextStageMods);
+			mockery.checking(new Expectations() {{
+				one(rootMod).resolveChildren(blocks.get(0), false, scope); will(returnValue(2));
+			}});
+			assertEquals(2, rule.processStage(0, scope));
+			assertEquals(1, rule.engine.stats.numBlocksResolved.value());
 		}
 		
-		@Test public void restoreModsAtPreKeyStage() throws TransformException {
+		@Test public void processStageAtPreKeyStage() throws TransformException {
+			injectEngineCounter("numBlocksResolved");
+			final QueryService scope = modStore.query();
 			mockMod(KeyMod.class, "_r1.", -1);
 			final Mod resultMod = mockMod(Mod.class, "_r1.2.", 2);
 			mockery.checking(new Expectations() {{
 				one(rule.self).restoreMod(modNodeAt(2));  will(returnValue(resultMod));
+				one(resultMod).resolveChildren(blocks.get(3), true, scope); will(returnValue(2));
 			}});
-			List<Mod> nextStageMods = new ArrayList<Mod>();
-			rule.restoreModsAtStage(nextStageMods, 2);
-			assertEquals(Collections.singletonList(resultMod), nextStageMods);
+			assertEquals(2, rule.processStage(3, scope));
+			assertEquals(1, rule.engine.stats.numBlocksResolved.value());
 		}
 		
-		@Test public void restoreModsAtPreKeyStageDuplicateKey() throws TransformException {
+		@Test public void processStageAtPreLinearStageHasMod() throws TransformException {
+			injectEngineCounter("numBlocksResolved");
+			final QueryService scope = modStore.query();
 			mockMod(KeyMod.class, "_r1.", -1);
-			List<Mod> nextStageMods = new ArrayList<Mod>();
-			nextStageMods.add(mockMod(Mod.class, "_r1.1.", 2));
-			nextStageMods = Collections.unmodifiableList(nextStageMods);
-			rule.restoreModsAtStage(nextStageMods, 2);
+			assertEquals(0, rule.processStage(2, scope));
+			assertEquals(0, rule.engine.stats.numBlocksResolved.value());
 		}
 		
-		@Test public void restoreModsAtPreLinearStageHasMod() throws TransformException {
-			mockMod(KeyMod.class, "_r1.", -1);
-			List<Mod> nextStageMods = new ArrayList<Mod>();
-			rule.restoreModsAtStage(nextStageMods, 1);
-			assertTrue(nextStageMods.isEmpty());
-		}
-		
-		@Test public void restoreModsAtPreLinearStageNoMod() throws TransformException {
+		@Test public void processStageAtPreLinearStageNoMod() throws TransformException {
+			injectEngineCounter("numBlocksResolved");
+			final QueryService scope = modStore.query();
 			mockMod(KeyMod.class, "_r1.", -1);
 			final Mod resultMod = mockMod(KeyMod.class, "_r1.1.", 1);
 			mockery.checking(new Expectations() {{
 				one(rule.self).restoreMod(modNodeAt(1));  will(returnValue(resultMod));
+				one(resultMod).resolveChildren(blocks.get(2), false, scope); will(returnValue(2));
 			}});
 			modNodeAt(2).delete();
-			List<Mod> nextStageMods = new ArrayList<Mod>();
-			rule.restoreModsAtStage(nextStageMods, 1);
-			assertEquals(Collections.singletonList(resultMod), nextStageMods);
+			assertEquals(2, rule.processStage(2, scope));
+			assertEquals(1, rule.engine.stats.numBlocksResolved.value());
 		}
 		
-		@Test public void resolveModsAtStage() throws TransformException {
-			final List<Mod> mods = new ArrayList<Mod>();
-			mods.add(mockery.mock(Mod.class, "m0"));
-			mods.add(mockery.mock(Mod.class, "m1"));
-			final Mod[] rmods = new Mod[] {mockery.mock(Mod.class, "rm0"), mockery.mock(Mod.class, "rm1"), mockery.mock(Mod.class, "rm2")};
-			final QueryService scope = modStore.query();
-			injectEngineCounter("numBlocksResolved");
-			mockery.checking(new Expectations() {{
-				one(mods.get(0)).resolveChildren(blocks.get(0), false, scope);
-				will(returnValue(Arrays.asList(rmods).subList(0, 1)));
-				one(mods.get(1)).resolveChildren(blocks.get(0), false, scope);
-				will(returnValue(Arrays.asList(rmods).subList(1, 3)));
-			}});
-			Collection<Mod> nextStageMods = rule.resolveModsAtStage(mods, 0, scope);
-			assertEquals(new HashSet<Mod>(Arrays.asList(rmods)), new HashSet<Mod>(nextStageMods));
-			assertEquals(3, rule.engine.stats.numBlocksResolved.value());
-		}
-
-		@Test public void resolveModsAtLastStage() throws TransformException {
-			final List<Mod> mods = new ArrayList<Mod>();
-			mods.add(mockery.mock(Mod.class, "m0"));
-			final Mod rmod = mockery.mock(Mod.class, "rm0");
-			final QueryService scope = modStore.query();
-			injectEngineCounter("numBlocksResolved");
-			mockery.checking(new Expectations() {{
-				one(mods.get(0)).resolveChildren(blocks.get(3), true, scope);
-				will(returnValue(Collections.singleton(rmod)));
-			}});
-			Collection<Mod> nextStageMods = rule.resolveModsAtStage(mods, 3, scope);
-			assertEquals(Collections.singleton(rmod), new HashSet<Mod>(nextStageMods));
-			assertEquals(1, rule.engine.stats.numBlocksResolved.value());
-		}
-
-		@Test public void resolveModsAfterDifferentStage() throws TransformException {
-			rule.firstDifferentStage = 2;
-			final List<Mod> mods = new ArrayList<Mod>();
-			mods.add(mockery.mock(Mod.class, "m0"));
-			final Mod rmod = mockery.mock(Mod.class, "rm0");
-			final QueryService scope = modStore.query();
-			injectEngineCounter("numBlocksResolved");
-			mockery.checking(new Expectations() {{
-				one(mods.get(0)).resolveChildren(blocks.get(2), false, null);
-				will(returnValue(Collections.singleton(rmod)));
-			}});
-			Collection<Mod> nextStageMods = rule.resolveModsAtStage(mods, 2, scope);
-			assertEquals(Collections.singleton(rmod), new HashSet<Mod>(nextStageMods));
-			assertEquals(1, rule.engine.stats.numBlocksResolved.value());
-		}
-
 	}
 
 	@Deprecated
@@ -1233,7 +1183,6 @@ public class Rule {
 		
 		private QueryService touchedScope;
 		private Sequence seq;
-		private List<Mod> prevMods;
 		
 		@Before public void setUp() {
 			// set up a confuser mod for another rule
@@ -1245,7 +1194,6 @@ public class Rule {
 			injectEngineCounter("numModsCompleted");
 			
 			seq = mockery.sequence("process");
-			prevMods = Collections.<Mod>emptyList();
 		}
 		
 		private void prepScenario(final boolean doGlobalProcessing, final boolean verifySuccessful) throws TransformException {
@@ -1269,20 +1217,14 @@ public class Rule {
 			}
 		}
 		
-		private void prepIteration(Class<? extends Block> blockType, int numModsToResolve) throws TransformException {
+		private void prepIteration(Class<? extends Block> blockType, final int numModsToResolve) throws TransformException {
 			final int stage = rule.blocks.size();
 			final Block block = mockery.mock(blockType, "block_" + rule.blocks.size());
 			rule.blocks.add(block);
-			final List<Mod> nextMods = new ArrayList<Mod>(numModsToResolve);
-			for (int i=0; i<numModsToResolve; i++) {
-				nextMods.add(mockery.mock(block instanceof KeyBlock ? KeyMod.class : Mod.class, "mod_" + stage + "-" + i));
-			}
 			mockery.checking(new Expectations() {{
-				one(rule.self).restoreModsAtStage(prevMods, stage-1); inSequence(seq);
-				one(rule.self).resolveModsAtStage(prevMods, stage, touchedScope);
-				will(returnValue(nextMods));
+				one(rule.self).processStage(stage, touchedScope); inSequence(seq);
+				will(returnValue(numModsToResolve));
 			}});
-			prevMods = nextMods;
 		}
 		
 		private void processRuleExpectingCompleted(boolean doGlobalProcessing, int expectedNumModsCompleted) throws TransformException {

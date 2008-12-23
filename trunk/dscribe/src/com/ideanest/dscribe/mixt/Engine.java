@@ -219,6 +219,7 @@ public class Engine {
 			fnInfo.appendTo(source);
 		}
 		for (StringBuilder source : moduleSources.values()) {
+			LOG.debug("module assembled:\n" + source.toString());
 			Document doc = modulespace.documents().load(Name.generate(".xq"), Source.blob(source.toString()));
 			globalScope.importModule(doc);
 		}

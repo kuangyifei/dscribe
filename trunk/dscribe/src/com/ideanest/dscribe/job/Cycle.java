@@ -269,8 +269,9 @@ public class Cycle {
 				notifyAll();
 			}
 			Database.flush();
-			LOG.info("running post-task database consistency check");
-			Database.checkConsistency();
+			LOG.debug("checking database consistency");
+			// if not consistent, a FATAL message will be logged by checkConsistency
+			if (Database.checkConsistency()) LOG.info("database internal structures are consistent");
 			myThread.setName(oldThreadName);
 			
 			if (schedulePaused) config.schedule().resume();
@@ -292,6 +293,8 @@ public class Cycle {
 	}
 
 	private void initializeWorkspace() {
+		// TODO: find a more nuanced way of dealing with clean runs, rather than wiping everything;
+		// be careful because bootstrapConfig *needs* current semantics to initialize stuff correctly.
 		workdir = job.workdir();
 		if (cleanRun) deleteContents(workdir);
 		tempdir = config.tempdir();

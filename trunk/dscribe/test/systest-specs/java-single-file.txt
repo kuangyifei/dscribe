@@ -1,8 +1,8 @@
-## load rules resources/java-to-uml.mxc
+## load rules resources/transforms/java-to-uml.mxc
 
 ## load file mappings.xml
-<mappings xmlns='http://ideanest.com/dscribe/ns/map'>
-	<create-diagram id='d1'/>
+<mappings xmlns='http://ideanest.com/dscribe/ns/mapping'>
+	<create-diagram diagram='d1'/>
 	<java-element-to-diagram java-element='j1' diagram='d1'/>
 </mappings>
 
@@ -33,18 +33,18 @@
 #### run 1
 
 ## check file diagrams/d1.xml
-<diagram xmlns='http://ideanest.com/dscribe/ns/uml' xml:id='_' id='d1'>
+<diagram xmlns='http://ideanest.com/dscribe/ns/uml' xml:id='_' diagram='d1'>
 	<class depicts='j1' xml:id='_'>
-		<compartment kind='attribute' xml:id='_'>
+		<blockname xml:id='_'>HelloWorld</blockname>
+		<compartment kind='attributes' xml:id='_'>
 			<attribute depicts='j2' xml:id='_'>
-				<name xml:id='_'>msg</name>
+				<var><name>msg</name><type>String</type></var>
 			</attribute>
 		</compartment>
-		<compartment kind='operation' xml:id='_'>
-			<operation depicts='j3' xml:id='_'/>
-			<operation depicts='j4' xml:id='_'><name xml:id='_'>sayHello</name></operation>
-			<operation depicts='j5' xml:id='_'><name xml:id='_'>main</name></operation>
+		<compartment kind='operations' xml:id='_'>
+			<operation depicts='j3' xml:id='_'><name>HelloWorld</name><args/></operation>
+			<operation depicts='j4' xml:id='_'><name>sayHello</name><args/><type>String</type></operation>
+			<operation depicts='j5' xml:id='_'><name>main</name><args><var><name>args</name><type>String[]</type></var></args><type>void</type></operation>
 		</compartment>
-		<name xml:id='_'>HelloWorld</name>
 	</class>
 </diagram>
