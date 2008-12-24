@@ -16,7 +16,6 @@ import org.junit.*;
 import org.junit.runner.RunWith;
 
 import com.ideanest.dscribe.mixt.blocks.*;
-import com.ideanest.dscribe.mixt.test.Matchers;
 
 
 public class Engine {
@@ -43,7 +42,6 @@ public class Engine {
 	private final List<Rule> rules = new ArrayList<Rule>();
 	
 	private final Folder workspace, modulespace;
-	private final QueryService globalScope;
 	private final QueryService utilQuery;
 	private final Node modStore;
 
@@ -69,8 +67,6 @@ public class Engine {
 		for (Document doc : this.modulespace.documents()) doc.delete();
 		
 		utilQuery = workspace.database().query();
-		// Need to clone the workspace to avoid wiping out namespace bindings of the folder's shared query service.
-		globalScope = workspace.cloneWithoutNamespaceBindings().query();
 		
 		this.modStore = modStore;
 		modStore.namespaceBindings().put("", Engine.MOD_NS);
@@ -82,10 +78,23 @@ public class Engine {
 		
 		this.sortController = new SortController(this, modifiedDocs.anchor());
 
-		Collection<QName> namesOfModifiedFunctions = parseFunctions(rulespace, prevrulespace);
+		LOG.debug("parsing functions");
+		Map<XMLDocument, Module> modules = parseFunctions(rulespace);
+		for (Module module : modules.values()) {
+			module.resolveReferencedFunctions();
+			module.saveTo(modulespace);
+		}
+		Map<XMLDocument, Module> prevModules;
+		try {
+			prevModules = parseFunctions(prevrulespace);
+		} catch (RuleBaseException e) {
+			LOG.warn("error parsing previous function definitions, continuing as if no previous functions were defined");
+			prevModules = Collections.emptyMap();
+		}
+		
 		invalidateIncompatibleBlocks(prevrulespace);
 		assignRuleIds(rulespace, prevrulespace);
-		parseRules(rulespace, prevrulespace, namesOfModifiedFunctions);
+		parseRules(rulespace, prevrulespace, modules, prevModules);
 		
 		LOG.debug("withdrawing mods of obsolete rules");
 		withdrawMods(modStore.query().unordered("for $mods in mods where not(exists($_1/id($mods/@rule))) return $mods", rulespace));
@@ -101,7 +110,6 @@ public class Engine {
 	private Engine(Folder workspace, Node modStore) {
 		this.workspace = workspace;
 		utilQuery = workspace.database().query();
-		globalScope = workspace.cloneWithoutNamespaceBindings().query();
 		this.modulespace = workspace.database().createFolder("/modules-temp");
 		if (modStore != null) {
 			modStore.namespaceBindings().clear();
@@ -112,150 +120,142 @@ public class Engine {
 		sortController = new SortController(this, modifiedDocs.anchor());
 	}
 	
-	private static class PrevFunctionInfo {
-		final QName name;
-		final Query.Items query;
-		final String args;		
-		PrevFunctionInfo(Node def) throws RuleBaseException {
-			this.query = new Query.Items(def);
-			this.name = query.parseQName(def.query().single("@name").value());
-			this.args = def.query().optional("@args").valueWithDefault("");
-		}
-	}
-	
-	private static class FunctionInfo extends PrevFunctionInfo {
-		private final Collection<QName> referencedFunctionNames;
-		private final Collection<FunctionInfo> referencedFunctions = new ArrayList<FunctionInfo>();
-		private boolean modified;
+	static class Module {
+		private static final String LOCAL_NS = "http://www.w3.org/2005/xquery-local-functions";
+		private final Map<QName, Function> functions = new TreeMap<QName, Function>();
+		private final NamespaceMap namespaceBindings;
+		private Document moduleDoc;
 		
-		FunctionInfo(Node def) throws RuleBaseException {
-			super(def);
-			if (!query.namespaceBindings().equals(def.query().single("..").node().inScopeNamespaces())) {
-				throw new RuleBaseException("function " + name + " must not declare additional namespace bindings");
+		Module(XMLDocument rulesDoc) {
+			this.namespaceBindings = rulesDoc.root().inScopeNamespaces();
+		}
+		
+		void defineFunction(Node def) throws RuleBaseException {
+			Function fn = new Function(def);
+			if (!def.inScopeNamespaces().equals(namespaceBindings)) {
+				throw new RuleBaseException("function " + fn.name.getTag() + " must not declare additional namespace bindings");
 			}
-			this.referencedFunctionNames = query.analyze(def.database().query()).requiredFunctions();
-		}
-		
-		void initModified(Map<QName, PrevFunctionInfo> prevFunctions) {
-			PrevFunctionInfo prevFnInfo = prevFunctions.get(name);
-			this.modified = !(prevFnInfo != null && args.equals(prevFnInfo.args) && query.equals(prevFnInfo.query));
-		}
-		
-		void resolveReferencedFunctions(Map<QName, FunctionInfo> functions) {
-			for (QName refName : referencedFunctionNames) {
-				FunctionInfo refFnInfo = functions.get(refName);
-				if (refFnInfo != null) referencedFunctions.add(refFnInfo);
+			if (functions.containsKey(fn.name)) {
+				throw new RuleBaseException("function overloading not yet supported: " + fn.name.getTag());
 			}
+			functions.put(fn.name, fn);
 		}
 		
-		boolean propagateModified() {
-			if (!this.modified) {
-				for (FunctionInfo refFnInfo : referencedFunctions) {
-					if (refFnInfo.modified) {
-						modified = true;
-						return true;
-					}
-				}
+		private Function getFunction(QName name) {
+			return functions.get(name);
+		}
+		
+		void saveTo(Folder modulespace) {
+			if (functions.isEmpty()) return;
+			StringBuilder source = new StringBuilder();
+			appendModuleHeaderTo(source);
+			for (Function fn : functions.values()) fn.appendTo(source);
+			moduleDoc = modulespace.documents().load(Name.generate(".xq"), Source.blob(source.toString()));
+		}
+		
+		Document source() {
+			return moduleDoc;
+		}
+		
+		void resolveReferencedFunctions() {
+			for (Function fn : functions.values()) fn.resolveReferencedFunctions(this);
+		}
+		
+		boolean areFunctionsModified(Set<QName> calledFunctionNames, Module prevModule) {
+			if (calledFunctionNames.isEmpty()) return false;
+			if (prevModule == null) return true;
+			for (QName fname : calledFunctionNames) {
+				Function fn = functions.get(fname);
+				if (fn == null || fn.isModified(prevModule)) return true;
 			}
 			return false;
 		}
 		
-		boolean isModified() {
-			return modified;
-		}
-		
-		void appendTo(StringBuilder source) {
-			source.append("declare function " + name.getTag() + "(" + args + ") {\n");
-			source.append(query.contentsAsString());
-			source.append("\n};\n");
-		}
-		
-		void appendModuleHeaderTo(StringBuilder source) throws RuleBaseException {
+		private void appendModuleHeaderTo(StringBuilder out) {
 			// TODO: should escape characters when writing out namespaces
-			if (name.getPrefix() == null || name.getPrefix().isEmpty()) {
-				throw new RuleBaseException("function namespace " + name.getNamespaceURI() + " must be assigned to a prefix");
-			}
-			source.append("module namespace " + name.getPrefix() + " = '" + name.getNamespaceURI() + "';\n");
-			for (Map.Entry<String, String> entry : query.namespaceBindings().getCombinedMap().entrySet()) {
-				if (entry.getValue().equals(name.getNamespaceURI())) continue;
+			out.append("module namespace local = '" + LOCAL_NS +"';\n");
+			for (Map.Entry<String, String> entry : namespaceBindings.getCombinedMap().entrySet()) {
+				if (entry.getValue().equals(MIXT_NS)) continue;
 				if (entry.getKey().isEmpty()) {
-					source.append("declare default element namespace '" + entry.getValue() + "';\n");					
+					out.append("declare default element namespace '" + entry.getValue() + "';\n");					
 				} else {
-					source.append("declare namespace " + entry.getKey() + " = '" + entry.getValue() + "';\n");
+					out.append("declare namespace " + entry.getKey() + " = '" + entry.getValue() + "';\n");
 				}
 			}
 		}
-	}
-	
-	private Set<QName> parseFunctions(Resource rulespace, Resource prevrulespace) throws RuleBaseException {
-		LOG.debug("parsing functions");
 		
-		Map<QName, FunctionInfo> functions = new TreeMap<QName, FunctionInfo>();
-		for (Node def : rulespace.query().all("//function").nodes()) {
-			FunctionInfo fnInfo = new FunctionInfo(def);
-			if (functions.containsKey(fnInfo.name)) {
-				throw new RuleBaseException("function overloading not yet supported: " + fnInfo.name.getTag());
+		private static class Function implements Comparable<Function> {
+			private final QName name;
+			private final Query.Items query;
+			private final String args;		
+			private final Set<QName> referencedFunctionNames;
+			
+			private Set<Function> allReferencedFunctionsAndSelf = new TreeSet<Function>();
+			
+			Function(Node def) throws RuleBaseException {
+				this.query = new Query.Items(def);
+				this.name = new QName(LOCAL_NS, def.query().single("@name").value(), "local");
+				this.args = def.query().optional("@args").valueWithDefault("");
+				this.referencedFunctionNames = query.analyze(def.database().query()).requiredFunctions();
+				allReferencedFunctionsAndSelf.add(this);
 			}
-			functions.put(fnInfo.name, fnInfo);
-		}
-		
-		assembleFunctionModules(functions);		
-		Set<QName> namesOfModifiedFunctions = analyzeModifiedFunctions(prevrulespace, functions);
-		
-		LOG.debug("parsed " + functions.size() + " functions");
-		return namesOfModifiedFunctions;
-	}
-	
-	private void assembleFunctionModules(Map<QName, FunctionInfo> functions) throws RuleBaseException {
-		Map<String, StringBuilder> moduleSources = new TreeMap<String, StringBuilder>();
-		for (FunctionInfo fnInfo : functions.values()) {
-			final String namespaceURI = fnInfo.name.getNamespaceURI();
-			StringBuilder source = moduleSources.get(namespaceURI);
-			if (source == null) {
-				source = new StringBuilder();
-				moduleSources.put(namespaceURI, source);
-				fnInfo.appendModuleHeaderTo(source);
+			
+			boolean isModified(Module prevModule) {
+				for (Function fn : allReferencedFunctionsAndSelf) {
+					Function prevFn = prevModule.getFunction(fn.name);
+					if (!(prevFn != null && fn.args.equals(prevFn.args) && fn.query.equals(prevFn.query))) return true;
+				}
+				return false;
 			}
-			fnInfo.appendTo(source);
-		}
-		for (StringBuilder source : moduleSources.values()) {
-			LOG.debug("module assembled:\n" + source.toString());
-			Document doc = modulespace.documents().load(Name.generate(".xq"), Source.blob(source.toString()));
-			globalScope.importModule(doc);
+			
+			void resolveReferencedFunctions(Module module) {
+				for (QName refName : referencedFunctionNames) {
+					Function refFn = module.getFunction(refName);
+					if (refFn != null) allReferencedFunctionsAndSelf.add(refFn);
+				}
+				
+				Set<Function> moreFunctions = new TreeSet<Function>();
+				do {
+					moreFunctions.clear();
+					for (Function refFn : allReferencedFunctionsAndSelf) {
+						moreFunctions.addAll(refFn.allReferencedFunctionsAndSelf);
+					}
+				} while (allReferencedFunctionsAndSelf.addAll(moreFunctions));
+			}
+			
+			void appendTo(StringBuilder out) {
+				out.append("declare function " + name.getTag() + "(" + args + ") {\n");
+				out.append(query.contentsAsString());
+				out.append("\n};\n");
+			}
+
+			@Override public int compareTo(Function o) {
+				return name.compareTo(o.name);
+			}
+			
 		}
 	}
 	
-	private Set<QName> analyzeModifiedFunctions(Resource prevrulespace, Map<QName, FunctionInfo> functions) throws RuleBaseException {
-		Map<QName, PrevFunctionInfo> prevFunctions = new HashMap<QName, PrevFunctionInfo>();
-		for (Node def : prevrulespace.query().unordered("//function").nodes()) {
-			PrevFunctionInfo prevFnInfo = new PrevFunctionInfo(def);
-			prevFunctions.put(prevFnInfo.name, prevFnInfo);
+	private Map<XMLDocument, Module> parseFunctions(Resource rulespace) throws RuleBaseException {
+		Map<XMLDocument, Module> modules = new HashMap<XMLDocument, Module>();
+		for (Node rulesRoot : rulespace.query().unordered("//rules").nodes()) {
+			Module module = new Module(rulesRoot.document());
+			modules.put(rulesRoot.document(), module);
+			for (Node fnDef : rulesRoot.query().unordered("//function").nodes()) {
+				module.defineFunction(fnDef);
+			}
 		}
-		
-		for (FunctionInfo fnInfo : functions.values()) {
-			fnInfo.initModified(prevFunctions);
-			fnInfo.resolveReferencedFunctions(functions);
-		}
-		
-		boolean changed;
-		do {
-			changed = false;
-			for (FunctionInfo fnInfo : functions.values()) changed |= fnInfo.propagateModified();
-		} while (changed);
-		
-		Set<QName> namesOfModifiedFunctions = new TreeSet<QName>();
-		for (FunctionInfo fnInfo : functions.values()) {
-			if (fnInfo.isModified()) namesOfModifiedFunctions.add(fnInfo.name);
-		}
-		return namesOfModifiedFunctions;
+		return modules;
 	}
 
-	private void parseRules(Resource rulespace, Resource prevrulespace, Collection<QName> namesOfModifiedFunctions) throws RuleBaseException {
+	private void parseRules(Resource rulespace, Resource prevrulespace, Map<XMLDocument, Module> modules, Map<XMLDocument, Module> prevModules) throws RuleBaseException {
 		LOG.debug("parsing rules");
 		ItemList ruleItems = rulespace.query().all("//rule");
 		for (Node ruleDef : ruleItems.nodes()) {
 			Node prevDef = prevrulespace.query().optional("/id($_1/@xml:id)", ruleDef).node();
-			Rule rule = new Rule(ruleDef, prevDef, this, modifiedDocs.anchor(), namesOfModifiedFunctions);
+			Rule rule = new Rule(
+					ruleDef, prevDef, this, modifiedDocs.anchor(),
+					modules.get(ruleDef.document()), prevDef.extant() ? prevModules.get(prevDef.document()) : null);
 			ruleMap.put(rule.id, rule);
 			rules.add(rule);
 		}
@@ -358,10 +358,6 @@ public class Engine {
 	}
 
 	Folder workspace() {return workspace;}
-	QueryService globalScope() {return globalScope;}
-	QueryService customScope(Collection<? extends Resource> context) {
-		return globalScope.database().query(context).importSameModulesAs(globalScope);
-	}
 	QueryService utilQuery() {return utilQuery;}
 	Node modStore() {return modStore;}
 	public Stats stats() {return stats;}
@@ -379,7 +375,7 @@ public class Engine {
 	boolean ensureWorkspaceNodeHasXmlId(Node node) {
 		if (node.query().exists("@xml:id")) return true;
 		if (autoGenIdPrefix == null) return false;
-		node.update().attr("xml:id", generateUniqueId(autoGenIdPrefix, globalScope)).commit();
+		node.update().attr("xml:id", generateUniqueId(autoGenIdPrefix, workspace.query())).commit();
 		return true;
 	}
 	
@@ -567,94 +563,15 @@ public class Engine {
 			assertFalse(Engine.isSameVersionAs(db.getFolder("/")));
 		}
 		
-		@Test public void analyzeModifiedFunctions() throws RuleBaseException {
-			String ns_x = "http://example.com", ns_y = "http://ideanest.com";
-			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns='" + Engine.MIXT_NS + "' xmlns:x='" + ns_x + "' xmlns:y='" + ns_y + "'>" +
-					"	<function name = 'x:f1'> /foo </function>" +
-					"	<function name = 'x:f2' args = '$a'> /bar[@a=$a] </function>" +
-					"	<function name = 'x:f3'> x:f1() </function>" +
-					"	<function name = 'x:f4'> /foo </function>" +
-					"	<function name = 'x:f5'> /foo </function>" +
-					"	<function name = 'x:f6'> x:f4() </function>" +
-					"	<function name = 'x:f7'> x:f6() </function>" +
-					"	<function name = 'x:f8'> /foo </function>" +
-					"	<function name = 'x:f9' args = '$a, $b'> /bar[@a=$a][@b=$b] </function>" +
-					"</rules>"
-			));
-			prevrulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns='" + Engine.MIXT_NS + "' xmlns:x='" + ns_x + "' xmlns:y='" + ns_y + "'>" +
-					"	<function name = 'x:f1'> /foo </function>" +
-					"	<function name = 'x:f2' args = '$a'> /bar[@a=$a] </function>" +
-					"	<function name = 'x:f3'> x:f1() </function>" +
-					"	<function name = 'x:f4'> /bar </function>" +
-					"	<function name = 'x:f6'> x:f4() </function>" +
-					"	<function name = 'x:f7'> x:f6() </function>" +
-					"	<function name = 'y:f8'> /foo </function>" +
-					"	<function name = 'x:f9' args = '$b, $a'> /bar[@a=$a][@b=$b] </function>" +
-					"</rules>"
-			));
-			Collection<FunctionInfo> defs = new ArrayList<Engine.FunctionInfo>();
-			for (Node node : rulespace.query().all("//function").nodes()) {
-				defs.add(new FunctionInfo(node));
-			}
-			Map<QName, FunctionInfo> functions = new TreeMap<QName, Engine.FunctionInfo>();
-			for (FunctionInfo fnInfo : defs) functions.put(fnInfo.name, fnInfo);
-			Engine engine = new Engine(workspace, null);
-			assertThat(
-					engine.analyzeModifiedFunctions(prevrulespace, functions),
-					Matchers.collection(
-							new QName(ns_x, "f4", null), new QName(ns_x, "f5", null), new QName(ns_x, "f6", null),
-							new QName(ns_x, "f7", null), new QName(ns_x, "f8", null), new QName(ns_x, "f9", null)));
-		}
-		
-		@Test public void assembleFunctionModules() throws RuleBaseException {
-			String ns_x = "http://example.com", ns_y = "http://ideanest.com";
-			rulespace.documents().load(Name.generate(), Source.xml(
-					"<rules xmlns='" + Engine.MIXT_NS + "' xmlns:x='" + ns_x + "' xmlns:y='" + ns_y + "'>" +
-					"	<function name = 'x:f1'> /foo </function>" +
-					"	<function name = 'y:f8'> /foo </function>" +
-					"	<function name = 'x:f9' args = '$b, $a'> /bar[@a=$a][@b=$b] </function>" +
-					"</rules>"
-			));
-			Collection<FunctionInfo> defs = new ArrayList<Engine.FunctionInfo>();
-			for (Node node : rulespace.query().all("//function").nodes()) {
-				defs.add(new FunctionInfo(node));
-			}
-			Map<QName, FunctionInfo> functions = new TreeMap<QName, Engine.FunctionInfo>();
-			for (FunctionInfo fnInfo : defs) functions.put(fnInfo.name, fnInfo);
-			Engine engine = new Engine(workspace, null);
-			engine.assembleFunctionModules(functions);
-			Collection<String> modules = new ArrayList<String>();
-			for (Document doc : engine.modulespace.documents()) modules.add(doc.contentsAsString());
-			assertThat(modules, Matchers.collection(
-					"module namespace x = '" + ns_x + "';\n" +
-						"declare default element namespace '" + Engine.MIXT_NS + "';\n" +
-						"declare namespace y = '" + ns_y + "';\n" +
-						"declare function x:f1() {\n" +
-						" /foo \n" +
-						"};\n" +
-						"declare function x:f9($b, $a) {\n" +
-						" /bar[@a=$a][@b=$b] \n" +
-						"};\n",
-					"module namespace y = '" + ns_y + "';\n" +
-						"declare default element namespace '" + Engine.MIXT_NS + "';\n" +
-						"declare namespace x = '" + ns_x + "';\n" +
-						"declare function y:f8() {\n" +
-						" /foo \n" +
-						"};\n"
-			));
-		}
-		
 		@Test public void parseRules() throws RuleBaseException, IllegalArgumentException, IllegalAccessException {
-			rulespace.documents().load(Name.generate(), Source.xml(
+			XMLDocument rulesDoc = rulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
 					"  <rule xml:id='r1' name='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + Engine.MOD_NS + "'/>")).root();
 			Engine engine = new Engine(workspace, modStore);
-			engine.parseRules(rulespace, prevrulespace, new ArrayList<QName>());
+			engine.parseRules(rulespace, prevrulespace, Collections.singletonMap(rulesDoc, new Module(rulesDoc)), Collections.<XMLDocument, Module>emptyMap());
 			assertEquals(1, engine.rules.size());
 			assertSame(engine.rules.get(0), engine.ruleMap.get("r1"));
 			assertEquals(0, firstDifferentStage.get(engine.rules.get(0)));
@@ -1081,6 +998,120 @@ public class Engine {
 				}
 			};
 		}
+	}
+	
+	@Deprecated @RunWith(JMock.class) @DatabaseTestCase.ConfigFile("test/conf.xml") 
+	public static class _TestModule extends DatabaseTestCase {
+		protected final Mockery mockery = new JUnit4Mockery() {{
+			setImposteriser(ClassImposteriser.INSTANCE);
+		}};
+		
+		private XMLDocument makeRules(String fn) {
+			Folder folder = db.getFolder("/");
+			folder.namespaceBindings().put("", Engine.MIXT_NS);
+			return folder.documents().load(
+					Name.generate(), Source.xml("<rules xmlns='" + Engine.MIXT_NS + "' xmlns:ex='http://example.com'>" + fn + "</rules>"));
+		}
+		
+		private Engine.Module defineModule(String functions) throws RuleBaseException {
+			XMLDocument rulesDoc = makeRules(functions);
+			Engine.Module module = new Engine.Module(rulesDoc);
+			for (Node def : rulesDoc.query().unordered("//function").nodes()) module.defineFunction(def);
+			return module;
+		}
+		
+		@Test public void defineFunctionGood() throws RuleBaseException {
+			Engine.Module module = defineModule("<function name='foo' args='$a, $b'>$a[@c=local:bar($b)]</function>");
+			QName fnName = new QName(Engine.Module.LOCAL_NS, "foo", null);
+			assertEquals(Collections.singleton(fnName), module.functions.keySet());
+			Engine.Module.Function fn = module.getFunction(fnName);
+			assertEquals(fnName, fn.name);
+			assertEquals("$a, $b", fn.args);
+			assertEquals(Collections.singleton(new QName(Engine.Module.LOCAL_NS, "bar", null)), fn.referencedFunctionNames);
+		}
+		
+		@Test(expected = RuleBaseException.class)
+		public void defineFunctionExtraNamespaces() throws RuleBaseException {
+			defineModule("<function xmlns:x='http://example.com' name='foo' args='$a, $b'>$a[@c=local:bar($b)]</function>");
+		}
+
+		@Test(expected = RuleBaseException.class)
+		public void defineFunctionOverload() throws RuleBaseException {
+			defineModule("<function name='foo' args='$a, $b'>$a[@c=local:bar($b)]</function><function name='foo'>'foo'</function>");
+		}
+		
+		@Test public void saveTo() throws RuleBaseException {
+			Folder modulespace = db.createFolder("/modules");
+			Engine.Module module = defineModule(
+					"<function name='foo' args='$a, $b'>$a[@c=local:bar($b)]</function>" +
+					"<function name='bar'>'bar'</function>");
+			module.saveTo(modulespace);
+			assertEquals(
+					"module namespace local = '" + Engine.Module.LOCAL_NS + "';\n" +
+					"declare namespace ex = 'http://example.com';\n" +
+					"declare function local:bar() {\n" +
+					"'bar'\n" +
+					"};\n" +
+					"declare function local:foo($a, $b) {\n" +
+					"$a[@c=local:bar($b)]\n" +
+					"};\n",
+					module.source().contentsAsString());
+		}
+		
+		@Test public void areFunctionsModified() throws RuleBaseException {
+			Engine.Module module = defineModule(
+					"	<function name = 'f1'> /foo </function>" +
+					"	<function name = 'f2' args = '$a'> /bar[@a=$a] </function>" +
+					"	<function name = 'f3'> local:f1() </function>" +
+					"	<function name = 'f4'> /foo </function>" +
+					"	<function name = 'f5'> /foo </function>" +
+					"	<function name = 'f6'> local:f4() </function>" +
+					"	<function name = 'f7'> local:f6() </function>" +
+					"	<function name = 'f8'> /foo </function>" +
+					"	<function name = 'f9' args = '$a, $b'> /bar[@a=$a][@b=$b] </function>"
+			);
+			module.resolveReferencedFunctions();
+			Engine.Module prevModule1 = defineModule(
+					"	<function name = 'f1'> /foo </function>" +
+					"	<function name = 'f2' args = '$a'> /bar[@a=$a] </function>" +
+					"	<function name = 'f3'> local:f1() </function>" +
+					"	<function name = 'f4'> /bar </function>" +
+					"	<function name = 'f6'> local:f4() </function>" +
+					"	<function name = 'f7'> local:f6() </function>" +
+					"	<function name = 'ex:f8'> /foo </function>" +
+					"	<function name = 'f9' args = '$b, $a'> /bar[@a=$a][@b=$b] </function>"
+			);
+			Engine.Module prevModule2 = defineModule(
+					"	<function name = 'f1'> /bar </function>"
+			);
+			assertTrue(module.areFunctionsModified(
+					Collections.singleton(new QName(Engine.Module.LOCAL_NS, "foo", null)), null));
+			assertFalse(module.areFunctionsModified(
+					Collections.<QName>emptySet(), prevModule1));
+			
+			assertFalse(module.areFunctionsModified(
+					Collections.singleton(new QName(Engine.Module.LOCAL_NS, "f1", null)), prevModule1));
+			assertFalse(module.areFunctionsModified(
+					Collections.singleton(new QName(Engine.Module.LOCAL_NS, "f2", null)), prevModule1));
+			assertFalse(module.areFunctionsModified(
+					Collections.singleton(new QName(Engine.Module.LOCAL_NS, "f3", null)), prevModule1));
+			assertTrue(module.areFunctionsModified(
+					Collections.singleton(new QName(Engine.Module.LOCAL_NS, "f4", null)), prevModule1));
+			assertTrue(module.areFunctionsModified(
+					Collections.singleton(new QName(Engine.Module.LOCAL_NS, "f5", null)), prevModule1));
+			assertTrue(module.areFunctionsModified(
+					Collections.singleton(new QName(Engine.Module.LOCAL_NS, "f6", null)), prevModule1));
+			assertTrue(module.areFunctionsModified(
+					Collections.singleton(new QName(Engine.Module.LOCAL_NS, "f7", null)), prevModule1));
+			assertTrue(module.areFunctionsModified(
+					Collections.singleton(new QName(Engine.Module.LOCAL_NS, "f8", null)), prevModule1));
+			assertTrue(module.areFunctionsModified(
+					Collections.singleton(new QName(Engine.Module.LOCAL_NS, "f9", null)), prevModule1));
+			
+			assertTrue(module.areFunctionsModified(
+					Collections.singleton(new QName(Engine.Module.LOCAL_NS, "f1", null)), prevModule2));
+		}
+		
 	}
 	
 	@Deprecated

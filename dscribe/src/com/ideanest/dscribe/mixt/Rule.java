@@ -1,6 +1,6 @@
 package com.ideanest.dscribe.mixt;
 
-import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.*;
 
 import java.lang.reflect.*;
@@ -10,6 +10,7 @@ import java.util.*;
 import org.apache.log4j.Logger;
 import org.exist.fluent.*;
 import org.exist.storage.DBBroker;
+import org.hamcrest.*;
 import org.jmock.*;
 import org.jmock.integration.junit4.*;
 import org.jmock.lib.legacy.ClassImposteriser;
@@ -81,12 +82,16 @@ public class Rule {
 	private final Accumulator.Locator<XMLDocument> modifiedDocsLocator;
 	private int firstDifferentStage;
 	private final Node rootModNode;
+	private final QueryService globalScope;
 
 	private Shim self;  // for testing only
 
-	Rule(Node def, Node prevDef, Engine engine, Accumulator.Locator<XMLDocument> modifiedDocsLocator, Collection<QName> namesOfModifiedFunctions) throws RuleBaseException {
+	Rule(Node def, Node prevDef, Engine engine, Accumulator.Locator<XMLDocument> modifiedDocsLocator, Engine.Module module, Engine.Module prevModule) throws RuleBaseException {
 		this.engine = engine;
 		this.modifiedDocsLocator = modifiedDocsLocator;
+		// Need to clone the workspace to avoid wiping out namespace bindings of the folder's shared query service.
+		this.globalScope = engine.workspace().cloneWithoutNamespaceBindings().query();
+		if (module.source() != null) globalScope.importModule(module.source());
 		initDefaultShim();
 		
 		validateAttributes(def, Collections.singleton("name"));
@@ -102,7 +107,7 @@ public class Rule {
 		
 		rootModNode = self.rootMod().node();
 
-		firstDifferentStage = parseBlocks(def, prevDef, namesOfModifiedFunctions);
+		firstDifferentStage = parseBlocks(def, prevDef, module, prevModule);
 		
 		if (firstDifferentStage < Integer.MAX_VALUE) {
 			LOG.debug(this + " has changed starting at stage " + firstDifferentStage + ", withdrawing affected mods");
@@ -114,6 +119,7 @@ public class Rule {
 	private Rule(Engine engine, Accumulator.Locator<XMLDocument> modifiedDocsLocator) {
 		this.engine = engine;
 		this.modifiedDocsLocator = modifiedDocsLocator;
+		this.globalScope = engine.workspace().query();
 		this.id = "r1";
 		rootModNode = null;
 		toString = "rule[r1]";
@@ -148,6 +154,10 @@ public class Rule {
 		};
 	}
 	
+	QueryService globalScope() {
+		return globalScope;
+	}
+	
 	/**
 	 * Parse all the blocks in the given rule definition, comparing it to a previous definition of the rule.
 	 * Fill the <code>blocks</code> list with the blocks and analyze each one.  Return the index of the
@@ -156,13 +166,13 @@ public class Rule {
 	 * @param def this rule's definition node, of which the block definitions are the children
 	 * @param prevDef the previous version of the rule's definition block; cannot be <code>null</code>, but
 	 * 		can be an inexistent node
-	 * @param namesOfModifiedFunctions names of any custom functions whose definitions might have
-	 * 		changed since the last run
+	 * @param module the module holding the function definitions for this rule
+	 * @param prevModule the matching previous module or <code>null</code>
 	 * @return the index of the first block whose definition differs from the previous version, or
 	 * 		<code>Integer.MAX_VALUE</code> if both versions of the rule are exactly the same
 	 * @throws RuleBaseException if unable to instantiate a block from its definition at any point
 	 */
-	private int parseBlocks(Node def, Node prevDef, Collection<QName> namesOfModifiedFunctions) throws RuleBaseException {
+	private int parseBlocks(Node def, Node prevDef, Engine.Module module, Engine.Module prevModule) throws RuleBaseException {
 		int firstDiff = Integer.MAX_VALUE;
 		try {
 			Mod mod = self.rootMod();
@@ -176,14 +186,13 @@ public class Rule {
 				if (firstDiff == Integer.MAX_VALUE) {
 					Node prevBlockDef = prevBlocksIterator.hasNext() ? prevBlocksIterator.next() : null;
 					if (prevBlockDef == null || !equalBlocks(blockDef, prevBlockDef)
-							|| !Collections.disjoint(analysis.requiredFunctions(), namesOfModifiedFunctions)) {
+							|| module.areFunctionsModified(analysis.requiredFunctions(), prevModule)) {
 						if (LOG.isDebugEnabled()) {
 							LOG.debug(
 									this + " blocks differ at stage " + blocks.size() + ";\n" +
 									"--- current block:\n" + blockDef + " with ns prefixes " + blockDef.query().all("in-scope-prefixes(.)") + "\n" +
 									"--- previous block:\n" + prevBlockDef + (prevBlockDef == null ? "" : " with ns prefixes " + prevBlockDef.query().all("in-scope-prefixes(.)")) + "\n" +
-									"--- required functions:\n" + analysis.requiredFunctions() + "\n" +
-									"--- modified functions:\n" + namesOfModifiedFunctions);
+									"--- required functions:\n" + analysis.requiredFunctions());
 						}
 						firstDiff = blocks.size();
 					}
@@ -283,7 +292,7 @@ public class Rule {
 			try {
 				self.verifyMods(modifiedDocs);
 				touched.addAll(modifiedDocs);
-				touchedScope = engine.customScope(touched);
+				touchedScope = globalScope.database().query(touched).importSameModulesAs(globalScope);
 			} catch (TransformException e) {
 				// inconsistent state, rule withdrawn, do global processing after all
 			}
@@ -437,6 +446,7 @@ public class Rule {
 	public static class _ConstructorTest extends DatabaseTestCase {
 		private Engine engine;
 		private Node modStore;
+		private XMLDocument ruleDoc;
 		protected final Mockery mockery = new JUnit4Mockery() {{
 			setImposteriser(ClassImposteriser.INSTANCE);
 		}};
@@ -468,22 +478,21 @@ public class Rule {
 			engine = mockery.mock(Engine.class);
 			mockery.checking(new Expectations() {{
 				allowing(engine).workspace(); will(returnValue(db.getFolder("/")));
-				allowing(engine).globalScope(); will(returnValue(db.getFolder("/").query()));
 				allowing(engine).modStore(); will(returnValue(modStore));
 				allowing(engine).utilQuery(); will(returnValue(db.query()));
 			}});
 		}
 		
 		private Node makeRule(String attributes, String xml) {
-			return db.getFolder("/").documents().load(Name.generate(), Source.xml(
-					"<rule " + attributes + " xmlns='" + Engine.MIXT_NS + "'>" + xml + "</rule>")).root();
+			return (ruleDoc = db.getFolder("/").documents().load(Name.generate(), Source.xml(
+					"<rule " + attributes + " xmlns='" + Engine.MIXT_NS + "'>" + xml + "</rule>"))).root();
 		}
 		
 		@Test public void sameDefsWithName() throws RuleBaseException {
 			Rule rule = new Rule(
 					makeRule("xml:id='r1' name='myrule'", "<create-doc>foobar</create-doc>"),
 					makeRule("xml:id='r1' name='myrule'", "<create-doc>foobar</create-doc>"),
-					engine, null, new ArrayList<QName>());
+					engine, null, new Engine.Module(ruleDoc), null);
 			assertThat(rule.toString(), containsString("r1"));
 			assertThat(rule.toString(), containsString("myrule"));
 		}
@@ -492,7 +501,7 @@ public class Rule {
 			Rule rule = new Rule(
 					makeRule("xml:id='r1'", "<create-doc>foobar</create-doc>"),
 					makeRule("xml:id='r1'", "<create-doc>foobar</create-doc>"),
-					engine, null, new ArrayList<QName>());
+					engine, null, new Engine.Module(ruleDoc), null);
 			assertThat(rule.toString(), containsString("r1"));
 		}
 		
@@ -503,7 +512,7 @@ public class Rule {
 			new Rule(
 					makeRule("xml:id='r1'", "<create-doc>foo</create-doc>"),
 					makeRule("xml:id='r1'", "<create-doc>bar</create-doc>"),
-					engine, null, new ArrayList<QName>());
+					engine, null, new Engine.Module(ruleDoc), null);
 		}
 
 		@Test public void diffDefsStage2() throws RuleBaseException {
@@ -513,7 +522,7 @@ public class Rule {
 			new Rule(
 					makeRule("xml:id='r1'", "<create-doc>foo</create-doc><with some='$x'>foo</with><insert>goo</insert>"),
 					makeRule("xml:id='r1'", "<create-doc>foo</create-doc><with some='$x'>foo</with>"),
-					engine, null, new ArrayList<QName>());
+					engine, null, new Engine.Module(ruleDoc), null);
 		}
 	}
 	
@@ -530,7 +539,6 @@ public class Rule {
 			final Engine engine = mockery.mock(Engine.class);
 			mockery.checking(new Expectations() {{
 				allowing(engine).workspace(); will(returnValue(db.getFolder("/")));
-				allowing(engine).globalScope(); will(returnValue(db.getFolder("/").query()));
 				allowing(engine).utilQuery(); will(returnValue(db.query()));
 			}});
 			final Accumulator.Locator<XMLDocument> locator = mockery.mock(Accumulator.Locator.class);
@@ -735,6 +743,16 @@ public class Rule {
 
 	@Deprecated
 	public static class _ParseBlocksTest extends _RuleTest {
+		final Engine.Module module = mockery.mock(Engine.Module.class, "module");
+		final Engine.Module prevModule = mockery.mock(Engine.Module.class, "prevModule");
+
+		@Before public void allowEmptyFunctionsModifiedCalls() {
+			mockery.checking(new Expectations() {{
+				allowing(module).areFunctionsModified(Collections.<QName>emptySet(), prevModule);
+				will(returnValue(false));
+			}});
+		}
+		
 		private Node makeRule(String xml) {
 			return db.getFolder("/").documents().load(Name.generate(), Source.xml(
 					"<rule xmlns='" + Engine.MIXT_NS + "'>" + xml + "</rule>")).root();
@@ -747,14 +765,14 @@ public class Rule {
 		
 		@Test(expected = RuleBaseException.class)
 		public void badBlock() throws RuleBaseException {
-			rule.parseBlocks(makeRule("<foo/>"), db.query().optional("inexistent").node(), new ArrayList<QName>());
+			rule.parseBlocks(makeRule("<foo/>"), db.query().optional("inexistent").node(), module, prevModule);
 		}
 		
 		@Test public void noPrevDef1() throws RuleBaseException {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for>"),
 					db.query().optional("inexistent").node(),
-					new ArrayList<QName>());
+					module, prevModule);
 			assertEquals(0, firstDiff);
 			assertEquals(1, rule.blocks.size());
 		}
@@ -763,7 +781,7 @@ public class Rule {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><insert> <operation/> </insert>"),
 					db.query().optional("inexistent").node(),
-					new ArrayList<QName>());
+					module, prevModule);
 			assertEquals(0, firstDiff);
 			assertEquals(2, rule.blocks.size());
 		}
@@ -772,7 +790,7 @@ public class Rule {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for>"),
 					makeRule("<foo each='$x'> //method </foo>"),
-					new ArrayList<QName>());
+					module, prevModule);
 			assertEquals(0, firstDiff);
 			assertEquals(1, rule.blocks.size());
 		}
@@ -781,7 +799,7 @@ public class Rule {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for>"),
 					makeRule("<for each='$x'> //method </for>"),
-					new ArrayList<QName>());
+					module, prevModule);
 			assertEquals(Integer.MAX_VALUE, firstDiff);
 			assertEquals(1, rule.blocks.size());
 		}
@@ -790,7 +808,7 @@ public class Rule {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><insert> <operation/> </insert>"),
 					makeRule("<for each='$x'> //method </for><insert> <operation/> </insert>"),
-					new ArrayList<QName>());
+					module, prevModule);
 			assertEquals(Integer.MAX_VALUE, firstDiff);
 			assertEquals(2, rule.blocks.size());
 		}
@@ -799,7 +817,7 @@ public class Rule {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><insert> <operation/> </insert>"),
 					makeRule("<for each='$x'> //method </for><insert> <op/> </insert>"),
-					new ArrayList<QName>());
+					module, prevModule);
 			assertEquals(1, firstDiff);
 			assertEquals(2, rule.blocks.size());
 		}
@@ -808,7 +826,7 @@ public class Rule {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with><insert> <operation/> </insert>"),
 					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with><insert> <operation/> </insert>"),
-					new ArrayList<QName>());
+					module, prevModule);
 			assertEquals(1, firstDiff);
 			assertEquals(3, rule.blocks.size());
 		}
@@ -817,7 +835,7 @@ public class Rule {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with><insert> <operation/> </insert>"),
 					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with><insert> <op/> </insert>"),
-					new ArrayList<QName>());
+					module, prevModule);
 			assertEquals(1, firstDiff);
 			assertEquals(3, rule.blocks.size());
 		}
@@ -826,7 +844,7 @@ public class Rule {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with>"),
 					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with><insert> <operation/> </insert>"),
-					new ArrayList<QName>());
+					module, prevModule);
 			assertEquals(2, firstDiff);
 			assertEquals(2, rule.blocks.size());
 		}
@@ -835,43 +853,55 @@ public class Rule {
 			int firstDiff = rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with><insert> <operation/> </insert>"),
 					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with>"),
-					new ArrayList<QName>());
+					module, prevModule);
 			assertEquals(2, firstDiff);
 			assertEquals(3, rule.blocks.size());
 		}
 		
 		@Test public void noPrevDefModifiedFunction() throws RuleBaseException {
 			int firstDiff = rule.parseBlocks(
-					makeRule("<for each='$x' xmlns:z='http://example.com'> z:foo(//method) </for>"),
+					makeRule("<for each='$x'> local:foo(//method) </for>"),
 					db.query().optional("inexistent").node(),
-					Arrays.asList(new QName[]{new QName("http://example.com", "foo", "e")}));
+					module, prevModule);
 			assertEquals(0, firstDiff);
 			assertEquals(1, rule.blocks.size());
 		}
 		
 		@Test public void samePrevDefModifiedFunction() throws RuleBaseException {
+			mockery.checking(new Expectations() {{
+				one(module).areFunctionsModified(
+						Collections.singleton(new QName("http://www.w3.org/2005/xquery-local-functions", "value", null)),
+						prevModule);
+				will(returnValue(true));
+			}});
 			int firstDiff = rule.parseBlocks(
-					makeRule("<for each='$x'> //method </for><insert xmlns:z='http://example.com'> <operation x='{z:value()}'/> </insert>"),
-					makeRule("<for each='$x'> //method </for><insert xmlns:z='http://example.com'> <operation x='{z:value()}'/> </insert>"),
-					Arrays.asList(new QName[]{new QName("http://example.com", "value", "e")}));
+					makeRule("<for each='$x'> //method </for><insert> <operation x='{local:value()}'/> </insert>"),
+					makeRule("<for each='$x'> //method </for><insert> <operation x='{local:value()}'/> </insert>"),
+					module, prevModule);
 			assertEquals(1, firstDiff);
 			assertEquals(2, rule.blocks.size());
 		}
 		
 		@Test public void samePrevDefUnmodifiedFunction() throws RuleBaseException {
+			mockery.checking(new Expectations() {{
+				one(module).areFunctionsModified(
+						Collections.singleton(new QName("http://www.w3.org/2005/xquery-local-functions", "value", null)),
+						prevModule);
+				will(returnValue(false));
+			}});
 			int firstDiff = rule.parseBlocks(
-					makeRule("<for each='$x'> //method </for><insert xmlns:z='http://example.com'> <operation x='{z:value()}'/> </insert>"),
-					makeRule("<for each='$x'> //method </for><insert xmlns:z='http://example.com'> <operation x='{z:value()}'/> </insert>"),
-					Arrays.asList(new QName[]{}));
+					makeRule("<for each='$x'> //method </for><insert> <operation x='{local:value()}'/> </insert>"),
+					makeRule("<for each='$x'> //method </for><insert> <operation x='{local:value()}'/> </insert>"),
+					module, prevModule);
 			assertEquals(Integer.MAX_VALUE, firstDiff);
 			assertEquals(2, rule.blocks.size());
 		}
 		
 		@Test public void middleBlockDiffLastBlockModifiedFunction() throws RuleBaseException {
 			int firstDiff = rule.parseBlocks(
-					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with> <insert xmlns:z='http://example.com'> <operation x='{z:value()}'/> </insert>"),
-					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with> <insert xmlns:z='http://example.com'> <operation x='{z:value()}'/> </insert>"),
-					Arrays.asList(new QName[]{new QName("http://example.com", "value", "e")}));
+					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with> <insert> <operation x='{local:value()}'/> </insert>"),
+					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with> <insert> <operation x='{local:value()}'/> </insert>"),
+					module, prevModule);
 			assertEquals(1, firstDiff);
 			assertEquals(3, rule.blocks.size());
 		}
@@ -1181,7 +1211,7 @@ public class Rule {
 			queryServicePrepareContext.setAccessible(true);
 		}
 		
-		private QueryService touchedScope;
+		private Matcher<QueryService> customScope;
 		private Sequence seq;
 		
 		@Before public void setUp() {
@@ -1209,12 +1239,7 @@ public class Rule {
 					if (!verifySuccessful) will(throwException(new TransformException()));
 				}
 			}});
-			if (!doGlobalProcessing && verifySuccessful) {
-				touchedScope = db.getFolder("/").query();
-				mockery.checking(new Expectations() {{
-					one(rule.engine).customScope(modifiedDocs);  will(returnValue(touchedScope));
-				}});
-			}
+			customScope = (!doGlobalProcessing && verifySuccessful) ? Matchers.<QueryService>notNullValue() : Matchers.<QueryService>nullValue();
 		}
 		
 		private void prepIteration(Class<? extends Block> blockType, final int numModsToResolve) throws TransformException {
@@ -1222,7 +1247,7 @@ public class Rule {
 			final Block block = mockery.mock(blockType, "block_" + rule.blocks.size());
 			rule.blocks.add(block);
 			mockery.checking(new Expectations() {{
-				one(rule.self).processStage(stage, touchedScope); inSequence(seq);
+				one(rule.self).processStage(with(equalTo(stage)), with(customScope)); inSequence(seq);
 				will(returnValue(numModsToResolve));
 			}});
 		}

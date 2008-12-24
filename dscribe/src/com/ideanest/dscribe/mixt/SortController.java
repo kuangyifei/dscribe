@@ -96,7 +96,7 @@ public class SortController {
 	}
 
 	private void sort(String nodeId) throws TransformException {
-		self.sort(engine.globalScope().single("/id($_1)", nodeId).node());
+		self.sort(engine.workspace().query().single("/id($_1)", nodeId).node());
 	}
 	
 	private void sort(Node node) throws TransformException {
@@ -167,7 +167,6 @@ public class SortController {
 				allowing(engine).relativePath(doc3);  will(returnValue(db.getFolder("/workspace").relativePath(doc3.path())));
 				allowing(engine).modStore();  will(returnValue(modStore));
 				allowing(engine).workspace();  will(returnValue(workspace));
-				allowing(engine).globalScope();  will(returnValue(workspace.query()));
 				allowing(engine).stats();  will(returnValue(engine.stats));
 				allowing(engine).ensureWorkspaceNodeHasXmlId(doc1.query().single("//e1").node());  will(returnValue(true));
 				allowing(engine).ensureWorkspaceNodeHasXmlId(doc1.query().single("//e2").node());  will(returnValue(true));

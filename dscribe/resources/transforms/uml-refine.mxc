@@ -3,35 +3,35 @@ namespace a http://ideanest.com/dscribe/ns/actions
 namespace attr http://ideanest.com/dscribe/ns/attribute-overrides
 namespace u http://ideanest.com/dscribe/ns/util
 
-function u:scope($action):
+function scope($action):
 	if ($action/@scope='diagram') then /id($action/@diagram) else /
 
-function u:specificity($action):
+function specificity($action):
 	(if ($action/@targetSelector = 'by-id') then 2
 		else if ($action/@location != 'any') then 1 else 0) +
 	(if ($action/@scope = 'diagram') then 1 else 0)
 
-function u:actionProperties($action):
+function actionProperties($action):
 	(
 		attribute action {$action/@xml:id},
-		attribute specificity {u:specificity($action)},
+		attribute specificity {local:specificity($action)},
 		attribute serial {$action/@serial},
 		if ($action/@override) then attribute override {} else ()
 	)
 
 
 rule deconflict candidate actions
-	for all $candidates: /a:candidates
-	with some $c0: $candidates/a:*
-	with distinct $key: $c0/u:key/@value
-	with some $c1: $c0[u:key/@value = $key]
-	with some $minserial: max((0, $c1[@override]/@serial))
-	with some $c2: $c1[@serial >= $minserial]
+	for all $candidates:		/a:candidates
+	with some $c0:			$candidates/a:*
+	with distinct $key:		$c0/u:key/@value
+	with some $c1:			$c0[u:key/@value = $key]
+	with some $minserial:	max((0, $c1[@override]/@serial))
+	with some $c2:			$c1[@serial >= $minserial]
 	with some $minspecificity: max((0, $c2/@specificity))
-	with some $c3: $c2[@specificity >= $minspecificity]
-	with some $highserial: max($c3/@serial)
-	for each target: /a:triggers
-	insert: $c3[@serial = $highserial]
+	with some $c3:			$c2[@specificity >= $minspecificity]
+	with some $highserial:	max($c3/@serial)
+	for each target:			/a:triggers
+	insert:						$c3[@serial = $highserial]
 
 rule derive keys for set-property actions
 	for each $action: /a:candidates/a:set-property
@@ -47,7 +47,7 @@ rule apply set-property actions
 rule apply delete-attribute actions
 	for each $action:	/a:triggers/a:delete-attribute
 	for each $attribute:
-		u:scope($action)/
+		local:scope($action)/
 		(if ($action/@targetSelector='by-id') then id($action/@selection)
 			else if ($action/@targetSelector='by-origin') then descendant::uml:attribute[depicts=$action/@origin]
 			else if ($action/@targetSelector='by-name') then descendant::uml:attribute[name=$action/@name]
@@ -60,5 +60,5 @@ rule apply delete-attribute actions
 			attribute target {$attribute/@xml:id},
 			attribute attr {'visible'},
 			attribute value {'false'},
-			u:actionProperties($action)
+			local:actionProperties($action)
 		}

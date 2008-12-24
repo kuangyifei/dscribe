@@ -2,13 +2,11 @@
 <foo xml:id='f'/>
 
 ## load rules
-namespace x http://example.com
-
-function x:foo(): <bar/>
+function foo(): <bar/>
 
 rule insert bar into foo [r1]
 	for each target: //foo
-	insert: x:foo()
+	insert: local:foo()
 
 #### run 1
 
