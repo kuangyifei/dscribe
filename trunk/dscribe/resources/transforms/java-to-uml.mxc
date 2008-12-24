@@ -1,17 +1,16 @@
 namespace	java	http://ideanest.com/dscribe/ns/java
 namespace	uml	http://ideanest.com/dscribe/ns/uml
 namespace map	http://ideanest.com/dscribe/ns/mapping
-namespace u		http://ideanest.com/dscribe/ns/util
 
-function u:type($java):
+function type($java):
 	let $type := ($java/java:type, $java/java:localType)[1]
-	return concat($type/text(), string-join(u:repeat('[]', xs:integer($type/@arrayDim)), ''))
+	return concat($type/text(), string-join(local:repeat('[]', xs:integer($type/@arrayDim)), ''))
 
-function u:depiction($java):
+function depiction($java):
 	//uml:*[@depicts = $java/@xml:id]
 
-function u:repeat($x, $n):
-	if ($n ge 1) then ($x, u:repeat($x, $n - 1)) else ()
+function repeat($x, $n):
+	if ($n ge 1) then ($x, local:repeat($x, $n - 1)) else ()
 
 rule create diagram
 	for each $mapping:	//map:create-diagram
@@ -26,7 +25,7 @@ rule copy class to diagram
 
 rule copy class name
 	for each $jclass:		//java:class
-	for each target:		u:depiction($jclass)
+	for each target:		local:depiction($jclass)
 	insert:					<uml:blockname>{$jclass/@name/string()}</uml:blockname>
 
 rule create class compartments
@@ -38,16 +37,16 @@ rule create class compartments
 
 rule copy fields to attributes
 	for each $source:		//java:field
-	for each target:		u:depiction($source/..)/uml:compartment[@kind='attributes']
+	for each target:		local:depiction($source/..)/uml:compartment[@kind='attributes']
 	insert:
 		<uml:attribute depicts='{$source/@xml:id}'>
-			<uml:var><uml:name>{$source/@name/string()}</uml:name><uml:type>{u:type($source)}</uml:type></uml:var>
+			<uml:var><uml:name>{$source/@name/string()}</uml:name><uml:type>{local:type($source)}</uml:type></uml:var>
 		</uml:attribute>
 	sort as corresponding:	$source
 
 rule copy method to operations
 	for each $source:		//java:method | //java:constructor
-	for each target:		u:depiction($source/..)/uml:compartment[@kind='operations']
+	for each target:		local:depiction($source/..)/uml:compartment[@kind='operations']
 	insert:
 		<uml:operation depicts='{$source/@xml:id}'>
 			<uml:name>{(if ($source/self::java:constructor) then $source/.. else $source)/@name/string()}</uml:name>
@@ -55,9 +54,9 @@ rule copy method to operations
 				for $param in $source/java:param return
 					<uml:var>
 						<uml:name>{$param/@name/string()}</uml:name>
-						<uml:type>{u:type($param)}</uml:type>
+						<uml:type>{local:type($param)}</uml:type>
 					</uml:var>
 			}</uml:args>
-			{if ($source/self::java:constructor) then () else <uml:type>{u:type($source/java:returns)}</uml:type>} 
+			{if ($source/self::java:constructor) then () else <uml:type>{local:type($source/java:returns)}</uml:type>} 
 		</uml:operation>
 	sort as corresponding:	$source

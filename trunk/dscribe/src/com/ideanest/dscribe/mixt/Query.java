@@ -20,7 +20,7 @@ public abstract class Query {
 		return QName.parse(qname, namespaceMap);
 	}
 	
-	public NamespaceMap namespaceBindings() {
+	public NamespaceMap inScopeNamespaces() {
 		return namespaceMap;
 	}
 	

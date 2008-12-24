@@ -78,7 +78,7 @@ public class Mod {
 	}
 
 	public QueryService globalScope() {
-		return rule.engine.globalScope();
+		return rule.globalScope();
 	}
 	
 	/**
@@ -143,7 +143,7 @@ public class Mod {
 	}
 	
 	int resolveChildren(Block block, boolean lastBlock, QueryService touchedScope) throws TransformException {
-		QueryService scope = self.prepScopeClone((touchedScope == null || !previouslyResolved) ? rule.engine.globalScope() : touchedScope);
+		QueryService scope = self.prepScopeClone((touchedScope == null || !previouslyResolved) ? rule.globalScope() : touchedScope);
 		
 		Builder modBuilder;
 		if (block instanceof KeyBlock) {
@@ -186,7 +186,7 @@ public class Mod {
 		if (refNodes.size() > 0) {
 			references = new ArrayList<Node>(refNodes.size());
 			for (Node refNode : refNodes.nodes()) {
-				Node referencedNode = rule.engine.globalScope().optional("/id($_1/@refid)", refNode).node();
+				Node referencedNode = rule.globalScope().optional("/id($_1/@refid)", refNode).node();
 				if (!referencedNode.extant()) throw new TransformException("missing referenced node " + refNode.query().single("@refid").value());
 				final String actualPath = rule.engine.relativePath(referencedNode.document());
 				final String storedPath = refNode.query().single("@doc").value();
@@ -215,7 +215,7 @@ public class Mod {
 		try {
 			seg.verify();
 		} catch (SortingException e) {
-			for (Node orderedNode : rule.engine.globalScope().namespace("mod", Engine.MOD_NS)
+			for (Node orderedNode : rule.globalScope().namespace("mod", Engine.MOD_NS)
 					.unordered("/id($_1/mod:order/@refid)", node).nodes()) {
 				rule.engine.eventuallySort(orderedNode);
 			}
@@ -525,8 +525,8 @@ public class Mod {
 		 */
 		public String generateId(int serial) {
 			String id = parent.key() + (parent.stage+1) + (serial >= 0 ? "-" + serial : "") + ".";
-			if (parent.rule.engine.globalScope().exists("/id($_1)", id))
-				LOG.error("generated id '" + id + "' already assigned to element " + parent.rule.engine.globalScope().unordered("/id($_1)", id));
+			if (parent.rule.globalScope().exists("/id($_1)", id))
+				LOG.error("generated id '" + id + "' already assigned to element " + parent.rule.globalScope().unordered("/id($_1)", id));
 			return id;
 		}
 		
@@ -632,7 +632,7 @@ public class Mod {
 				allowing(engine).relativePath(doc1);  will(returnValue(doc1Name));
 				allowing(engine).modStore();  will(returnValue(modStore));
 				allowing(engine).workspace();  will(returnValue(workspace));
-				allowing(engine).globalScope();  will(returnValue(workspace.query()));
+				allowing(rule).globalScope();  will(returnValue(workspace.query()));
 				allowing(engine).ensureWorkspaceNodeHasXmlId(doc1.query().single("//e1").node());  will(returnValue(true));
 				allowing(engine).ensureWorkspaceNodeHasXmlId(doc1.query().single("//e2").node());  will(returnValue(true));
 				allowing(parentMod).key();  will(returnValue("_r1.e13."));
