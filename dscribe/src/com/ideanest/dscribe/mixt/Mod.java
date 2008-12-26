@@ -120,8 +120,8 @@ public class Mod {
 	}
 	
 	public List<Node> references() {
-		if (references == null) return Collections.emptyList();
-		return Collections.unmodifiableList(references);
+		assert references != null;
+		return references;
 	}
 	
 	/**
@@ -182,18 +182,13 @@ public class Mod {
 			throw new IllegalArgumentException("stage mismatch on node restore, given " + stage + ", stored " + storedStage);
 		
 		previouslyResolved = !node.query().exists("@new");
-		ItemList refNodes = node.query().all("reference");
-		if (refNodes.size() > 0) {
-			references = new ArrayList<Node>(refNodes.size());
-			for (Node refNode : refNodes.nodes()) {
-				Node referencedNode = rule.globalScope().optional("/id($_1/@refid)", refNode).node();
-				if (!referencedNode.extant()) throw new TransformException("missing referenced node " + refNode.query().single("@refid").value());
-				final String actualPath = rule.engine.relativePath(referencedNode.document());
-				final String storedPath = refNode.query().single("@doc").value();
-				if (!actualPath.equals(storedPath))
-					throw new TransformException("doc mismatch on reference, resolves to '" + actualPath + "' but stored as '" + storedPath + "'");
-				references.add(referencedNode);
-			}
+		references = Collections.unmodifiableList(Arrays.asList(
+				node.query().all(
+						// resolve all references, filling in ones that failed with a placeholder that could never be referenced
+						"for $ref in reference return (doc(concat($_1, '/', $ref/@doc))/id($ref/@refid), $_2)[1]",
+						Database.ROOT_PREFIX + rule.engine.workspace().path(), node).nodes().toArray()));
+		for (Node ref : references) {
+			if (ref.equals(node)) throw new TransformException("failed to resolve at least one reference");
 		}
 		
 		seg.restore();
@@ -207,7 +202,7 @@ public class Mod {
 	}
 	
 	public List<String> affectedIds() {
-		return globalScope().unordered("declare namespace mod = '" + Engine.MOD_NS + "'; $_1/mod:affected/@refid", node).values().asList();
+		return node.query().all("mod:affected/@refid").values().asList();
 	}
 	
 	void verify() throws TransformException {
@@ -317,9 +312,12 @@ public class Mod {
 				checkChildCount();
 				childCount++;
 				
-				assert !parent.node().query().exists("mod[not(@xml:id)]");
+				// This assertion is too expensive (up to 20% of query time is spent checking it!)
+				// assert parent.node().query().single("every $m in mod satisfies $m/@xml:id").booleanValue();
 				String key = key();
-				if (!parent.node().query().exists("mod[@xml:id=$_1]", key)) writeMod(key);
+				if (key == null || !parent.node().query().exists("/id($_1)/.. intersect .", key)) {
+					writeMod(key);
+				}
 			} finally {
 				reset();
 			}
@@ -328,7 +326,7 @@ public class Mod {
 		private void writeMod(String key) {
 			ElementBuilder<Node> builder = parent.node().append().namespace("", Engine.MOD_NS);
 			builder.elem("mod")
-				.attrIf(!key.equals(parent.key()), "xml:id", key)
+				.attrIf(key != null, "xml:id", key)
 				.attr("stage", parent.stage + 1)
 				.attr("new", "");
 			for (String docName : dependentDocNames) {
@@ -362,7 +360,7 @@ public class Mod {
 		}
 		
 		String key() {
-			return parent.key();
+			return null;
 		}
 		
 		public QueryService scope() {
@@ -525,8 +523,8 @@ public class Mod {
 		 */
 		public String generateId(int serial) {
 			String id = parent.key() + (parent.stage+1) + (serial >= 0 ? "-" + serial : "") + ".";
-			if (parent.rule.globalScope().exists("/id($_1)", id))
-				LOG.error("generated id '" + id + "' already assigned to element " + parent.rule.globalScope().unordered("/id($_1)", id));
+			assert !parent.rule.engine.workspace().query().exists("/id($_1)", id)
+					: "generated id '" + id + "' already assigned to element " + parent.rule.engine.workspace().query().unordered("/id($_1)", id);
 			return id;
 		}
 		
