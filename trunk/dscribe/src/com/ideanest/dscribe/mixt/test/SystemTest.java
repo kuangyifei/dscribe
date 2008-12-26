@@ -3,7 +3,7 @@ package com.ideanest.dscribe.mixt.test;
 import static org.junit.Assert.*;
 
 import java.io.*;
-import java.text.ParseException;
+import java.text.*;
 import java.util.*;
 import java.util.regex.*;
 
@@ -22,6 +22,25 @@ import com.ideanest.dscribe.mixt.test.ParameterizedShowingArgs.Parameters;
 public class SystemTest extends DatabaseTestCase {
 	
 	private static final File TEST_SPEC_DIR = new File("test/systest-specs");
+	
+	public static void main(String args[]) throws Exception {
+		configureLogging();
+		SystemTest test = new SystemTest(args[1], new File(TEST_SPEC_DIR, args[1]));
+		test.startupDatabase();
+		try {
+			for (int i = Integer.parseInt(args[0], 10); i > 0; i--) {
+				test = new SystemTest(args[1], new File(TEST_SPEC_DIR, args[1]));
+				test.setUp();
+				test.run();
+				db.getFolder("/workspace").delete();
+				db.getFolder("/rulespace").delete();
+				db.getFolder(Transformer.recordsRootPath()).delete();
+			}
+			System.out.println(QueryService.statistics().toStringTop(20));
+		} finally {
+			test.shutdownDatabase();
+		}
+	}
 
 	@Parameters public static Collection<Object[]> findSpecFiles() {
 		List<Object[]> list = new ArrayList<Object[]>();
@@ -41,7 +60,7 @@ public class SystemTest extends DatabaseTestCase {
 	@BeforeClass public static void configureLogging() {
 		ConsoleAppender appender = (ConsoleAppender) Logger.getRootLogger().getAllAppenders().nextElement();
 		previousAppenderThreshold = appender.getThreshold();
-		appender.setThreshold(Level.DEBUG);
+		appender.setThreshold(Level.TRACE);
 		Logger logger = Logger.getLogger("com.ideanest.dscribe.mixt");
 		previousLoggerLevel = logger.getLevel();
 		logger.setLevel(Level.DEBUG);
@@ -87,8 +106,10 @@ public class SystemTest extends DatabaseTestCase {
 				int nextStage = Integer.parseInt(matcher.group(1));
 				if (nextStage != ++run) throw new IOException("non-consecutive cycle: " + line);
 				LOG.debug("system test " + specFile + " starting run " + run);
+				long startTime = System.currentTimeMillis();
 				stats = transformer.executeOnce();
-				LOG.debug("system test " + specFile + " finished run " + run);
+				double runTime = (System.currentTimeMillis() - startTime) / 1000.0;
+				LOG.debug("system test " + specFile + " finished run " + run + " in " + new DecimalFormat("0.000").format(runTime) + "s");
 				line = reader.readLine();
 			} else if (line.startsWith("##")) {
 				Matcher matcher = INSTRUCTION_RE.matcher(line);

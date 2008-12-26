@@ -225,7 +225,7 @@ public class TypeResolver extends TaskBase {
 	}
 
 	private String load(String className) throws TypeResolutionException {
-		ItemList qr = resultStore.query().all("/file//(class|interface)[@implName = $_1]/@fullName", className);
+		ItemList qr = resultStore.query().all("//(class|interface)[@implName = $_1]/@fullName", className);
 		if (qr.size() == 1) {
 			return qr.get(0).value();
 		} else if (qr.size() == 0) {

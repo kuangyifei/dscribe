@@ -327,7 +327,8 @@ public class Rule {
 			}
 		} else {
 			for (Node node : self.rootMod().node().query().unordered(
-					".//mod[xs:integer(@stage)=$_1]" + (mustRestore ? "" : "[not(mod)]"), stage - 1).nodes()) {
+					".//mod[@stage=$_1]" + (mustRestore ? "" : "[not(exists(mod))]"), stage - 1).nodes()) {
+				LOG.debug("restoring mod at stage " + (stage - 1));
 				Mod mod = self.restoreMod(node);
 				LOG.debug("resolving children of " + mod);
 				numResolved += mod.resolveChildren(block, lastBlock, stageScope);
@@ -372,7 +373,7 @@ public class Rule {
 		Collection<String> modifiedDocsNames = convertDocsToNames(modifiedDocs);
 		
 		ItemList modsToVerify = rootModNode.query().unordered(
-				".//mod[dependency/@doc=$_1]", modifiedDocsNames);
+				".//dependency[@doc=$_1]/parent::mod", modifiedDocsNames);
 		if (modsToVerify.size() == 0) {
 			LOG.debug("no mods to verify");
 		} else {
@@ -401,7 +402,7 @@ public class Rule {
 		mods.add(self.rootMod());
 		while(!mods.isEmpty()) {
 			Mod mod = mods.remove(mods.size()-1);
-			ItemList childNodes = mod.node().query().unordered("mod[exists(descendant-or-self::mod intersect $_1)]", modsToVerify);
+			ItemList childNodes = mod.node().query().unordered("mod[exists(descendant-or-self::* intersect $_1)]", modsToVerify);
 			for (Node childNode : engine.utilQuery().unordered("$_1 intersect $_2", childNodes, modsToVerify).nodes()) {
 				Mod childMod = null;
 				try {

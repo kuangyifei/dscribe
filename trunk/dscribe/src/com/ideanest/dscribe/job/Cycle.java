@@ -229,6 +229,7 @@ public class Cycle {
 			// TODO: append log messages to notes
 			
 			LOG.info("started");
+			QueryService.statistics().reset();
 
 			try {
 				// to abandon a job during prepartion, you must be careful since not all
@@ -262,6 +263,7 @@ public class Cycle {
 			// clean up listener, though it's just weakly referenced so it would disappear by itself eventually
 			Database.remove(inheritedDocumentListener);
 			commitNotes();
+			LOG.info("cycle query statistics:\n" + QueryService.statistics().toStringTop(20));
 			
 			synchronized(this) {
 				Thread.interrupted();	// clear interruption flag
