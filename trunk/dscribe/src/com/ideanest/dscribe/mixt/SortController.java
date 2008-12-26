@@ -105,6 +105,7 @@ public class SortController {
 		Rule prevRule = null;
 		int prevStage = -1;
 		Collection<Seg> segs = new ArrayList<Seg>();
+		Mod mod = null;
 		for (Node modNode : engine.modStore().query().all(
 				"for $mod in //mod[order/@refid=$_1/@xml:id] order by $mod/ancestor::mods/@rule, $mod/@stage return $mod", node).nodes()) {
 			int stage = modNode.query().single("@stage").intValue();
@@ -115,7 +116,8 @@ public class SortController {
 				prevRule = rule;
 				prevStage = stage;
 			}
-			segs.add(rule.restoreMod(modNode).seg());
+			mod = rule.restoreMod(modNode, mod);
+			segs.add(mod.seg());
 		}
 		if (!segs.isEmpty()) {
 			prevRule.sortBlock(prevStage, segs, graph);
@@ -306,13 +308,13 @@ public class SortController {
 				
 				Mod m11 = mockery.mock(Mod.class, "m11"), m12 = mockery.mock(Mod.class, "m12"), m131 = mockery.mock(Mod.class, "m131"), m21 = mockery.mock(Mod.class, "m21");
 				Seg s11 = mockery.mock(Seg.class, "s11"), s12 = mockery.mock(Seg.class, "s12"), s131 = mockery.mock(Seg.class, "s131"), s21 = mockery.mock(Seg.class, "s21");
-				one(r1).restoreMod(modStore.query().single("/id('r1.1')").node());  will(returnValue(m11));
+				one(r1).restoreMod(modStore.query().single("/id('r1.1')").node(), null);  will(returnValue(m11));
 				allowing(m11).seg();  will(returnValue(s11));
-				one(r1).restoreMod(modStore.query().single("/id('r1.2')").node());  will(returnValue(m12));
+				one(r1).restoreMod(modStore.query().single("/id('r1.2')").node(), m11);  will(returnValue(m12));
 				allowing(m12).seg();  will(returnValue(s12));
-				one(r1).restoreMod(modStore.query().single("/id('r1.3.1')").node());  will(returnValue(m131));
+				one(r1).restoreMod(modStore.query().single("/id('r1.3.1')").node(), m12);  will(returnValue(m131));
 				allowing(m131).seg();  will(returnValue(s131));
-				one(r2).restoreMod(modStore.query().single("/id('r2.1')").node());  will(returnValue(m21));
+				one(r2).restoreMod(modStore.query().single("/id('r2.1')").node(), m131);  will(returnValue(m21));
 				allowing(m21).seg();  will(returnValue(s21));
 				
 				OrderGraph graph = mockery.mock(OrderGraph.class);
