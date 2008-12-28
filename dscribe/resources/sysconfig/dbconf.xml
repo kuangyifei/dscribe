@@ -17,6 +17,9 @@
 			<fulltext default="all" attributes="true">
 				<exclude path="/auth"/>
 			</fulltext>
+
+			<create qname="@implName" type="xs:string"/>
+			
 			<create qname="@rule" type="xs:string"/>
 			<create qname="@refid" type="xs:string"/>
 			<create qname="@kind" type="xs:string"/>

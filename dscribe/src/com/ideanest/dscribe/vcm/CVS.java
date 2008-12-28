@@ -1,28 +1,22 @@
 package com.ideanest.dscribe.vcm;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.math.BigDecimal;
 import java.text.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import javax.xml.datatype.Duration;
-import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.datatype.*;
 
 import org.apache.log4j.Logger;
 import org.exist.fluent.*;
-import org.netbeans.lib.cvsclient.CVSRoot;
-import org.netbeans.lib.cvsclient.Client;
-import org.netbeans.lib.cvsclient.admin.AdminHandler;
-import org.netbeans.lib.cvsclient.admin.StandardAdminHandler;
+import org.netbeans.lib.cvsclient.*;
+import org.netbeans.lib.cvsclient.admin.*;
 import org.netbeans.lib.cvsclient.command.*;
 import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
 import org.netbeans.lib.cvsclient.command.history.HistoryCommand;
-import org.netbeans.lib.cvsclient.command.log.LogInformation;
-import org.netbeans.lib.cvsclient.command.log.RlogCommand;
-import org.netbeans.lib.cvsclient.connection.AuthenticationException;
-import org.netbeans.lib.cvsclient.connection.ConnectionFactory;
+import org.netbeans.lib.cvsclient.command.log.*;
+import org.netbeans.lib.cvsclient.connection.*;
 import org.netbeans.lib.cvsclient.event.*;
 
 import com.ideanest.dscribe.Namespace;
@@ -72,8 +66,7 @@ public class CVS extends TaskBase {
 		module = taskDef.query().single("@module").value();
 		blockBetweenUpdates = taskDef.query().flag("@block-between-updates", false);
 		scanPrehistory = taskDef.query().flag("@scan-prehistory", false);
-		String dir = taskDef.query().optional("@dir").value();
-		targetDir = dir == null ? cycle().workdir() : new File(cycle().workdir(), dir);
+		targetDir = cycle().resolveOptionalFile(taskDef.query().optional("@dst").value());
 		targetDir.mkdirs();
 	}
 	

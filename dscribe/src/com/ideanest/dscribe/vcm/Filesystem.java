@@ -2,8 +2,7 @@ package com.ideanest.dscribe.vcm;
 
 import java.io.*;
 import java.nio.channels.FileChannel;
-import java.text.MessageFormat;
-import java.text.ParseException;
+import java.text.*;
 import java.util.Date;
 
 import org.apache.log4j.Logger;
@@ -39,8 +38,8 @@ public class Filesystem extends TaskBase {
 
 	@Override
 	protected void init(Node taskDef) throws Exception {
-		srcDir = cycle().resolveOptionalFile(taskDef.query().single("@dir").value()).getCanonicalFile();
-		dstDir = cycle().workdir();
+		srcDir = cycle().resolveOptionalFile(taskDef.query().single("@src").value()).getCanonicalFile();
+		dstDir = cycle().resolveOptionalFile(taskDef.query().optional("@dst").value()).getCanonicalFile();
 		
 		quietPeriod = new QuietPeriod(cycle(), taskDef, null);	// default start scan time of taskStart-quietPeriod, so that the only possible agreement point is "now"
 		latestFileModification = new Date(0);	// arbitrary past dateTime in case there are no files

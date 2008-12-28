@@ -34,6 +34,7 @@ public class SourceExtractor extends TaskBase implements Builder {
 	);
 	
 	private Folder workspace, prevspace, codespace;
+	private File baseDir;
 	private int numExtracted, numFailed, numInherited;
 	
 
@@ -42,6 +43,7 @@ public class SourceExtractor extends TaskBase implements Builder {
 		workspace = cycle().workspace(NAMESPACE_MAPPINGS);
 		prevspace = cycle().prevspace(NAMESPACE_MAPPINGS);
 		codespace = workspace.children().create("code");
+		baseDir = cycle().resolveOptionalFile(def.query().optional("@src").value());
 	}
 	
 	@Phase
@@ -49,7 +51,7 @@ public class SourceExtractor extends TaskBase implements Builder {
 		LOG.debug("extracting from source");
 		
 		DirectoryScanner scanner = new DirectoryScanner();
-		scanner.setBasedir(cycle().workdir());
+		scanner.setBasedir(baseDir);
 		scanner.setIncludes(new String[] {"**/*.java"});
 		scanner.addDefaultExcludes();
 		scanner.scan();
@@ -119,7 +121,7 @@ public class SourceExtractor extends TaskBase implements Builder {
 	public synchronized void extract(String relativeFilename) throws FileNotFoundException, ParseException {
 		reset();
 		
-		File file = new File(cycle().workdir(), relativeFilename);
+		File file = new File(baseDir, relativeFilename);
 		builder = codespace.documents().build(Name.adjust(file.getName()));
 		builder.elem("unit").elem("file").attr("type", "source").text(relativeFilename).end("file");
 		

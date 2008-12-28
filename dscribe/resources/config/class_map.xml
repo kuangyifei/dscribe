@@ -2,7 +2,7 @@
 	<mapping namespace="http://ideanest.com/dscribe/ns/config">
 		<map tag="job" class="com.ideanest.dscribe.job.JobRun">
 			<default type="chore" phases="execute"/>
-			<default type="project" phases="check agree update build extract elaborate transform layout commit"/>
+			<default type="project" phases="check agree update build extract elaborate transform layout export"/>
 		</map>
 		
 		<map tag="log" class="com.ideanest.dscribe.job.WriteLog"/>
@@ -23,5 +23,6 @@
 		<map tag="assign-diagrams" class="com.ideanest.dscribe.opti.AnnealingDiagramAssigner"/>
 		
 		<map tag="mixt" class="com.ideanest.dscribe.uml.TransformTask"/>
+		<map tag="export-diagrams" class="com.ideanest.dscribe.uml.ExportDiagrams"/>
 	</mapping>
 </mapping>

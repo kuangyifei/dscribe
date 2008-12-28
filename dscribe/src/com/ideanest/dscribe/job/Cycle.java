@@ -171,6 +171,7 @@ public class Cycle {
 	
 	public File resolveOptionalFile(String dir) {
 		if (dir == null) return workdir();
+		if (dir.startsWith("^/")) return new File(config.workdir(), dir.substring(2));
 		File f = new File(dir);
 		if (!f.isAbsolute()) f = new File(workdir(), dir);
 		return f;
