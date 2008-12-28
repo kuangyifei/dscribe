@@ -20,6 +20,14 @@ function actionProperties($action):
 	)
 
 
+rule create candidates container
+	create-doc:		actions/candidates.xml
+	insert:			element a:candidates {}
+
+rule create triggers container
+	create-doc:		actions/triggers.xml
+	insert:			element a:triggers {}
+
 rule deconflict candidate actions
 	for all $candidates:		/a:candidates
 	with some $c0:			$candidates/a:*
@@ -58,6 +66,7 @@ rule apply delete-attribute actions
 	insert:
 		element a:set-property {
 			attribute target {$attribute/@xml:id},
+			attribute diagram {$attribute/root()/@xml:id},
 			attribute attr {'visible'},
 			attribute value {'false'},
 			local:actionProperties($action)

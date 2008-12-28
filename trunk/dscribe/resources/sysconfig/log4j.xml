@@ -28,13 +28,9 @@
 	<category name="org.quartz">
 		<priority value="warn"/>
 	</category>
-	
-	<category name="com.ideanest.dscribe.mixt">
-		<priority value="debug"/>
-	</category>
 
 	<category name="com.ideanest.dscribe.opti.AnnealingDiagramAssigner">
-		<priority value="debug"/>
+		<priority value="info"/>
 	</category>
 	
 	<root>

@@ -3,26 +3,27 @@
 	<job type="project" name="dScribe" enabled="true" debug-dump="true">
 		<schedule at="0/30 * * * * ?"/>
 		<wipe if="empty($versions//notes:notes[@status='completed'])"/>
-		<filesystem dir="c:\code\projects\dscribe" quiet-period="PT30S">
+		<filesystem src="c:\code\projects\dscribe" dst="code" quiet-period="PT30S">
 			<exclude name="bin/"/>
 			<exclude name="build/"/>
 			<exclude name="test/"/>
 			<exclude name="test-job/"/>
 		</filesystem>
 		<agree-checkpoint/>
-		<java-extract-source/>
+		<java-extract-source src="code"/>
 		<java-resolve-types/>
 		<java-analyze-origin/>
 		<assign-diagrams>
 			<calculator class="com.ideanest.dscribe.java.PackageAssignmentCalculator"/>
 			<calculator class="com.ideanest.dscribe.java.ClassAssignmentCalculator"/>
 		</assign-diagrams>
-		<mixt folder="rules" rules="../../../transforms"/>
+		<mixt folder="rules" rules="^/transforms"/>
+		<export-diagrams rules-doc="uml-refine" dst="export" template="^/diagram-template.lzx"/>
 	</job>
 
 	<job type="project" name="Reef-CVS" min-run-interval="PT3M" enabled="false">
 		<schedule at="0 0/1 * * * ?"/>
-		<cvs root=":pserver:pkaminsk:tea63bis@cvs.cs.uvic.ca:/home/cvs/varlet" module="reef" quiet-period="PT3M"/>
+		<cvs root=":pserver:pkaminsk:tea63bis@cvs.cs.uvic.ca:/home/cvs/varlet" dst="code" module="reef" quiet-period="PT3M"/>
 		<agree-checkpoint/>
 	</job>
 	
@@ -32,6 +33,7 @@
 		<cvs
 			root=":pserver:cvsnt:cvsnt@transfinity:c:/code/cvs/cvsrepo/work"
 			module="Ideanest"
+			dst="code"
 			quiet-period="PT5M"
 			block-between-updates="true"
 			scan-prehistory="true">
@@ -50,7 +52,7 @@
 	
 	<job name="update-config" phases="check agree update load expand schedule" debug-dump="true">
 		<schedule at="0 0/1 * * * ?"/>
-		<filesystem dir="../../../config" quiet-period="PT5S"/>
+		<filesystem src="^/config" quiet-period="PT5S"/>
 		<agree-checkpoint/>
 		<load-files/>
 		<schedule-jobs/>

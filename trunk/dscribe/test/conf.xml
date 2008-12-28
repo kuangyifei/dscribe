@@ -17,6 +17,9 @@
 			<fulltext default="all" attributes="true">
 				<exclude path="/auth"/>
 			</fulltext>
+			
+			<create qname="@implName" type="xs:string"/>
+			
 			<create qname="@rule" type="xs:string"/>
 			<create qname="@refid" type="xs:string"/>
 			<create qname="@kind" type="xs:string"/>
@@ -24,6 +27,10 @@
 			<create qname="@depicts" type="xs:string"/>
 			<create qname="@doc" type="xs:string"/>
 			<create qname="@stage" type="xs:integer"/>
+			
+			<create qname="@diagram" type="xs:string"/>
+			<create qname="@scope" type="xs:string"/>
+			<create qname="@target" type="xs:string"/>
 		</index>
 	</indexer>
 
