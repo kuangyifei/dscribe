@@ -469,7 +469,7 @@ public class Engine {
 			affected = utilQuery.unordered("$_1 union $_2", affected, newAffected);
 			mods = utilQuery.unordered("$_1 union $_2", mods, newMods);
 			// TODO: refactor query to use idref() once we can declare @refid as type IDREF
-			Set<String> newAffectedDocNames = new TreeSet<String>();
+			List<String> newAffectedDocNames = new ArrayList<String>();
 			for (Document doc : newAffected.nodes().documents()) newAffectedDocNames.add(workspace.relativePath(doc.path()));
 			newMods = modStore.query().unordered(
 					"//reference[@doc = $_4][let $refid := @refid return exists($_3/id($refid)/ancestor-or-self::* intersect $_1)]/parent::mod except $_2",
@@ -878,7 +878,7 @@ public class Engine {
 		}
 		
 		@Test public void withdrawModsWithAffectedDocsAndKnockOnReferences() {
-			workspace.documents().load(Name.generate(), Source.xml(
+			workspace.documents().load(Name.create("doc1"), Source.xml(
 					"<foo><bar xml:id='b1'><baz xml:id='b1a'/></bar><bar xml:id='b2'/><xyz xml:id='b3'/></foo>"));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
 					"<modstore xmlns='" + Engine.MOD_NS + "'>" +
@@ -887,8 +887,8 @@ public class Engine {
 					"  <mod xml:id='m2'/>" +
 					"</mods>" +
 					"<mods rule='r2'>" +
-					"  <mod xml:id='m3'><reference refid='b1'/></mod>" +
-					"  <mod xml:id='m4'><reference refid='b1a'/><affected refid='b3'/></mod>" +
+					"  <mod xml:id='m3'><reference refid='b1' doc='doc1'/></mod>" +
+					"  <mod xml:id='m4'><reference refid='b1a' doc='doc1'/><affected refid='b3'/></mod>" +
 					"</mods>" +
 					"</modstore>")).root();
 			Engine engine = new Engine(workspace, modStore);
