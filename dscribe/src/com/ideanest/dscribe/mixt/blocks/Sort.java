@@ -364,6 +364,8 @@ public class Sort implements BlockType {
 			};
 			modBuilder = mockery.mock(Mod.Builder.class);
 			mockery.checking(new Expectations() {{
+				one(modBuilder).dependOn(m1.document());
+				one(modBuilder).dependOn(m2.document());
 				Sequence seq1 = mockery.sequence("pre-commit resolveOrder 1");
 				Sequence seq2 = mockery.sequence("pre-commit resolveOrder 2");
 				one(mockBlock).resolveOrder(modBuilder, m1); inSequence(seq1);
@@ -419,7 +421,6 @@ public class Sort implements BlockType {
 			SortBlock block = define("<sort by='ascending'>@name</sort>");
 			Node m1 = content.query().single("/id('m1')").node();
 			setModBuilderCustomScope(m1.query());
-			dependOnDocument(m1.document());
 			supplement();
 			block.resolveOrder(modBuilder, m1);
 			checkSupplement("<sort-value refid='m1'>start</sort-value>");
@@ -531,7 +532,6 @@ public class Sort implements BlockType {
 			Node um1 = content.query().single("/id('um1')").node();
 			Node m1 = content.query().single("/id('m1')").node();
 			setModBuilderCustomScope(um1.query().let("$source", m1));
-			dependOnDocument(um1.document());
 			reference(m1);
 			supplement();
 			block.resolveOrder(modBuilder, um1);
