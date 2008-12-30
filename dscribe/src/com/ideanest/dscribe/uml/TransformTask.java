@@ -2,6 +2,7 @@ package com.ideanest.dscribe.uml;
 
 import java.io.*;
 import java.text.*;
+import java.util.Collection;
 
 import org.apache.log4j.Logger;
 import org.apache.tools.ant.DirectoryScanner;
@@ -17,6 +18,7 @@ public class TransformTask extends TaskBase {
 	private static final NamespaceMap NAMESPACE_MAPPINGS = new NamespaceMap(
 			"", Engine.MIXT_NS,
 			"mod", Engine.MOD_NS,
+			"record", Engine.RECORD_NS,
 			"notes", Namespace.NOTES
 	);
 	
@@ -44,9 +46,13 @@ public class TransformTask extends TaskBase {
 	
 	@Phase
 	public void transform() throws RuleBaseException, TransformException {
-		Engine engine = initEngine(initModStore());
+		boolean inherit = Engine.isSameVersionAs(prevspace);
+		Collection<XMLDocument> modifiedDocs = inherit ? cycle().uninheritedWorkspaceDocuments() : null;
+		Node modStore = initModStore(inherit);
+		Engine engine = initEngine(modStore);
 		try {
-			engine.executeTransform(cycle().uninheritedWorkspaceDocuments());
+			engine.executeTransform(modifiedDocs);
+			recordRun();
 		} catch (InterruptedException e) {
 			Thread.currentThread().interrupt();
 			cycle().checkInterrupt();
@@ -57,6 +63,16 @@ public class TransformTask extends TaskBase {
 		LOG.info(new MessageFormat(
 				"completed transformation after {0,choice,1#one iteration|1<{0,number,integer} iterations}")
 				.format(new Object[] {engine.stats().numCycles.value()}));
+	}
+	
+	private void recordRun() {
+		ElementBuilder<XMLDocument> builder = workspace.documents().build(Name.adjust("last-mixt-run"));
+		builder.elem("last-run");
+		Engine.recordVersions(builder);
+		builder.end("last-run").commit();
+
+		// Remove temporary incompatibility markers.
+		rulespace.query().unordered("//rules//(record:* union @record:*)").deleteAllNodes();
 	}
 	
 	private void loadRules() throws FileNotFoundException, IOException, ParseException {
@@ -82,9 +98,12 @@ public class TransformTask extends TaskBase {
 	
 	/**
 	 * Copy the modstore over from prevspace if available, otherwise create a new one.
+	 * @param inherit if <code>true</code>, try inheriting the modstore from prevspace, as well as all
+	 * 		affected documents; if <code>false</code> just create a new modstore and don't inherit any
+	 * 		documents
 	 * @return the modstore root node
 	 */
-	private Node initModStore() {
+	private Node initModStore(boolean inherit) {
 		// There should be no modstores in the workspace, but to avoid confusion delete
 		// any that are found.
 		for (Document doc : workspace.query().unordered("/mod:modstore").nodes().documents()) {
@@ -94,7 +113,7 @@ public class TransformTask extends TaskBase {
 		
 		// Copy or create.
 		Node modStore = prevspace.query().optional("/mod:modstore").node();
-		if (modStore.extant()) {
+		if (inherit && modStore.extant()) {
 			cycle().inherit(modStore.document());
 			// Inherit any documents that were affected by the previous run of the transform.
 			// TODO: if any of these were previously inherited, this will create a duplicate copy -- fix or ignore?

@@ -465,13 +465,15 @@ public class Engine {
 		ItemList affected = workspace.query().all("()");
 		
 		while (newMods.size() > 0) {
-			ItemList newAffected = workspace.query().unordered("/id(distinct-values($_1//mod:affected/@refid))", newMods);
+			ItemList newAffected = workspace.query().unordered("/id($_1//mod:affected/@refid)", newMods);
 			affected = utilQuery.unordered("$_1 union $_2", affected, newAffected);
 			mods = utilQuery.unordered("$_1 union $_2", mods, newMods);
 			// TODO: refactor query to use idref() once we can declare @refid as type IDREF
+			Set<String> newAffectedDocNames = new TreeSet<String>();
+			for (Document doc : newAffected.nodes().documents()) newAffectedDocNames.add(workspace.relativePath(doc.path()));
 			newMods = modStore.query().unordered(
-					"//mod[reference/@refid=$_1/descendant-or-self::*/@xml:id] except $_2",
-					newAffected, mods);
+					"//reference[@doc = $_4][let $refid := @refid return exists($_3/id($refid)/ancestor-or-self::* intersect $_1)]/parent::mod except $_2",
+					newAffected, mods, workspace, newAffectedDocNames);
 		}
 		
 		// Touch only the dependencies of the highest withdrawn mods, since any children will be resolved in global scope anyway.

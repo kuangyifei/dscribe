@@ -1,9 +1,9 @@
 <group name="Global" xmlns="http://ideanest.com/dscribe/ns/config">
 
-	<job type="project" name="dScribe" enabled="true" debug-dump="true">
+	<job type="project" name="dScribe-sample" enabled="true" debug-dump="true">
 		<schedule at="0/30 * * * * ?"/>
 		<wipe if="empty($versions//notes:notes[@status='completed'])"/>
-		<filesystem src="c:\code\projects\dscribe" dst="code" quiet-period="PT30S">
+		<filesystem src="c:\code\projects\dscribe-sample" dst="code" quiet-period="PT30S">
 			<exclude name="bin/"/>
 			<exclude name="build/"/>
 			<exclude name="test/"/>

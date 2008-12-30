@@ -38,7 +38,7 @@ public class SystemTest extends DatabaseTestCase {
 			}
 			System.out.println(QueryService.statistics().toStringTop(20));
 		} finally {
-			test.shutdownDatabase();
+			SystemTest.shutdownDatabase();
 		}
 	}
 

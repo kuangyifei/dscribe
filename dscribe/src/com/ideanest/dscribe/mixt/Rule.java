@@ -417,7 +417,10 @@ public class Rule {
 		while(!mods.isEmpty()) {
 			Mod mod = mods.remove(mods.size()-1);
 			ItemList childNodes = mod.node().query().unordered("mod[exists(descendant-or-self::* intersect $_1)]", modsToVerify);
-			for (Node childNode : engine.utilQuery().unordered("$_1 intersect $_2", childNodes, modsToVerify).nodes()) {
+			ItemList childrenToVerify = engine.utilQuery().unordered("$_1 intersect $_2", childNodes, modsToVerify);
+			ItemList childrenNotToVerify = engine.utilQuery().unordered("$_1 except $_2", childNodes, modsToVerify);
+			childNodes = null;
+			for (Node childNode : childrenToVerify.nodes()) {
 				Mod childMod = null;
 				try {
 					childMod = mod.restoreChild(blocks.get(mod.stage+1), childNode);
@@ -430,10 +433,11 @@ public class Rule {
 					} else {
 						LOG.debug("failed to verify " + childMod + ": " + e.getMessage());
 					}
+					modsToVerify = engine.utilQuery().unordered("$_1 except ($_2 union $_2//*)", modsToVerify, childNode);
 					engine.withdrawMod(childNode);
 				}
 			}
-			for (Node childNode : engine.utilQuery().unordered("$_1 except $_2", childNodes, modsToVerify).nodes()) {
+			for (Node childNode : childrenNotToVerify.nodes()) {
 				try {
 					mods.add(mod.restoreChild(blocks.get(mod.stage+1), childNode));
 				} catch (TransformException e) {

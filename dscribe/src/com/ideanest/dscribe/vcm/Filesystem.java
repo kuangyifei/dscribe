@@ -50,8 +50,10 @@ public class Filesystem extends TaskBase {
 	private void initScanner(Item taskDef) {
 		scanner = new DirectoryScanner();
 		scanner.setBasedir(srcDir);
-		scanner.setIncludes(taskDef.query().all("include/@name").values().toArray(null));
-		scanner.setExcludes(taskDef.query().all("exclude/@name").values().toArray(null));
+		ItemList includes = taskDef.query().all("include/@name");
+		if (includes.size() > 0) scanner.setIncludes(includes.values().toArray());
+		ItemList excludes = taskDef.query().all("exclude/@name");
+		if (excludes.size() > 0) scanner.setExcludes(excludes.values().toArray());
 		if (taskDef.query().flag("@defaultexcludes", true)) scanner.addDefaultExcludes();
 	}
 

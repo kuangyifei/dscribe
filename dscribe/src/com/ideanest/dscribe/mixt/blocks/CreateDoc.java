@@ -36,7 +36,7 @@ public class CreateDoc implements BlockType {
 		
 		public void resolve(Mod.Builder modBuilder) throws TransformException {
 			modBuilder.supplement().elem("docname")
-				.text(resolveName(modBuilder.parent(), modBuilder.scope()))
+				.text(resolveName(modBuilder.parent(), modBuilder.closedScope()))
 			.end("docname");
 			modBuilder.dependOn(requiredVariables);
 			modBuilder.commit();
@@ -143,7 +143,7 @@ public class CreateDoc implements BlockType {
 			CreateDocBlock block = define("<create-doc>constant</create-doc>");
 			block.requiredVariables = Collections.emptyList();
 			setModBuilderParent(mod);
-			setModBuilderScope(content.query());
+			setModBuilderClosedScope(content.query());
 			supplement();
 			thenCommit();
 			block.resolve(modBuilder);

@@ -22,11 +22,11 @@ function actionProperties($action):
 
 rule create candidates container
 	create-doc:		actions/candidates.xml
-	insert:			element a:candidates {}
+	insert:			element a:candidates {attribute kind {'derived'}}
 
 rule create triggers container
 	create-doc:		actions/triggers.xml
-	insert:			element a:triggers {}
+	insert:			element a:triggers {attribute kind {'derived'}}
 
 rule deconflict candidate actions
 	for all $candidates:		/a:candidates
@@ -38,7 +38,7 @@ rule deconflict candidate actions
 	with some $minspecificity: max((0, $c2/@specificity))
 	with some $c3:			$c2[@specificity >= $minspecificity]
 	with some $highserial:	max($c3/@serial)
-	for each target:			/a:triggers
+	for each target:			/a:triggers[@kind = 'derived']
 	insert:						$c3[@serial = $highserial]
 
 rule derive keys for set-property actions
@@ -62,11 +62,11 @@ rule apply delete-attribute actions
 			else if ($action/@targetSelector='by-type') then descendant::uml:attribute[type=$action/@type]
 			else ())/ 
 		(if ($action/@location='in-class-name') then .[ancestor::uml:class/name=$action/@className] else .)
-	for each target:	/a:candidates
+	for each target:	/a:candidates[@kind = 'derived']
 	insert:
 		element a:set-property {
 			attribute target {$attribute/@xml:id},
-			attribute diagram {$attribute/root()/@xml:id},
+			attribute diagram {$attribute/root()/*/@xml:id},
 			attribute attr {'visible'},
 			attribute value {'false'},
 			local:actionProperties($action)

@@ -27,6 +27,10 @@
 			<create qname="@depicts" type="xs:string"/>
 			<create qname="@doc" type="xs:string"/>
 			<create qname="@stage" type="xs:integer"/>
+
+			<create qname="@diagram" type="xs:string"/>
+			<create qname="@scope" type="xs:string"/>
+			<create qname="@target" type="xs:string"/>
 		</index>
 	</indexer>
 	
