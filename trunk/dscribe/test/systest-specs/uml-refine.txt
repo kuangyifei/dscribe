@@ -1,7 +1,7 @@
 ## load rules resources/transforms/uml-refine.mxc
 
 ## load file diagram.xml
-<diagram xmlns='http://ideanest.com/dscribe/ns/uml' xml:id='d1' id='d1'>
+<diagram xmlns='http://ideanest.com/dscribe/ns/uml' xml:id='d1' diagram='d1'>
 	<class depicts='j1' xml:id='c1'>
 		<name xml:id='c1n'>HelloWorld</name>
 		<compartment kind='attribute' xml:id='c1a'>
@@ -17,12 +17,8 @@
 	</class>
 </diagram>
 
-## load file action-candidates.xml
-<a:candidates xmlns:a='http://ideanest.com/dscribe/ns/actions'>
-</a:candidates>
-
 ## load file action-triggers.xml
-<triggers xmlns='http://ideanest.com/dscribe/ns/actions'>
+<triggers xmlns='http://ideanest.com/dscribe/ns/actions' xml:id='triggers'>
 	<delete-attribute xml:id='act01' serial='123'
 		targetSelector='by-id' location='any' scope='diagram'
 		selection='c1a1' diagram='d1' origin='j2' name='msg' className='HelloWorld'/>
@@ -30,15 +26,15 @@
 
 #### run 1
 
-## check file action-candidates.xml
-<a:candidates xmlns:a='http://ideanest.com/dscribe/ns/actions' xml:id='_'>
-	<a:set-property target='c1a1' attr='visible' value='false' action='act01' specificity='3' serial='123' xml:id='_'>
+## check file actions/candidates.xml
+<a:candidates xmlns:a='http://ideanest.com/dscribe/ns/actions' xml:id='_' kind='derived'>
+	<a:set-property diagram='d1' target='c1a1' attr='visible' value='false' action='act01' specificity='3' serial='123' xml:id='_'>
 		<u:key xmlns:u='http://ideanest.com/dscribe/ns/util' value='set-property-c1a1-visible' xml:id='_'/>
 	</a:set-property>
 </a:candidates>
 
 ## check file diagram.xml
-<diagram xmlns='http://ideanest.com/dscribe/ns/uml' xml:id='d1' id='d1'>
+<diagram xmlns='http://ideanest.com/dscribe/ns/uml' xml:id='d1' diagram='d1'>
 	<class depicts='j1' xml:id='c1'>
 		<name xml:id='c1n'>HelloWorld</name>
 		<compartment kind='attribute' xml:id='c1a'>

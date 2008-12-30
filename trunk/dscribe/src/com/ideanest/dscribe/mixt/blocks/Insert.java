@@ -59,7 +59,7 @@ public class Insert implements BlockType {
 		}
 
 		public void resolve(Mod.Builder modBuilder) throws TransformException {
-			ItemList nodesToInsert = query.runOn(modBuilder.scope());
+			ItemList nodesToInsert = query.runOn(modBuilder.closedScope());
 			
 			if (nodesToInsert.size() > 0) {
 				try {
@@ -208,7 +208,7 @@ public class Insert implements BlockType {
 		@Test public void resolveNoNodes() throws RuleBaseException, TransformException {
 			InsertBlock block = define("<insert>()</insert>");
 			block.requiredVariables = Collections.emptyList();
-			setModBuilderScope(content.query());
+			setModBuilderClosedScope(content.query());
 			thenCommit();
 			
 			block.resolve(modBuilder);
@@ -220,7 +220,7 @@ public class Insert implements BlockType {
 			
 			final Node outputNode = content.documents().load(Name.generate(), Source.xml("<output/>")).root();
 			
-			setModBuilderScope(content.query());
+			setModBuilderClosedScope(content.query());
 			setModBuilderParent(mod);
 			setModGlobalScope(content.query());
 			

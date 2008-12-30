@@ -29,8 +29,8 @@
 		<priority value="warn"/>
 	</category>
 
-	<category name="com.ideanest.dscribe.opti.AnnealingDiagramAssigner">
-		<priority value="info"/>
+	<category name="com.ideanest.dscribe.mixt">
+		<priority value="debug"/>
 	</category>
 	
 	<root>

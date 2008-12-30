@@ -29,7 +29,7 @@ public class Mod {
 	
 	private boolean previouslyResolved;
 	private Set<QName> boundVariables;
-	private List<Node> references;
+	private List<Node> references = Collections.emptyList();
 	private Seg seg;
 	private Node node;
 	private QueryService supplementQuery;
@@ -90,16 +90,14 @@ public class Mod {
 	 * @return a clone of the given query service with variables from previous blocks bound and namespace map cleared
 	 */
 	public QueryService scope(QueryService qs) {
-		if (qs == null) {
-			qs = globalScope();
-		} else {
-			qs.importSameModulesAs(globalScope());
-		}
+		if (qs == null) qs = globalScope();
 		return parent.prepScopeClone(qs);
 	}
 	
 	QueryService prepScopeClone(QueryService qs) {
-		return qs.clone(new NamespaceMap(), Collections.unmodifiableMap(variableBindings()));
+		return qs
+				.clone(new NamespaceMap(), Collections.unmodifiableMap(variableBindings()))
+				.importSameModulesAs(globalScope());
 	}
 	
 	public void bindVariable(QName name, Resource value) throws TransformException {
@@ -120,7 +118,6 @@ public class Mod {
 	}
 	
 	public List<Node> references() {
-		assert references != null;
 		return references;
 	}
 	
@@ -202,7 +199,7 @@ public class Mod {
 	}
 	
 	public List<String> affectedIds() {
-		return node.query().all("mod:affected/@refid").values().asList();
+		return node.query().all("affected/@refid").values().asList();
 	}
 	
 	void verify() throws TransformException {
@@ -363,11 +360,15 @@ public class Mod {
 			return null;
 		}
 		
-		public QueryService scope() {
+		public QueryService openScope() {
 			return scope;
 		}
 		
-		public QueryService scopeWithVariablesBound(QueryService qs) {
+		public QueryService closedScope() {
+			return parent.prepScopeClone(parent.node().database().query());
+		}
+		
+		public QueryService customScope(QueryService qs) {
 			return parent.prepScopeClone(qs);
 		}
 		
@@ -660,7 +661,7 @@ public class Mod {
 		}
 		
 		@Test public void key() {
-			assertSame("_r1.e13.", builder.key());
+			assertNull(builder.key());
 		}
 		
 		@Test public void supplement() {
@@ -889,7 +890,7 @@ public class Mod {
 					"</mod>"
 					)).root();
 			
-			builder.writeMod("_r1.e13.");
+			builder.writeMod(null);
 			
 			Node writtenNode = parentModNode.query().single("mod").node();
 			if (!db.query().single("deep-equal($_1, $_2)", targetNode, writtenNode).booleanValue()) {

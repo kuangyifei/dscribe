@@ -39,7 +39,7 @@ public class For implements BlockType {
 			super(def, "@each");
 		}
 		public void resolve(KeyMod.Builder modBuilder) throws TransformException {
-			for (Node node : query.runOn(modBuilder.scope()).nodes()) {
+			for (Node node : query.runOn(modBuilder.openScope()).nodes()) {
 				modBuilder.referenceKey(node);
 				modBuilder.dependOn(requiredVariables);
 				modBuilder.commit();
@@ -55,7 +55,7 @@ public class For implements BlockType {
 			super(def, "@one");
 		}
 		public void resolve(Mod.Builder modBuilder) throws TransformException {
-			ItemList items = query.runOn(modBuilder.scope());
+			ItemList items = query.runOn(modBuilder.openScope());
 			if (items.size() == 0) return;
 			if (items.size() > 1) throw new TransformException("for-one got " + items.size() + " results from query");
 			modBuilder.reference(items.get(0).node());
@@ -86,7 +86,7 @@ public class For implements BlockType {
 		}
 		
 		public void resolve(Mod.Builder modBuilder) throws TransformException {
-			ItemList items = query.runOn(modBuilder.scope());
+			ItemList items = query.runOn(modBuilder.openScope());
 			if (items.size() == 0) return;
 			for (Node node : nodesToCanonicalArray(items)) modBuilder.reference(node);
 			modBuilder.dependOn(requiredVariables);
@@ -235,14 +235,14 @@ public class For implements BlockType {
 		@Test(expected = TransformException.class)
 		public void resolveOneFailsOnMultipleResults() throws RuleBaseException, TransformException {
 			ForOneBlock block = define("<for one='$x'> //java:method </for>");
-			setModBuilderScope(content.query());
+			setModBuilderOpenScope(content.query());
 			block.resolve(modBuilder);
 		}
 		
 		@Test
 		public void resolveOneDoesNothingOnNoResult() throws RuleBaseException, TransformException {
 			ForOneBlock block = define("<for one='$x'> //java:foobar </for>");
-			setModBuilderScope(content.query());
+			setModBuilderOpenScope(content.query());
 			block.resolve(modBuilder);
 		}
 
@@ -251,7 +251,7 @@ public class For implements BlockType {
 			ForOneBlock block = define("<for one='$x'> //java:method[@name='start'] </for>");
 			block.requiredVariables = Collections.emptyList();
 
-			setModBuilderScope(content.query());
+			setModBuilderOpenScope(content.query());
 			reference(content.query().single("//java:method[@name='start']").node());
 			thenCommit();
 			
@@ -263,7 +263,7 @@ public class For implements BlockType {
 			ForEachBlock block = define("<for each='$x'> //java:method </for>");
 			block.requiredVariables = Collections.emptyList();
 
-			setModBuilderScope(content.query());
+			setModBuilderOpenScope(content.query());
 			for (Node node : content.query().all("//java:method").nodes()) {
 				referenceKey(node);
 				thenCommit();
@@ -275,7 +275,7 @@ public class For implements BlockType {
 		@Test
 		public void resolveAllDoesNothingOnNoResult() throws RuleBaseException, TransformException {
 			ForAllBlock block = define("<for all='$x'> //java:foobar </for>");
-			setModBuilderScope(content.query());
+			setModBuilderOpenScope(content.query());
 			block.resolve(modBuilder);
 		}
 

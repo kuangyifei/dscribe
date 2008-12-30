@@ -87,16 +87,21 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 		}
 	}
 	
-	public void setModBuilderScope(final QueryService qs) {
+	public void setModBuilderOpenScope(final QueryService qs) {
 		mockery.checking(new Expectations() {{
-			allowing(modBuilder).scope(); will(returnValue(qs));
+			allowing(modBuilder).openScope(); will(returnValue(qs));
 		}});
 	}
 	
-	public void setModBuilderScopeWithVariablesBound(final QueryService qs) {
+	public void setModBuilderClosedScope(final QueryService qs) {
 		mockery.checking(new Expectations() {{
-			allowing(modBuilder).scopeWithVariablesBound(with(any(QueryService.class)));
-			will(returnValue(qs));
+			allowing(modBuilder).closedScope(); will(returnValue(qs));
+		}});
+	}
+	
+	public void setModBuilderCustomScope(final QueryService qs) {
+		mockery.checking(new Expectations() {{
+			allowing(modBuilder).customScope(with(any(QueryService.class))); will(returnValue(qs));
 		}});
 	}
 	

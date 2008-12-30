@@ -51,6 +51,7 @@ public class Sort implements BlockType {
 		
 		public void resolve(Mod.Builder modBuilder) throws TransformException {
 			for (Node node : modBuilder.dependOnNearest(NodeTarget.class).unverified().get().targets().nodes()) {
+				modBuilder.dependOn(node.document());
 				modBuilder.order(node);
 				resolveOrder(modBuilder, node);
 			}
@@ -97,9 +98,8 @@ public class Sort implements BlockType {
 		}
 		
 		@Override void resolveOrder(Mod.Builder modBuilder, Node node) throws TransformException {
-			ItemList items = query.runOn(modBuilder.scopeWithVariablesBound(node.query()));
+			ItemList items = query.runOn(modBuilder.customScope(node.query()));
 			if (items.size() != 1) throw new TransformException("sort by value must select one value per target, but instead selected " + items.size() + ": " + items);
-			modBuilder.dependOn(node.document());
 			modBuilder.supplement()
 				.elem("sort-value").attr("refid", node.query().single("@xml:id").value())
 					.text(items.get(0).value())
@@ -162,10 +162,9 @@ public class Sort implements BlockType {
 
 		@Override void resolveOrder(Mod.Builder modBuilder, Node node) throws TransformException {
 			// TODO: see if we can resolve /id in global scope while keeping node context
-			ItemList items = query.runOn(modBuilder.scopeWithVariablesBound(node.query()));
+			ItemList items = query.runOn(modBuilder.customScope(node.query()));
 			if (items.size() != 1) throw new TransformException("sort by corresponding node must select one node per target, but instead selected " + items.size() + ": " + items);
 			Node proxy = items.get(0).node();
-			modBuilder.dependOn(node.document());
 			modBuilder.reference(proxy);
 			modBuilder.supplement()
 				.elem("sort-proxy")
@@ -245,7 +244,7 @@ public class Sort implements BlockType {
 		}
 		
 		@Override void resolveOrder(Mod.Builder modBuilder, Node node) throws TransformException {
-			ItemList siblings = query.runOn(modBuilder.scopeWithVariablesBound(node.query().single("..").query()));
+			ItemList siblings = query.runOn(modBuilder.customScope(node.query().single("..").query()));
 			for (Node sibling : siblings.nodes()) {
 				if (!node.query().single(".. is $_1/..", sibling).booleanValue())
 					throw new TransformException("query selected non-sibling node: " + sibling);
@@ -419,7 +418,7 @@ public class Sort implements BlockType {
 		@Test public void resolveOrder() throws RuleBaseException, TransformException {
 			SortBlock block = define("<sort by='ascending'>@name</sort>");
 			Node m1 = content.query().single("/id('m1')").node();
-			setModBuilderScopeWithVariablesBound(m1.query());
+			setModBuilderCustomScope(m1.query());
 			dependOnDocument(m1.document());
 			supplement();
 			block.resolveOrder(modBuilder, m1);
@@ -430,7 +429,7 @@ public class Sort implements BlockType {
 		public void resolveOrderBadQuery() throws RuleBaseException, TransformException {
 			SortBlock block = define("<sort by='ascending'>*</sort>");
 			Node c1 = content.query().single("/id('c1')").node();
-			setModBuilderScopeWithVariablesBound(c1.query());
+			setModBuilderCustomScope(c1.query());
 			block.resolveOrder(modBuilder, c1);
 		}
 		
@@ -531,7 +530,7 @@ public class Sort implements BlockType {
 			SortBlock block = define("<sort as='corresponding'>$source</sort>");
 			Node um1 = content.query().single("/id('um1')").node();
 			Node m1 = content.query().single("/id('m1')").node();
-			setModBuilderScopeWithVariablesBound(um1.query().let("$source", m1));
+			setModBuilderCustomScope(um1.query().let("$source", m1));
 			dependOnDocument(um1.document());
 			reference(m1);
 			supplement();
@@ -543,7 +542,7 @@ public class Sort implements BlockType {
 		public void resolveOrderBadQuery() throws RuleBaseException, TransformException {
 			SortBlock block = define("<sort as='corresponding'>*</sort>");
 			Node uc1 = content.query().single("/id('uc1')").node();
-			setModBuilderScopeWithVariablesBound(uc1.query());
+			setModBuilderCustomScope(uc1.query());
 			block.resolveOrder(modBuilder, uc1);
 		}
 		
@@ -636,7 +635,7 @@ public class Sort implements BlockType {
 			SortBlock block = define("<sort after='sibling'>uml:name</sort>");
 			Node comp1 = content.query().single("/id('comp1')").node();
 			Node uc1 = content.query().single("/id('uc1')").node();
-			setModBuilderScopeWithVariablesBound(uc1.query());
+			setModBuilderCustomScope(uc1.query());
 			reference(content.query().single("/id('cname')").node());
 			supplement();
 			block.resolveOrder(modBuilder, comp1);
@@ -647,7 +646,7 @@ public class Sort implements BlockType {
 			SortBlock block = define("<sort before='sibling'>uml:compartment</sort>");
 			Node cname = content.query().single("/id('cname')").node();
 			Node uc1 = content.query().single("/id('uc1')").node();
-			setModBuilderScopeWithVariablesBound(uc1.query());
+			setModBuilderCustomScope(uc1.query());
 			reference(content.query().single("/id('comp1')").node());
 			reference(content.query().single("/id('comp2')").node());
 			supplement();
@@ -659,7 +658,7 @@ public class Sort implements BlockType {
 			SortBlock block = define("<sort before='sibling'>()</sort>");
 			Node cname = content.query().single("/id('cname')").node();
 			Node uc1 = content.query().single("/id('uc1')").node();
-			setModBuilderScopeWithVariablesBound(uc1.query());
+			setModBuilderCustomScope(uc1.query());
 			supplement();
 			block.resolveOrder(modBuilder, cname);
 			checkSupplement("<sort-siblings run-length='0'/>");
@@ -670,7 +669,7 @@ public class Sort implements BlockType {
 			SortBlock block = define("<sort before='sibling'>.//uml:operation</sort>");
 			Node cname = content.query().single("/id('cname')").node();
 			Node uc1 = content.query().single("/id('uc1')").node();
-			setModBuilderScopeWithVariablesBound(uc1.query());
+			setModBuilderCustomScope(uc1.query());
 			block.resolveOrder(modBuilder, cname);
 		}
 		

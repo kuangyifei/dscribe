@@ -65,7 +65,7 @@ public class With implements BlockType {
 		}
 
 		public void resolve(Mod.Builder modBuilder) throws TransformException {
-			if (optional || query.runExists(modBuilder.scope())) {
+			if (optional || query.runExists(modBuilder.closedScope())) {
 				modBuilder.dependOn(requiredVariables).unverified();
 				modBuilder.commit();
 			}
@@ -91,7 +91,8 @@ public class With implements BlockType {
 		}
 		
 		public void resolve(KeyMod.Builder modBuilder) throws TransformException {
-			ItemList values = modBuilder.scope().unordered("distinct-values($_1)", query.runOn(modBuilder.scope()));
+			QueryService closedScope = modBuilder.closedScope();
+			ItemList values = closedScope.unordered("distinct-values($_1)", query.runOn(closedScope));
 			for (Item value : values) {
 				String atomizedValue = value.value();
 				modBuilder.dependOn(requiredVariables);
@@ -182,7 +183,7 @@ public class With implements BlockType {
 		public void resolveSome() throws RuleBaseException, TransformException {
 			WithAnySomeBlock block = define("<with some='$x'> //java:method </with>");
 			block.requiredVariables = Collections.emptyList();
-			setModBuilderScope(content.query());
+			setModBuilderClosedScope(content.query());
 			dependOnUnverifiedVariables();
 			thenCommit();
 			block.resolve(modBuilder);
@@ -204,7 +205,7 @@ public class With implements BlockType {
 			supplement();
 			setKey("end");
 			thenCommit();
-			setModBuilderScope(content.query().let("$y", content.query().single("//java:class")));
+			setModBuilderClosedScope(content.query().let("$y", content.query().single("//java:class")));
 			block.resolve(keyModBuilder);
 			checkSupplement("(<distinct-value type='xs:string'>start</distinct-value>, <distinct-value type='xs:string'>other</distinct-value>, <distinct-value type='xs:string'>end</distinct-value>)");
 		}

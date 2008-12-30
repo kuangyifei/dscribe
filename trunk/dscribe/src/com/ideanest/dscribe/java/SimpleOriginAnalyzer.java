@@ -1,6 +1,7 @@
 package com.ideanest.dscribe.java;
 
 import java.text.MessageFormat;
+import java.util.HashSet;
 
 import org.apache.log4j.Logger;
 import org.exist.fluent.*;
@@ -57,8 +58,11 @@ public class SimpleOriginAnalyzer extends TaskBase {
 			matchUids(
 					"//method[not(@xml:id)]",
 					"//java:*[@xml:id=$it/../@xml:id]/method[@name=$it/@name][deep-equal(param/type, $it/param/type)]/@xml:id");
-			for (String oldUid : prevspace.query().unordered("//java:*/@xml:id[not(.=$_1//java:*/@xml:id)]", workspace).values()) {
-				changes.append().elem("change").attr("uidref", oldUid).attr("action", "delete").end("change").commit();
+			HashSet<String> currentUids = new HashSet<String>(workspace.query().unordered("//java:*/@xml:id").values().asList());
+			for (String oldUid : prevspace.query().unordered("//java:*/@xml:id").values()) {
+				if (!currentUids.contains(oldUid)) {
+					changes.append().elem("change").attr("uidref", oldUid).attr("action", "delete").end("change").commit();
+				}
 			}
 		} else {
 			for (Node node : workspace.query().unordered("//(package|class|interface|annotationinterface|field|constructor|method)").nodes()) {
