@@ -60,33 +60,33 @@ function ArgumentValidator(kind) {
 ArgumentValidator.prototype.clone = function() {
 	var that = new ArgumentValidator(this.kind);
 	that.multiplicity = this.multiplicity;
-	that.ifMissing = this.ifMissing;
-	that.ifEmpty = this.ifEmpty;
+	if ('ifMissing' in this) that.ifMissing = this.ifMissing;
+	if ('ifEmpty' in this) that.ifEmpty = this.ifEmpty;
 	return that;
 };
 ArgumentValidator.prototype.optional = function() {
-	if (!this.optionalVariant) {
+	if (!('optionalVariant' in this)) {
 		this.optionalVariant = this.clone();
 		this.optionalVariant.multiplicity = multiplicityOptional;
 	}
 	return this.optionalVariant;
 };
 ArgumentValidator.prototype.sequence = function() {
-	if (!this.sequenceVariant) {
+	if (!('sequenceVariant' in this)) {
 		this.sequenceVariant = this.clone();
 		this.sequenceVariant.multiplicity = multiplicitySequence;
 	}
 	return this.sequenceVariant;
 };
 ArgumentValidator.prototype.useContextIfMissing = function() {
-	if (!this.useContextIfMissingVariant) {
+	if (!('useContextIfMissingVariant' in this)) {
 		this.useContextIfMissingVariant = this.clone();
 		this.useContextIfMissingVariant.ifMissing = replaceArgWithContextItem;
 	}
 	return this.useContextIfMissingVariant;
 };
 ArgumentValidator.prototype.useContextIfEmpty = function() {
-	if (!this.useContextIfEmptyVariant) {
+	if (!('useContextIfEmptyVariant' in this)) {
 		this.useContextIfEmptyVariant = this.clone();
 		this.useContextIfEmptyVariant.ifEmpty = replaceArgWithContextItem;
 	}
@@ -116,12 +116,12 @@ XPath.ArgumentConstraints = {
 	integer: new ArgumentValidator(function(x) {return ((x instanceof Number || typeof x == "number") && x === parseInt(x)) ? null : "integer";})
 };
 
-}();
+var arg = XPath.ArgumentConstraints;
 
-with(XPath.ArgumentConstraints) { XPath.Functions = {
+XPath.Functions = {
 
 root: {
-	args: [node.optional().useContextIfMissing()],
+	args: [arg.node.optional().useContextIfMissing()],
 	fn: function(context, node) {
 		if (node == null) return [];
 		while (node.xparent()) node = node.xparent();
@@ -130,7 +130,7 @@ root: {
 },
 
 id: {
-	args: [string.sequence(), node.useContextIfMissing()],
+	args: [arg.string.sequence(), arg.node.useContextIfMissing()],
 	fn: function(context, idrefs, node) {
 		while (node && !node.getByXmlId) node = node.xparent();
 		if (!node) {
@@ -146,12 +146,12 @@ id: {
 				if (r) result.push(r);
 			}
 		}
-		return result.length > 1 ? s.nodeCombine([result], function(p) {return p[0];}, context.env) : result;
+		return result.length > 1 ? XPath.Semantics.nodeCombine([result], function(p) {return p[0];}, context.env) : result;
 	}
 },
 
 max: {
-	args: [atom.sequence()],
+	args: [arg.atom.sequence()],
 	bounded: true,
 	fn: function(context, arg) {
 		if (arg.length == 0) return [];
@@ -165,7 +165,7 @@ max: {
 },
 
 min: {
-	args: [atom.sequence()],
+	args: [arg.atom.sequence()],
 	bounded: true,
 	fn: function(context, arg) {
 		if (arg.length == 0) return [];
@@ -179,13 +179,15 @@ min: {
 },
 
 'string-join': {
-	args: [string.sequence(), string.optional()],
+	args: [arg.string.sequence(), arg.string.optional()],
 	bounded: true,
 	fn: function(context, parts, separator) {
 		return [parts.join(separator ? separator : '')];
 	}
 }
 
-}};
+};
+
+}();
 
 XPath.Environment.prototype.builtinFunctions = XPath.Functions;

@@ -48,20 +48,64 @@ Viewer {
 </class>
 
 
+<class name = 'EditTab'>
+<attribute name = 'dragger' type = 'expression'/>
+<attribute name = 'hovering' value = 'false' type = 'boolean'/>
+<attribute name = 'dragging' value = 'false' type = 'boolean'/>
+<attribute name = 'fillColor' type = 'color'/>
+
+<drawview name = 'editTabShape'
+		width = '${parent.editTabText.x + parent.editTabText.width + 8}'
+		height = '${parent.editTabText.y + parent.editTabText.height + 2}'>
+	<handler name = 'oncontext' method = 'redraw'/>
+	<handler name = 'onheight' method = 'redraw'/>
+	<handler name = 'onwidth' method = 'redraw'/>
+	<method name = 'redraw' args = '_'>
+		if (!context) return;
+		clear();
+		beginPath();
+		moveTo(0, 0);
+		lineTo(0, height);
+		lineTo(parent.editTabText.x + parent.editTabText.width, height);
+		quadraticCurveTo(width - 3, height, width, 0);
+		closePath();
+		this.fillStyle = classroot.fillColor;
+		this.strokeStyle = this.fillStyle;
+		stroke();
+		fill();
+	</method>
+</drawview>
+
+<text name = 'editTabText' text = 'Edit' x = '2' y = '2'>
+	<handler name = 'onhovering' reference = 'parent' method = 'changeColor'/>
+	<handler name = 'ondragging' reference = 'parent' method = 'changeColor'/>
+	<method name = 'changeColor' args = '_'>
+		var newColor = parent.dragging || parent.hovering ? 0xffffff : 0x000000;
+		if (fgcolor != newColor) setColor(newColor);
+	</method>
+</text>
+
+<handler name = 'onmouseover'> setAttribute("hovering", true); </handler>
+<handler name = 'onmouseout'> setAttribute("hovering", false); </handler>
+<handler name = 'onmousedown'> setAttribute("dragging", true); dragger.apply(); </handler>
+<handler name = 'onmouseup'> setAttribute("dragging", false); dragger.remove(); </handler>
+</class>
+
+
 <class name = 'Viewer' clip = 'true'>
 	<attribute name = 'defaultplacement' value = 'custom_method' type = 'string'/>
 	<attribute name = 'padding' value = '$style{"margin"}' type = 'number'/>
 	<attribute name = 'diagram' value = '${main.contents.subviews[0]}' type = 'expression'/>
 	
 	<view name = 'main'
-			x = '${parent.sidebar.x + parent.sidebar.width + 2}'
+			x = '${("sidebar" in parent ? parent.sidebar.x + parent.sidebar.width : 0) + 2}'
 			width = '${parent.width - x}'
 			height = '${parent.height}'>
 		<rect name = 'border'
 			fgcolor = '$style{"titlebgcolor"}'
 			width = '${parent.width}' height = '${parent.height}'/>
 		<view name = 'titlebar' width = '${parent.width}'>
-			<attribute name = 'reservedWidth' value = '${editTab.x + editTab.width + 8}' type = 'number'/>
+			<attribute name = 'reservedWidth' value = '${editTab.visible ? editTab.x + editTab.width + 8 : 0}' type = 'number'/>
 			<rect
 				width = '${parent.width}' height = '${parent.titleText.height + 6}'
 				fillColor = '$style{"titlebgcolor"}' strokeColor = '$style{"titlebgcolor"}'/>

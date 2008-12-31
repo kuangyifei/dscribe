@@ -74,7 +74,7 @@ s.analyzePredicates = function(predicates, analysis) {
 };
 
 s.AxisStep = function(axis, nodeName) {
-	this.axis = axis;  this.axisfn = this[this.axis.replace('-', '_', 'g')];  this.reverse = !!this.axisfn.reverse;
+	this.axis = axis;  this.axisfn = this[this.axis.replace('-', '_', 'g')];  this.reverse = 'reverse' in this.axisfn && this.axisfn.reverse;
 	this.nodeName = nodeName;  this.wildcard = nodeName === "*"; this.predicates = null;
 };
 s.AxisStep.prototype.self = function(node) {

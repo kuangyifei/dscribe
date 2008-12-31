@@ -37,8 +37,8 @@ Array.prototype.numberValue = function() {
 	console.error("[FORG0001] not a number: [" + this + "]");
 };
 String.prototype.numberValue = function() {
-	var r = Number(x);
-	if (r != Number.NaN || x == "NaN") return r;
+	var r = Number(this);
+	if (r != Number.NaN || this == "NaN") return r;
 };
 Number.prototype.numberValue = function() {return this;};
 lz.node.prototype.numberValue = function() {};
@@ -54,7 +54,7 @@ s.serializeToXML = function(element) {
 	}
 	var name = element.xname();
 	var attributes = element.xattributes(), children = element.xchildren();
-	if (!text && attributes.length == 0 && children.length == 0) return "<" + name + "/>";
+	if (!element.text && attributes.length == 0 && children.length == 0) return "<" + name + "/>";
 	var attrStrings = [], childrenStrings = [];
 	for (var i = 0; i < attributes.length; i++) {
 		attrStrings.push(attributes[i].key + '="' + attributes[i].atomized() + '"'); // TODO: escape value

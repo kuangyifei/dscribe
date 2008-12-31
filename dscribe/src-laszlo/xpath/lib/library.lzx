@@ -33,7 +33,7 @@ XPath.Environment.prototype.popVar = function() {
 };
 
 XPath.parse = function(s) {
-	if (!XPath.parse.cache) XPath.parse.cache = {};
+	if (!('cache' in XPath.parse)) XPath.parse.cache = {};
 	var expr = XPath.parse.cache[s];
 	if (expr) return expr;
 	

@@ -80,4 +80,6 @@
         this.globalAlpha = savedOpacity;
     });
 
-})(function(n, fn) {lz.drawview.addProperty(n, fn)});
+})(function(n, fn) {
+	if (!(n in lz.drawview.prototype)) lz.drawview.prototype.addProperty(n, fn);
+});

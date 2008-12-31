@@ -57,7 +57,7 @@ s.FunctionCall.prototype.eval = function(context) {
 };
 s.FunctionCall.prototype.analyze = function(analysis) {
 	var fnEntry = this.findFunction(analysis.env);
-	if (!(fnEntry && fnEntry.bounded)) analysis.bounded = false;
+	if (!(fnEntry && 'bounded' in fnEntry && fnEntry.bounded)) analysis.bounded = false;
 	this.args.forEach(function(arg) {arg.analyze(analysis);});
 };
 
@@ -94,7 +94,6 @@ s.ElementConstructor.prototype.eval = function(context) {
 		result.attributes.push(attr);
 		i++;
 	}
-	delete attribSet;
 	result.attributes.sort(s.AttributeNode.cmp);
 	
 	var lastItemWasAtomic = false;
@@ -271,7 +270,7 @@ s.NodeComparison.prototype.eval = function(context) {
 		console.error("[XPTY0004] operands to node comparison must be single nodes: " + va + " " + this.op + " " + vb);
 		return;
 	}
-	return [this.opfn(va[0], vb[0], env)];
+	return [this.opfn(va[0], vb[0], context.env)];
 };
 s.NodeComparison.prototype.analyze = function(analysis) {
 	this.a.analyze(analysis);
@@ -304,7 +303,7 @@ s.BinaryOp.prototype.opTable = {
 	"-": function(a, b) {return a - b;},
 	"*": function(a, b) {return a * b;},
 	"div": function(a, b) {return a / b;},
-	"idiv": function(a, b) {return parseInt(a/b);},
+	"idiv": function(a, b) {return parseInt(String(a/b));},
 	"mod": function(a,b) {return a % b;}
 };
 s.BinaryOp.prototype.toString = function() {return "BinaryOp(" + this.a + " " + this.op + " " + this.b + ")";};

@@ -23,8 +23,8 @@ function() {
 		for (key in args) this.savedArgs[key] = true;
 		this.container = this.findAncestor('fireNodeChanged');
 		if (this.container) {
-			new LzDeclaredEventClass(this, 'onelementchanged');
-			this.container.trackXmlId(this, null, this.xml_id);
+			new lz.DeclaredEventClass(this, 'onelementchanged');
+			if ('xml_id' in this) this.container.trackXmlId(this, null, this.xml_id);
 			for (var key in this.savedArgs) this.container.fireNodeChanged('@' + key);
 			this.container.fireNodeChanged(this.constructor.tagname);
 		}
