@@ -2,7 +2,7 @@
 	<debug y = '400' height = '200'/>
 	<include href='diagram-editor.lzx'/>
 	<include href='uml-lib.lzx'/>
-
+	
 	<!-- <view bgcolor='green' x='250' y='150' width='100' height='100'/> -->
 
 	<Editor x = '20' y = '20' width = '600' height = '350' editMode = 'true'>
@@ -40,4 +40,5 @@
 		</mod_modstore>
 	
 	</Editor>
+
 </canvas>

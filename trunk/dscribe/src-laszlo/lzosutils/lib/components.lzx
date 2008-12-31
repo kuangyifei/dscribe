@@ -13,9 +13,9 @@
       clear();
       beginPath();
       if (dash)
-        withDash([5], function(){drawRect(0, 0, width-1, height-1, radius, radius)});
+        this.withDash([5], function(){this.drawRect(0, 0, width-1, height-1, radius, radius)});
       else
-        drawRect(0, 0, width-1, height-1, radius, radius);
+        this.drawRect(0, 0, width-1, height-1, radius, radius);
       this.lineWidth = borderWidth;
       stroke();
     </method>
@@ -29,7 +29,7 @@
     <method name="redraw">
       clear();
       beginPath();
-      drawRect(0, 0, width-1, height-1, radius, radius);
+      this.drawRect(0, 0, width-1, height-1, radius, radius);
       fill();
     </method>
   </class>
@@ -39,13 +39,13 @@
   <class name="Link" extends="text"
          onmouseover="setAttribute('label', '&lt;u&gt;'+plainLabel+'&lt;/u&gt;');
                       setAttribute('fgcolor', 0x4040ff);"
-         onmouseout="setText(this.plainLabel); setAttribute('fgcolor', mycolor)">
+         onmouseout="setText(this.plainLabel); setAttribute('fgcolor', this.mycolor)">
     <attribute name="plainLabel" value="$once{this.getText()}"/>
     <handler name="oninit">this.mycolor=parseInt(this.colorstring.slice(1), 16)</handler>
   </class>
 
   <class name="ScaledImage" stretches="both">
-    <handler name="oninit">recompute();v=this</handler>
+    <handler name="oninit">recompute()</handler>
     <handler name="onload">recompute()</handler>
     <handler name="onwidth" reference="parent">recompute()</handler>
     <handler name="onheight" reference="parent">recompute()</handler>

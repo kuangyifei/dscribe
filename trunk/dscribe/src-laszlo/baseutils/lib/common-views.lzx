@@ -58,9 +58,9 @@ bracketselector {
 		if (!context) return;
 		clear();
 		beginPath();
-		drawRect(0, 0, width-1, height-1, cornerRadius);
-		redrawFill();
-		redrawStroke();
+		this.drawRect(0, 0, width-1, height-1, cornerRadius);
+		redrawFill(null);
+		redrawStroke(null);
 	</method>
 	<method name = 'redrawStroke' args = '_'>
 		if (!visible || !context) return;
@@ -87,9 +87,9 @@ bracketselector {
 		y = '${gy == 0 ? targety : masky + (gy > 0 ? maskheight - fadeMargin : 0)}'
 		width = '${gx == 0 ? targetwidth : fadeMargin}'
 		height = '${gy == 0 ? targetheight : fadeMargin}'>
-	<attribute name = 'side' type = 'string' required = 'true'/>
+	<attribute name = 'side' type = 'string'/>
 	<attribute name = 'fadeMargin' value = '$style{"fadeMargin"}' type = 'size'/>
-	<attribute name = 'target' type = 'expression' required = 'true'/>
+	<attribute name = 'target' type = 'expression'/>
 	<attribute name = 'targetx' value = '${target.getAttributeRelative("x", this)}' type = 'number'/>
 	<attribute name = 'targety' value = '${target.getAttributeRelative("y", this)}' type = 'number'/>
 	<attribute name = 'targetwidth' value = '${target.getAttributeRelative("width", this)}' type = 'size'/>
@@ -133,8 +133,8 @@ bracketselector {
 		height = '${Math.max(enabledIconView.height, disabledIconView.height) + 2}'
 		showhandcursor = '${enabled}'>
 	<attribute name = 'enabled' value = 'true' type = 'boolean'/>
-	<attribute name = 'enabledIcon' type = 'string' required = 'true'/>
-	<attribute name = 'disabledIcon' type = 'string' required = 'true'/>
+	<attribute name = 'enabledIcon' type = 'string'/>
+	<attribute name = 'disabledIcon' type = 'string'/>
 	<attribute name = 'hovering' value = 'false' type = 'boolean'/>
 	<attribute name = 'dragging' value = 'false' type = 'boolean'/>
 	
@@ -152,8 +152,8 @@ bracketselector {
 	<handler name = 'onenabled' method = 'adjustIcons'/>
 	<method name = 'adjustIcons' args = '_'><![CDATA[
 		var raised = enabled && (hovering ? !dragging : dragging);
-		enabledIconView.setX(raised ? 1 : 2);
-		disabledIconView.setX(raised ? 1 : 2);
+		enabledIconView.setAttribute('x', raised ? 1 : 2);
+		disabledIconView.setAttribute('x', raised ? 1 : 2);
 	]]></method>
 </class>
 
@@ -166,7 +166,7 @@ bracketselector {
 		onmouseup = 'setAttribute("dragging", false); resizer.remove()'
 		onmouseover = 'setAttribute("hovering", true)'
 		onmouseout = 'setAttribute("hovering", false)'>
-	<attribute name = 'resizer' type = 'expression' required = 'true'/>
+	<attribute name = 'resizer' type = 'expression'/>
 	<attribute name = 'size' value = '$style{"size"}' type = 'number'/>
 	<attribute name = 'hovering' value = 'false' type = 'boolean'/>
 	<attribute name = 'dragging' value = 'false' type = 'boolean'/>
@@ -207,10 +207,10 @@ bracketselector {
 	<attribute name = 'idletextcolor' value = '$style{"idletextcolor"}' type = 'color'/>
 	<attribute name = 'hovertextcolor' value = '$style{"hovertextcolor"}' type = 'color'/>
 	<attribute name = 'overflow' type = 'boolean'/>
-	<handler name = 'onmouseover'> setColor(hovertextcolor); </handler>
-	<handler name = 'onmouseout'> setColor(idletextcolor); </handler>
-	<handler name = 'onmousedown'> callAncestorProperty("dragger", function() {this.apply()}); </handler>
-	<handler name = 'onmouseup'> callAncestorProperty("dragger", function() {this.remove()}); </handler>
+	<handler name = 'onmouseover'> setAttribute('fgcolor', hovertextcolor); </handler>
+	<handler name = 'onmouseout'> setAttribute('fgcolor', idletextcolor); </handler>
+	<handler name = 'onmousedown'> this.callAncestorProperty("dragger", function() {this.apply()}); </handler>
+	<handler name = 'onmouseup'> this.callAncestorProperty("dragger", function() {this.remove()}); </handler>
 	<handler name = 'onclick' args = 'ev'>
 		this.immediateparent.callAncestorProperty("onclick", LzEvent, function() {
 			this.sendEvent(ev)});
@@ -219,7 +219,7 @@ bracketselector {
 
 <class name = 'bracketselector'
 		fgcolor = '$style{"fgcolor"}'>
-	<attribute name = 'target' type = 'expression' required = 'true'/>
+	<attribute name = 'target' type = 'expression'/>
 	<drawview name = 'leftBracket'
 			x = '${parent.target.getAttributeRelative("x", immediateparent) - width - 3}'
 			y = '${parent.target.getAttributeRelative("y", immediateparent) - 1}'

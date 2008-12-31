@@ -13,7 +13,7 @@
 	<attribute name = 'mayBeChanging' value = 'false' type = 'boolean'/>
 	
 	<handler name = 'oninit'><![CDATA[
-		setAttribute('text', this.text.replace('&apos;', "'", 'g').replace('&quot;', '"', 'g'));
+		setAttribute('text', this.text.replace('&apos;', "'").replace('&quot;', '"'));
 		this.setAttribute('query', XPath.parse(this.text));
 		if (this.query) this.setAttribute('text', null);
 	]]></handler>
@@ -109,7 +109,7 @@
 		new lz.mod_mod(baseMod, {values: values});
 	]]></method>
 	<method name = 'recomputeDistinct' args = 'baseMod, env'><![CDATA[
-	    values = {};
+	    var values = {};
 		this.runQuery(env).forEach(function(val) {values[val] = true;});
 		if (baseMod.subnodes) {
 			var oldMods = baseMod.subnodes.slice();
@@ -167,8 +167,8 @@
 </class>
 
 <class name = 'mixt_rule' extends = 'node'>
-	<attribute name = 'xml_id' type = 'string' required = 'true'/>
-	<attribute name = 'description' type = 'string' required = 'false'/>
+	<attribute name = 'xml_id' type = 'string'/>
+	<attribute name = 'description' type = 'string'/>
 
 	<method name = 'prepareForCycle'>
 		var changed = false;
@@ -186,7 +186,7 @@
 </class>
 
 <class name = 'mixt_function' extends = 'node'>
-	<attribute name = 'name' type = 'token' required = 'true'/>
+	<attribute name = 'name' type = 'token'/>
 	<attribute name = 'args' type = 'string'/>
 	<attribute name = 'text' type = 'text'/>
 	<attribute name = 'query' type = 'expression'/>
@@ -216,7 +216,7 @@
 	<attribute name = 'map' value = '{}' type = 'expression'/>
 	<attribute name = 'functions' value = '{}' type = 'expression'/>
 	<handler name = 'oninit'>
-		this.subnodes.forEach(function(rule) {map[rule.xml_id] = rule;});
+		this.subnodes.forEach(function(rule) {if ('xml_id' in rule) map[rule.xml_id] = rule;});
 	</handler>
 	<method name = 'analyze' args = 'env'>
 		this.subnodes.forEach(function(rule) {

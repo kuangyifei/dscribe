@@ -15,40 +15,6 @@ String.prototype.escapeHTML = function() {
             .replace('"', '&quot;'));
 }
 
-String.prototype.inflect = function(suffix) {
-    var index = this.indexOf(' ');
-    if (index >= 0)
-        return this.slice(0, index).inflect(suffix) + this.slice(index);
-    // pos == 'v', or vp has single word
-    var inflections = {'ed': {'set': 'set'}};
-    var key = this.toLowerCase();
-    var value = (inflections[suffix]||{})[key];
-    if (!value) {
-        value = key;
-        var lastChar = key.charAt(key.length-1);
-        info(0, key);
-        switch (lastChar) {
-        case 'y':
-            if (suffix == 'ed')
-                value = value.slice(0, value.length-1) + 'i';
-            break;
-        case 'e':
-            value = value.slice(0, value.length-1);
-            break;
-        }
-        var vowels = "aeiou";
-        if (key == value &&
-            // CVC -> VCVV
-            vowels.indexOf(value.charAt(value.length-1)) < 0 &&
-            vowels.indexOf(value.charAt(value.length-2)) >= 0 &&
-            vowels.indexOf(value.charAt(value.length-3)) < 0)
-            value += value.charAt(value.length-1);
-        value += suffix;
-    }
-    // TODO: capitalize
-    return value;
-}
-
 String.prototype.pluralize = function(count) {
     if (arguments.length && count == 1)
         return this;
@@ -76,4 +42,16 @@ String.prototype.truncate = function(length, ellipsis) {
     return (this.length <= length
             ? this
             : this.slice(0, length) + (ellipsis||''));
+}
+
+if (!String.prototype.replace || 'aa'.replace('a', 'b') != 'bb') {
+	String.prototype.replace =  function(pattern, sub) {
+	    var splits = this.split(pattern),
+	        segments = new Array(splits.length*2-1);
+	    for (var i = 0, dst = 0; i < splits.length; i++) {
+	        i && (segments[dst++] = sub);
+	        segments[dst++] = splits[i];
+	    }
+	    return segments.join('');
+	};
 }

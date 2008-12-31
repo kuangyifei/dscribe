@@ -3,7 +3,7 @@ function dump(data) {
 	return data;
 }
 
-MAX_INT = 2 << 32 - 1;
+var MAX_INT = 2 << 32 - 1;
 
 Array.prototype.equals = function(that) {
 	if (!(that instanceof Array)) return false;
@@ -12,15 +12,6 @@ Array.prototype.equals = function(that) {
 		if (this[i] != that[i]) return false;
 	}
 	return true;
-};
-
-String.prototype.fill = function() {
-	var result = this;
-	var i = 0;
-	arguments.forEach(function(arg) {
-		result = result.replace("$" + ++i, arg);
-	});
-	return result;
 };
 
 lz.node.prototype.findFormalAncestorSuchThat = function(predicate) {
@@ -32,10 +23,10 @@ lz.node.prototype.findFormalAncestorSuchThat = function(predicate) {
 	return null;
 };
 
-lz.node.prototype.findAncestorSuchThat = function(predicate) {
+lz.node.prototype.findAncestorSuchThat = function(predicate, arg) {
 	var node = this;
 	while (node != null && node != node.immediateparent) {
-		if (predicate.call(node)) return node;
+		if (predicate.call(node, arg)) return node;
 		node = node.immediateparent;
 	}
 	return null;
@@ -46,9 +37,9 @@ lz.node.prototype.findAncestor = function(propertyName) {
 };
 
 lz.node.prototype.findAncestorProperty = function(propertyName, type) {
-	var ancestor = this.findAncestorSuchThat(function() {
+	var ancestor = this.findAncestorSuchThat(function(type) {
 		return propertyName in this && (!type || this[propertyName] instanceof type);
-	});
+	}, type);
 	return ancestor ? ancestor[propertyName] : null;
 };
 
@@ -65,4 +56,13 @@ lz.node.prototype.callAncestorProperty = function(propertyName, type, fn) {
 lz.node.prototype.callAncestor = function(methodName) {
 	var ancestor = this.findAncestor(methodName);
 	if (ancestor) return ancestor[methodName].apply(ancestor, arguments.slice(1));
+}
+
+
+lz.node.prototype.show = function() {
+    this.setAttribute('visible', true);
+}
+
+lz.node.prototype.hide = function() {
+    this.setAttribute('visible', false);
 }

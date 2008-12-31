@@ -4,15 +4,15 @@
 
 <script><![CDATA[
 
-MagicSentenceAction = function() {
+lz.MagicSentenceAction = function() {
 	this.choices = {};
 	this.sentences = [];
 	this.selections = {};
 };
 
-MagicSentenceAction.prototype.addChoice = function() {
+lz.MagicSentenceAction.prototype.addChoice = function() {
 	if (arguments.length < 3 || arguments.length % 2 != 1) throw new Error("bad number of arguments " + arguments.length);
-	if (arguments[0] in choices) throw new Error(arguments[0] + " already listed in choices map");
+	if (arguments[0] in this.choices) throw new Error(arguments[0] + " already listed in choices map");
 	var options = [];
 	for (var i = 1; i < arguments.length; i += 2) {
 		options.push({text: arguments[i], value: arguments[i+1]});
@@ -21,19 +21,19 @@ MagicSentenceAction.prototype.addChoice = function() {
 	this.selections[arguments[0]] = 0;
 };
 
-MagicSentenceAction.prototype.addSentence = function(pattern, text) {
+lz.MagicSentenceAction.prototype.addSentence = function(pattern, text) {
 	this.sentences.push({pattern: pattern, text: text});
 };
 
-MagicSentenceAction.prototype.get = function(choiceName) {
+lz.MagicSentenceAction.prototype.get = function(choiceName) {
 	return this.choices[choiceName][this.selections[choiceName]].value;
 };
 
-MagicSentenceAction.prototype.roll = function(choiceName) {
+lz.MagicSentenceAction.prototype.roll = function(choiceName) {
 	this.selections[choiceName] = (this.selections[choiceName] + 1) % this.choices[choiceName].length;
 }
 
-MagicSentenceAction.prototype.getCurrentSentenceTemplate = function() {
+lz.MagicSentenceAction.prototype.getCurrentSentenceTemplate = function() {
 	for (var i = 0; i < this.sentences.length; i++) {
 		var sentence = this.sentences[i];
 		var match = true;
@@ -48,38 +48,38 @@ MagicSentenceAction.prototype.getCurrentSentenceTemplate = function() {
 	return "No sentence matched selections " + this.selections;
 };
 
-MagicSentenceAction.prototype.getCurrentSentence = function(dispatchIndex) {
+lz.MagicSentenceAction.prototype.getCurrentSentence = function(dispatchIndex) {
 	var template = this.getCurrentSentenceTemplate();
 	for (var key in this.choices) {
 		template = template.replace(
 				"${" + key + "}",
-				"<a href='asfunction:_root.TextClickDispatcher.dispatchClick," + dispatchIndex + ":" + key +"'>" +
+				"<a href='asfunction:_root.lz.TextClickDispatcher.dispatchClick," + dispatchIndex + ":" + key +"'>" +
 						this.choices[key][this.selections[key]].text + "</a>");
 	}
 	return template;
 };
 
-MagicSentenceAction.prototype.createView = function(parent) {
+lz.MagicSentenceAction.prototype.createView = function(parent) {
 	return new lz.MagicSentenceView(parent, {action: this});
 };
 
 
-TextClickDispatcher = {};
+lz.TextClickDispatcher = {};
 
-TextClickDispatcher.dispatchTable = [];
+lz.TextClickDispatcher.dispatchTable = [];
 
-TextClickDispatcher.register = function(view) {
-	TextClickDispatcher.dispatchTable.push(view);
-	return TextClickDispatcher.dispatchTable.length - 1;
+lz.TextClickDispatcher.register = function(view) {
+	lz.TextClickDispatcher.dispatchTable.push(view);
+	return lz.TextClickDispatcher.dispatchTable.length - 1;
 };
 
-TextClickDispatcher.unregister = function(index) {
-	TextClickDispatcher.dispatchTable.splice(index, 1);
+lz.TextClickDispatcher.unregister = function(index) {
+	lz.TextClickDispatcher.dispatchTable.splice(index, 1);
 }
 
-TextClickDispatcher.dispatchClick = function(cookie) {
+lz.TextClickDispatcher.dispatchClick = function(cookie) {
 	var k = cookie.indexOf(":");
-	TextClickDispatcher.dispatchTable[parseInt(cookie.substring(0, k))].clicked(cookie.substring(k+1));
+	lz.TextClickDispatcher.dispatchTable[parseInt(cookie.substring(0, k))].clicked(cookie.substring(k+1));
 };
 
 
@@ -90,11 +90,11 @@ TextClickDispatcher.dispatchClick = function(cookie) {
 	<attribute name = 'dispatchIndex' type = 'number'/>
 	<text name = 'sentence' width = '${parent.width}' multiline='true' resize='false'/>
 	<handler name = 'oninit'>
-		var styleSheet = new TextField.StyleSheet();
+		var styleSheet = new lz.TextField.StyleSheet();
 		styleSheet.setStyle("a:link", {color:"#0000FF"});
 		styleSheet.setStyle("a:hover", {color:"#FF0000"});
 		sentence.sprite.__LZtextclip.styleSheet = styleSheet;
-		this.dispatchIndex = TextClickDispatcher.register(this);
+		this.dispatchIndex = lz.TextClickDispatcher.register(this);
 		buildSentence();
 	</handler>
 	<method name = 'buildSentence'>
@@ -104,8 +104,8 @@ TextClickDispatcher.dispatchClick = function(cookie) {
 		action.roll(choiceName);
 		buildSentence();
 	</method>
-	<method name = 'destroy' args = '_'>
-		TextClickDispatcher.unregister(dispatchIndex);
+	<method name = 'destroy'>
+		lz.TextClickDispatcher.unregister(dispatchIndex);
 		super.destroy();
 	</method>
 </class>

@@ -43,14 +43,14 @@ SimpleActionLink {
 		<attribute name = 'idlecolor' value = '$style{"fgcolor"}' type = 'color'/>
 		<attribute name = 'activecolor' value = '$style{"activecolor"}' type = 'color'/>
 		<attribute name = 'hovercolor' value = '$style{"hovercolor"}' type = 'color'/>
-		<attribute name = 'over' type = 'boolean'/>
-		<attribute name = 'down' type = 'boolean'/>
+		<attribute name = 'over' type = 'boolean' value = 'false'/>
+		<attribute name = 'down' type = 'boolean' value = 'false'/>
 		<handler name = 'onmouseover'> over = true; recolor(); </handler>
 		<handler name = 'onmouseout'> over = false; recolor(); </handler>
 		<handler name = 'onmousedown'> down = true; recolor(); </handler>
 		<handler name = 'onmouseup'> down = false; recolor(); </handler>
 		<method name = 'recolor'>
-			setColor(over ? (down ? activecolor : hovercolor) : idlecolor);
+			setAttribute('fgcolor', over ? (down ? activecolor : hovercolor) : idlecolor);
 		</method>
 		<handler name = 'onclick' args = 'ev'>
 			this.immediateparent.callAncestorProperty("onclick", LzEvent, function() {
@@ -58,7 +58,7 @@ SimpleActionLink {
 		</handler>
 	</text>
 	<handler name = 'onclick'>
-		findAncestor("execute").execute(actionCreator);
+		this.findAncestor("execute").execute(actionCreator);
 	</handler>
 </class>
 
@@ -66,7 +66,7 @@ SimpleActionLink {
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'padding' value = '$style{"padding"}' type = 'number'/>
 	<attribute name = 'spacing' value = '$style{"spacing"}' type = 'number'/>
-	<attribute name = 'title' type = 'string'/>
+	<attribute name = 'title' type = 'string' value = ''/>
 	<attribute name = 'titleAlign' value = 'left' type = 'string'/>
 	
 	<drawview name = 'titleStrip' width = '${parent.width}' height = '${parent.titleText.height + 2}'>
@@ -80,8 +80,8 @@ SimpleActionLink {
 			if (!context) return;
 			clear();
 			beginPath();
-			drawRect(0, 0, width, height, cornerRadius, cornerRadius, cornerRadius, 0);
-			setGradient(0, 0, width, height, [leftColor, rightColor]);
+			this.drawRect(0, 0, width, height, cornerRadius, cornerRadius, cornerRadius, 0);
+			this.setGradient(0, 0, width, height, [leftColor, rightColor]);
 			fill();
 		</method>
 	</drawview>
@@ -133,7 +133,7 @@ SimpleActionLink {
 
 	<vbox name = 'contents'
 			width = '${parent.width}'
-			spacing = '$once{findAncestorProperty("padding")}' inset = '$once{findAncestorProperty("padding")}'>
+			spacing = '$once{this.findAncestorProperty("padding")}' inset = '$once{this.findAncestorProperty("padding")}'>
 	</vbox>
 	
 	<handler name = 'oninit'> refreshActions(); </handler>
@@ -159,7 +159,7 @@ SimpleActionLink {
 	]]></method>
 
 	<method name = 'nearestCommonAncestor' args = 'targets'>
-		if (!targets || targets.length == 0) return findAncestorProperty("diagram");
+		if (!targets || targets.length == 0) return this.findAncestorProperty("diagram");
 		var ancestor = targets[0];
 		targets.each(function(target) {
 			if (target != ancestor) {
@@ -212,7 +212,7 @@ SimpleActionLink {
 		var views = box.contents.subviews;
 		
 		var animator = views[0].animate("x", delta, 150, true, {motion: "linear"});
-		new LzDelegate({execute: function(_) {views[0].destroy();}}, "execute", animator, "onstop");
+		new LzDelegate(views[0], "destroy", animator, "onstop");
 		new LzDelegate(this, "stopScrolling", animator, "onstop");
 		
 		views[1].setX(-delta);
@@ -254,49 +254,6 @@ SimpleActionLink {
 	</method>
 </class>
 
-<class name = 'EditTab'>
-	<attribute name = 'dragger' type = 'expression'/>
-	<attribute name = 'hovering' value = 'false' type = 'boolean'/>
-	<attribute name = 'dragging' value = 'false' type = 'boolean'/>
-	<attribute name = 'fillColor' type = 'color' required = 'true'/>
-
-	<drawview name = 'editTabShape'
-			width = '${parent.editTabText.x + parent.editTabText.width + 8}'
-			height = '${parent.editTabText.y + parent.editTabText.height + 2}'>
-		<handler name = 'oncontext' method = 'redraw'/>
-		<handler name = 'onheight' method = 'redraw'/>
-		<handler name = 'onwidth' method = 'redraw'/>
-		<method name = 'redraw' args = '_'>
-			if (!context) return;
-			clear();
-			beginPath();
-			moveTo(0, 0);
-			lineTo(0, height);
-			lineTo(parent.editTabText.x + parent.editTabText.width, height);
-			quadraticCurveTo(width - 3, height, width, 0);
-			closePath();
-			this.fillStyle = classroot.fillColor;
-			this.strokeStyle = this.fillStyle;
-			stroke();
-			fill();
-		</method>
-	</drawview>
-	
-	<text name = 'editTabText' text = 'Edit' x = '2' y = '2'>
-		<handler name = 'onhovering' reference = 'parent' method = 'changeColor'/>
-		<handler name = 'ondragging' reference = 'parent' method = 'changeColor'/>
-		<method name = 'changeColor' args = '_'>
-			var newColor = parent.dragging || parent.hovering ? 0xffffff : 0x000000;
-			if (fgcolor != newColor) setColor(newColor);
-		</method>
-	</text>
-
-	<handler name = 'onmouseover'> setAttribute("hovering", true); </handler>
-	<handler name = 'onmouseout'> setAttribute("hovering", false); </handler>
-	<handler name = 'onmousedown'> setAttribute("dragging", true); dragger.apply(); </handler>
-	<handler name = 'onmouseup'> setAttribute("dragging", false); dragger.remove(); </handler>
-</class>
-
 <class name = 'EditTabDragger' extends = 'state'>
 	<attribute name = 'xroffset' value = '$once{immediateparent.getMouse("x")}'/>
 	<attribute name = 'yroffset' value = '$once{immediateparent.getMouse("y")}'/>
@@ -309,7 +266,7 @@ SimpleActionLink {
 	<attribute name = 'x' value = '${width == minwidth || x &lt; 0 ? Math.max(-width, Math.min(0, oldx + immediateparent.getMouse("x") - xroffset - (width - oldwidth))) : x}'/>
 	<attribute name = 'width' value = '${x == 0 ? Math.min(maxwidth, Math.max(minwidth, oldwidth + immediateparent.getMouse("x") - xroffset - (x - oldx))) : width}'/>
 	<handler name = 'onremove'><![CDATA[
-		var sidebar = findAncestorProperty("sidebar");
+		var sidebar = this.findAncestorProperty("sidebar");
 		var destx = sidebar.x;
 		if (parent.maxmove == 0) {
 			destx = sidebar.x == 0 ? -sidebar.width : 0;
@@ -317,7 +274,7 @@ SimpleActionLink {
 			destx = sidebar.x > -sidebar.width / 2 ? 0 : -sidebar.width;
 		}
 		if (x != destx) sidebar.animate("x", destx, 150, false, {motion: "linear"});
-		findAncestor("editMode").setAttribute("editMode", destx == 0);
+		this.findAncestor("editMode").setAttribute("editMode", destx == 0);
 	]]></handler>
 </class>
 
@@ -345,7 +302,7 @@ SimpleActionLink {
 	
 	<handler name = 'oninit'>
 		this.main.titlebar.editTab.setAttribute('dragger', this.sidebar.dragger);
-		this.main.titlebar.editTab.show();
+		this.main.titlebar.editTab.setAttribute('visible', true);
 	</handler>
 	
 	<handler name = 'oneditMode'>
@@ -357,7 +314,7 @@ SimpleActionLink {
 	</handler>
 	
 	<method name = 'select' args = 'item'>
-		if (editMode) _select(item, LzKeys.isKeyDown("control"));
+		if (editMode) _select(item, lz.Keys.isKeyDown("control"));
 	</method>
 	
 	<method name = '_select' args = 'item, multi'><![CDATA[
@@ -369,7 +326,7 @@ SimpleActionLink {
 				return !r;
 			});
 			if (newSelection.length == selection.length && item != null) {
-				newSelection.push(new bracketselector(this, {target: item}));
+				newSelection.push(new lz.bracketselector(this, {target: item}));
 			}
 		} else {
 			selection.forEach(function(selector) {selector.destroy();});

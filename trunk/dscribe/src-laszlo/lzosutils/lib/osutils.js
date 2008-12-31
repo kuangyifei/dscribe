@@ -14,11 +14,11 @@ function setTimeout(fn, ms) {
 
 var clearTimeout = clearInterval;
 
-var Event = {
-    observe: function(target, eventName, fn) {
-        new LzDelegate({run:fn}, 'run', target, eventName);
-    }
-};
+//var Event = {
+//    observe: function(target, eventName, fn) {
+//        new LzDelegate({run:fn}, 'run', target, eventName);
+//    }
+//};
 
 LzNode.prototype.observe = function(eventName, fn) {
     info('register', eventName, this);

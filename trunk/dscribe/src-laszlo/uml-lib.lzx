@@ -2,10 +2,21 @@
 
 <include href="lzosutils/lib"/>
 <include href="baseutils/lib"/>
-<include href="diagram-editor.lzx"/>
 <include href="magic-sentence.lzx"/>
 
 <resource name = 'iconDelete' src = 'icons/delete_obj.gif'/>
+
+<script><![CDATA[
+
+function format(str) {
+	var result = str;
+	for (var i = 1; i < arguments.length; i++) {
+		result = result.replace("$" + i, arguments[i]);
+	}
+	return result;
+}
+
+]]></script>
 
 <class name = 'attr_override' extends = 'state' applied='true'>
 	<attribute name = 'visible' type = 'boolean'/>
@@ -25,15 +36,15 @@
 <class name = 'uml_diagram'
 		showhandcursor = 'false' width = '${immediateparent.width}' height = '${immediateparent.height}'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
-	<attribute name = 'title' type = 'string'/>
+	<attribute name = 'title' type = 'string' value = 'Untitled Diagram'/>
 	<attribute name = 'xml_id' type = 'string'/>
 	
 	<view name = 'contents' width = '${parent.width}' height = '${parent.height}'/>
 
-	<handler name = 'onclick'> findAncestor("select").select(null); </handler>
+	<handler name = 'onclick'> this.findAncestor("select").select(null); </handler>
 	<method name = 'gatherPossibleActions' args = 'box, targets'>
 		box.setTitle("Diagram");
-		box.addLink({icon: 'iconDelete', text: "Do something", action: function() {dump(this);}});
+		box.addLink({icon: 'iconDelete', text: "Do something", action: function() {}});
 	</method>
 </class>
 
@@ -44,7 +55,7 @@
 	<attribute name = 'padding' value = '$style{"padding"}' type = 'size'/>
 	<attribute name = 'color' value = '$style{"color"}' type = 'color'/>
 	<attribute name = 'xml_id' type = 'string'/>
-	<handler name = 'onclick'> findAncestor("select").select(this); </handler>
+	<handler name = 'onclick'> this.findAncestor("select").select(this); </handler>
 
 	<dragstate name = 'dragger'
 		drag_min_x = '0'
@@ -52,7 +63,7 @@
 		drag_min_y = '0'
 		drag_max_y = '${immediateparent.mask.getAttributeRelative("height", immediateparent) - height}'>
 		<handler name = 'onapply'>
-			if (!findAncestorProperty("editMode")) this.remove();
+			if (!this.findAncestorProperty("editMode")) this.remove();
 		</handler>
 	</dragstate>
 	
@@ -62,7 +73,7 @@
 		minheight = '$once{19 + 2*padding}'
 		maxheight = '${inside.contents.height + 2*(padding + 1)}'>
 		<handler name = 'onapply'>
-			if (!findAncestorProperty("editMode")) this.remove();
+			if (!this.findAncestorProperty("editMode")) this.remove();
 		</handler>
 	</resizestatelimits>
 	
@@ -79,7 +90,7 @@
 			side = 'bottom'/>
 	</view>
 
-	<sizecorner resizer = '$once{parent.resizer}' visible = '${findAncestor("editMode").editMode}'/>
+	<sizecorner resizer = '$once{parent.resizer}' visible = '${this.findAncestor("editMode").editMode}'/>
 	
 	<method name = 'init'><![CDATA[
 		super.init();
@@ -121,26 +132,27 @@
 	
 	<method name = 'findSetHeightContainer'><![CDATA[
 		return parent.findFormalAncestorSuchThat(function() {
-				return this.hassetheight && !(this instanceof uml_diagram);});
+				return this.hassetheight && !(this instanceof lz.uml_diagram);});
 	]]></method>
 	
 	<method name = 'animateShow'>
-		setHeight(0);
-		show();
-		animate("height", measureHeight(), 150, false, {motion: "linear"});
-		var container = findSetHeightContainer();
+		this.setHeight(0);
+		this.show();
+		this.animate("height", measureHeight(), 150, false, {motion: "linear"});
+		var container = this.findSetHeightContainer();
 		if (container) container.animate("height", measureHeight(), 150, true, {motion: "linear"});
 	</method>
 	<method name = 'animateHide'>
-		findAncestor("deselect").deselect(this);
-		var animator = animate("height", 0, 150, false, {motion: "linear"});
-		new LzDelegate({execute: function(_) {hide();}}, "execute", animator, "onstop");
-		var container = findSetHeightContainer();
+		var self = this;
+		this.findAncestor("deselect").deselect(this);
+		var animator = this.animate("height", 0, 150, false, {motion: "linear"});
+		new LzDelegate(this, "hide", animator, "onstop");
+		var container = this.findSetHeightContainer();
 		if (container) container.animate("height", -height, 150, true, {motion: "linear"});
 	</method>
 	
 	<method name = 'refresh' args = 'unused'>
-		displayText.setAttribute('text', computeText());
+		displayText.setAttribute('text', this.computeText());
 	</method>
 
 	<method name = 'renderVar' args = 'v'><![CDATA[
@@ -157,9 +169,9 @@
 		return s;
 	]]></method>
 	
-	<handler name = 'onmousedown'> callAncestorProperty("dragger", function() {this.apply()}); </handler>
-	<handler name = 'onmouseup'> callAncestorProperty("dragger", function() {this.remove()}); </handler>
-	<handler name = 'onclick'> findAncestor("select").select(this); </handler>
+	<handler name = 'onmousedown'> this.callAncestorProperty("dragger", function() {this.apply()}); </handler>
+	<handler name = 'onmouseup'> this.callAncestorProperty("dragger", function() {this.remove()}); </handler>
+	<handler name = 'onclick'> this.findAncestor("select").select(this); </handler>
 	<handler name = 'onwidth'>
 		displayText.setAttribute("overflow", displayText.width > width);
 	</handler>
@@ -185,19 +197,19 @@
 		var target = targets[0];
 		actionBox.setTitle("Attribute");
 		actionBox.addLink({icon: "iconDelete", text: "Delete", actionCreator: function() {
-			var action = new MagicSentenceAction();
+			var action = new lz.MagicSentenceAction();
 			action.addChoice(
 					"targetSelector",
-					"attribute " + target.name, "/id('$1')".fill(target.xml_id),
-					"attributes named " + target.name, "//uml:attribute[name='$1']".fill(target.name),
-					"all attributes of type " + target.type, "//uml:attribute[type='$1']".fill(target.type));
+					"attribute " + target.name, format("/id('$1')", target.xml_id),
+					"attributes named " + target.name, format("//uml:attribute[name='$1']", target.name),
+					"all attributes of type " + target.type, format("//uml:attribute[type='$1']", target.type));
 			action.addChoice(
 					"location",
-					"class " + target.uml_class.name, "[ancestor::uml:class/name='$1']".fill(target.uml_class.name),
+					"class " + target.uml_class.name, format("[ancestor::uml:class/name='$1']", target.uml_class.name),
 					"all classes", "");
 			action.addChoice(
 					"scope",
-					"this diagram", "/id('$1')".fill(target.uml_class.diagram.xml_id),
+					"this diagram", format("/id('$1')", target.uml_class.diagram.xml_id),
 					"all diagrams", "");
 			action.addSentence({targetSelector: 0}, "Delete ${targetSelector} in ${scope}.");
 			action.addSentence({}, "Delete ${targetSelector} from ${location} in ${scope}.");
@@ -219,7 +231,7 @@
 		var oargs = contents.subnodes.length >= 2 ? contents.subnodes[1] : null;
 		if (oargs && !(oargs instanceof lz.uml_args)) return 'expected uml:args: ' + oargs;
 		var ortype = contents.subnodes.length >= 3 ? contents.subnodes[2] : null;
-		if (ortype && (!ortype instanceof uml_type)) return 'expected uml:type: ' + ortype;
+		if (ortype && (!ortype instanceof lz.uml_type)) return 'expected uml:type: ' + ortype;
 		var s = oname.text + '(';
 		if (args_visibility == 'elide') {
 			s += '...';
