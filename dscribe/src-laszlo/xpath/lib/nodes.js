@@ -130,7 +130,7 @@ lz.node.prototype.atomized = function() {
 };
 lz.node.prototype.serialized = function() {return s.serializeToXML(this);};
 
-s.ConstructedElementNode = function(name) {this.name = name; this.attributes = []; this.text = ""; this.children = [];};
+s.ConstructedElementNode = function(name) {this.name = name.replace(':', '_').replace('-', '_'); this.attributes = []; this.text = ""; this.children = [];};
 s.ConstructedElementNode.prototype.xnode = "element";
 s.ConstructedElementNode.prototype.xname = function() {return this.name;};
 s.ConstructedElementNode.prototype.xparent = function() {return null;};
@@ -226,7 +226,7 @@ s.AttributeNode.cmp = function(a, b) {
 	return ka === kb ? 0 : (ka < kb ? -1 : 1);
 };
 
-s.ConstructedAttributeNode = function(key, value) {this.key = key; this.value = value;};
+s.ConstructedAttributeNode = function(key, value) {this.key = key.replace(':', '_').replace('-', '_'); this.value = value;};
 s.ConstructedAttributeNode.prototype.xnode = "attribute";
 s.ConstructedAttributeNode.prototype.xname = function() {return this.key;};
 s.ConstructedAttributeNode.prototype.xparent = function() {return null;};

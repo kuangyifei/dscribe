@@ -136,16 +136,16 @@ LzView.prototype.setFilter = function(filter) {
     this.getMCRef().filters = filters;
 }
 
-LzNode.prototype.getClip = function() {
+LzView.prototype.getClip = function() {
     this.getMCRef() || this.makeContainerResource();
     return this.getMCRef();
 }
 
-LzNode.prototype.show = function() {
+LzView.prototype.show = function() {
     this.setAttribute('visible', true);
 }
 
-LzNode.prototype.hide = function() {
+LzView.prototype.hide = function() {
     this.setAttribute('visible', false);
 }
 

@@ -76,7 +76,7 @@ public class Main implements Runnable {
 		}
 	}
 
-	private void initScheduler() {
+	private synchronized void initScheduler() {
 		try {
 			schedule = new Schedule(this);
 		} catch (SchedulerException e) {
@@ -108,7 +108,7 @@ public class Main implements Runnable {
 					}
 				} catch (IOException e) {
 				}
-				schedule.shutdown();
+				synchronized (this) { if (schedule != null) schedule.shutdown(); }
 				Database.shutdown();
 				System.exit(0);
 			}
