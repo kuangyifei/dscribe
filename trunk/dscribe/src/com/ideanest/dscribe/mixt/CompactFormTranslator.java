@@ -100,7 +100,7 @@ public class CompactFormTranslator {
 						if (!ruleMatcher.matches()) throw new ParseException("rule definition syntax doesn't match 'to <rule name> [<id>]' on line " + lineNumber + ":\n" + line, indent.length());
 						buf.append("<mixt:rule ");
 						if (ruleMatcher.group(2) != null) buf.append("xml:id='" + ruleMatcher.group(3) + "' ");
-						buf.append("name='" + ruleMatcher.group(1) + "'>");
+						buf.append("desc='" + ruleMatcher.group(1) + "'>");
 						tags.addFirst("rule");
 						atRule = true;
 					} else if (keyword.equals("alias")) {
@@ -108,7 +108,7 @@ public class CompactFormTranslator {
 						if (!atRule) throw new ParseException("alias declarations must immediately follow a rule declaration, but found a misplaced one on line " + lineNumber + ":\n" + line, indent.length());
 						assert content.startsWith("alias");
 						if (content.length() >= 7) {
-							buf.append("<mixt:alias name='").append(content.substring(6)).append("'>");
+							buf.append("<mixt:alias desc='").append(content.substring(6)).append("'>");
 							tags.addFirst("alias");
 						}
 					} else {
@@ -200,7 +200,7 @@ public class CompactFormTranslator {
 			_("rule do stuff [r1]");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "' xmlns:java='" + Namespace.JAVA + "' xmlns:uml='" + Namespace.UML + "'>");
-			_("	<mixt:rule xml:id='r1' name='do stuff'/>");
+			_("	<mixt:rule xml:id='r1' desc='do stuff'/>");
 			_("</mixt:rules>");
 			translateAndCheck();
 		}
@@ -254,7 +254,7 @@ public class CompactFormTranslator {
 			_("rule do something or other [r1]");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "'>");
-			_("	<mixt:rule xml:id='r1' name='do something or other'/>");
+			_("	<mixt:rule xml:id='r1' desc='do something or other'/>");
 			_("</mixt:rules>");
 			translateAndCheck();
 		}
@@ -264,7 +264,7 @@ public class CompactFormTranslator {
 			_("rule do something or other");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "'>");
-			_("	<mixt:rule name='do something or other'/>");
+			_("	<mixt:rule desc='do something or other'/>");
 			_("</mixt:rules>");
 			translateAndCheck();
 		}
@@ -275,8 +275,8 @@ public class CompactFormTranslator {
 			_("rule do other [r2]");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "'>");
-			_("	<mixt:rule xml:id='r1' name='do something'/>");
-			_("	<mixt:rule xml:id='r2' name='do other'/>");
+			_("	<mixt:rule xml:id='r1' desc='do something'/>");
+			_("	<mixt:rule xml:id='r2' desc='do other'/>");
 			_("</mixt:rules>");
 			translateAndCheck();
 		}
@@ -289,8 +289,8 @@ public class CompactFormTranslator {
 			_("");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "'>");
-			_("	<mixt:rule xml:id='r1' name='do something'/>");
-			_("	<mixt:rule xml:id='r2' name='do other'/>");
+			_("	<mixt:rule xml:id='r1' desc='do something'/>");
+			_("	<mixt:rule xml:id='r2' desc='do other'/>");
 			_("</mixt:rules>");
 			translateAndCheck();
 		}
@@ -302,7 +302,7 @@ public class CompactFormTranslator {
 			_("	insert");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "'>");
-			_("	<mixt:rule xml:id='r1' name='do something or other'>");
+			_("	<mixt:rule xml:id='r1' desc='do something or other'>");
 			_("		<mixt:for/><mixt:insert/>");
 			_("	</mixt:rule>");
 			_("</mixt:rules>");
@@ -315,7 +315,7 @@ public class CompactFormTranslator {
 			_("	for some $x and $y");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "'>");
-			_("	<mixt:rule xml:id='r1' name='do something or other'>");
+			_("	<mixt:rule xml:id='r1' desc='do something or other'>");
 			_("		<mixt:for some='$x' and='$y'/>");
 			_("	</mixt:rule>");
 			_("</mixt:rules>");
@@ -328,7 +328,7 @@ public class CompactFormTranslator {
 			_("	for: foo bar bar : is < blah");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "'>");
-			_("	<mixt:rule xml:id='r1' name='do something or other'>");
+			_("	<mixt:rule xml:id='r1' desc='do something or other'>");
 			_("		<mixt:for>foo bar bar : is &lt; blah</mixt:for>");
 			_("	</mixt:rule>");
 			_("</mixt:rules>");
@@ -341,7 +341,7 @@ public class CompactFormTranslator {
 			_("	insert: <bar/>");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "'>");
-			_("	<mixt:rule xml:id='r1' name='do something or other'>");
+			_("	<mixt:rule xml:id='r1' desc='do something or other'>");
 			_("		<mixt:insert>&lt;bar/&gt;</mixt:insert>");
 			_("	</mixt:rule>");
 			_("</mixt:rules>");
@@ -354,7 +354,7 @@ public class CompactFormTranslator {
 			_("	for any $x: foo bar bar : is blah");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "'>");
-			_("	<mixt:rule xml:id='r1' name='do something or other'>");
+			_("	<mixt:rule xml:id='r1' desc='do something or other'>");
 			_("		<mixt:for any='$x'>foo bar bar : is blah</mixt:for>");
 			_("	</mixt:rule>");
 			_("</mixt:rules>");
@@ -369,7 +369,7 @@ public class CompactFormTranslator {
 			_("	with that $y");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "'>");
-			_("	<mixt:rule xml:id='r1' name='do something or other'>");
+			_("	<mixt:rule xml:id='r1' desc='do something or other'>");
 			_("		<mixt:with this='$x'/>");
 			_("		<mixt:for>foo bar bar : is blah</mixt:for>");
 			_("		<mixt:with that='$y'/>");
@@ -388,7 +388,7 @@ public class CompactFormTranslator {
 			_("	with that $y");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "'>");
-			_("	<mixt:rule xml:id='r1' name='do something or other'>");
+			_("	<mixt:rule xml:id='r1' desc='do something or other'>");
 			_("		<mixt:for>something like: this and");
 			_("	this more indented stuff too");
 			_("then back to normal");
@@ -408,7 +408,7 @@ public class CompactFormTranslator {
 			_("	insert");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "'>");
-			_("	<mixt:rule xml:id='r1' name='do something or other'>");
+			_("	<mixt:rule xml:id='r1' desc='do something or other'>");
 			_("		<mixt:for>");
 			_("			<mixt:with that='$y'/>");
 			_("			<mixt:with this='$x'/>");
@@ -425,8 +425,8 @@ public class CompactFormTranslator {
 			_("	alias do that other thing");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "'>");
-			_("	<mixt:rule xml:id='r1' name='do something or other'>");
-			_("		<mixt:alias name='do that other thing'/>");
+			_("	<mixt:rule xml:id='r1' desc='do something or other'>");
+			_("		<mixt:alias desc='do that other thing'/>");
 			_("	</mixt:rule>");
 			_("</mixt:rules>");
 			translateAndCheck();
@@ -441,9 +441,9 @@ public class CompactFormTranslator {
 			_("	insert");
 			captureOutput();
 			_("<mixt:rules xmlns:mixt='"+ Engine.MIXT_NS + "'>");
-			_("	<mixt:rule xml:id='r1' name='do something or other'>");
-			_("		<mixt:alias name='do that other thing'/>");
-			_("		<mixt:alias name='and that too'/>");
+			_("	<mixt:rule xml:id='r1' desc='do something or other'>");
+			_("		<mixt:alias desc='do that other thing'/>");
+			_("		<mixt:alias desc='and that too'/>");
 			_("		<mixt:for/><mixt:insert/>");
 			_("	</mixt:rule>");
 			_("</mixt:rules>");

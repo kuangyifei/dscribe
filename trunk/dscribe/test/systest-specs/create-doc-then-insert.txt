@@ -21,6 +21,7 @@ rule insert bar into foo [r2]
 	<mod stage='0'>
 		<docname xmlns=''>result.xml</docname>
 		<mod stage='1' new=''>
+			<created doc='result.xml'/>
 			<affected refid='_r1.1.'/>
 			<checksum xmlns='' digest-type='_'>_</checksum>
 		</mod>

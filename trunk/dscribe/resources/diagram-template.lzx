@@ -1,9 +1,9 @@
-<canvas width='800' height='600'>
-	<debug y = '400' height = '200'/>
-	<include href='diagram-editor.lzx'/>
-	<include href='uml-lib.lzx'/>
+<canvas width='100%' height='800'>
+	<debug y = '400' height = '400'/>
+	<include href='diagrams/lib/diagram-editor.lzx'/>
+	<include href='diagrams/lib/uml-actions.lzx'/>
 	
-	<Editor x = '20' y = '20' width = '600' height = '350' editMode = 'true'>
+	<Editor x = '20' y = '20' width = '${parent.width - 40}' height = '360' editMode = 'true' highSerial = '$(highSerial)' actionIdBase = '$(actionIdBase)'>
 		
 $(diagram)
 		
@@ -11,9 +11,11 @@ $(rules)
 		
 $(modstore)
 		
-$(candidates)
+$(actions)
 		
 $(triggers)
+
+<a_triggers kind = 'session' xml_id = 'history'/>
 		
 	</Editor>
 </canvas>

@@ -253,7 +253,7 @@ public class Mod {
 		private final QueryService scope;
 		private final boolean lastBlock;
 		
-		private Set<String> dependentDocNames, unverifiedDocNames, affectedNodeIds;
+		private Set<String> dependentDocNames, unverifiedDocNames, affectedNodeIds, createdDocNames;
 		private List<Node> references, orders;
 		private ElementBuilder<org.w3c.dom.Node> supplement;
 		
@@ -270,6 +270,7 @@ public class Mod {
 		void reset() {
 			dependentDocNames = new TreeSet<String>();
 			unverifiedDocNames = new TreeSet<String>();
+			createdDocNames = new TreeSet<String>();
 			affectedNodeIds = new TreeSet<String>();
 			references = new ArrayList<Node>(1);
 			orders = new ArrayList<Node>(1);
@@ -332,6 +333,7 @@ public class Mod {
 					.attr("doc", docName)
 				.end("dependency");
 			}
+			for (String docName : createdDocNames) builder.elem("created").attr("doc", docName).end("created");
 			for (String nodeId : affectedNodeIds) builder.elem("affected").attr("refid", nodeId).end("affected");
 			for (Node node : references)
 				builder.elem("reference")
@@ -460,6 +462,15 @@ public class Mod {
 				dependOn(parent.binder(varName), depMod);
 			}
 			return depMod;
+		}
+		
+		/**
+		 * Declare that the mod being built has created the given document.
+		 *
+		 * @param doc the document created by the mod being built
+		 */
+		public void create(XMLDocument doc) {
+			createdDocNames.add(parent.rule.engine.workspace().relativePath(doc.path()));
 		}
 		
 		/**

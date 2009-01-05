@@ -74,7 +74,7 @@ public class CreateDoc implements BlockType {
 					throw new TransformException("stored document name '" + name + "' doesn't match recalculated document name '" + resolvedName + "'");
 			}
 			
-			public Node insert(Node node) throws TransformException {
+			public Node insert(Node node, Mod.Builder modBuilder) throws TransformException {
 				String docName = name;
 				Folder folder;
 				int k = docName.lastIndexOf('/');
@@ -84,7 +84,9 @@ public class CreateDoc implements BlockType {
 					folder = mod.workspace().children().create(docName.substring(0, k));
 					docName = docName.substring(k+1);
 				}
-				return folder.documents().build(Name.adjust(docName)).node(node).commit().root();
+				XMLDocument doc = folder.documents().build(Name.adjust(docName)).node(node).commit();
+				modBuilder.create(doc);
+				return doc.root();
 			}
 			
 			public boolean canInsertMultiple() {
@@ -185,9 +187,10 @@ public class CreateDoc implements BlockType {
 		@Test public void insert1() throws RuleBaseException, TransformException {
 			CreateDocBlock block = define("<create-doc>hello</create-doc>");
 			setModWorkspace(content);
+			create("/content/hello");
 			CreateDocBlock.CreateDocSeg seg = (CreateDocBlock.CreateDocSeg) block.createSeg(mod);
 			seg.name = "hello";
-			Node root = seg.insert(db.query().single("<root/>").node());
+			Node root = seg.insert(db.query().single("<root/>").node(), modBuilder);
 			assertEquals("/content/hello", root.document().path());
 			assertEquals("<root/>", root.toString());
 		}
@@ -195,9 +198,10 @@ public class CreateDoc implements BlockType {
 		@Test public void insert2() throws RuleBaseException, TransformException {
 			CreateDocBlock block = define("<create-doc>hello</create-doc>");
 			setModWorkspace(content);
+			create("/content/foo/bar/hello");
 			CreateDocBlock.CreateDocSeg seg = (CreateDocBlock.CreateDocSeg) block.createSeg(mod);
 			seg.name = "foo/bar/hello";
-			Node root = seg.insert(db.query().single("<root/>").node());
+			Node root = seg.insert(db.query().single("<root/>").node(), modBuilder);
 			assertEquals("/content/foo/bar/hello", root.document().path());
 			assertEquals("<root/>", root.toString());
 		}
@@ -205,10 +209,11 @@ public class CreateDoc implements BlockType {
 		@Test public void insert3() throws RuleBaseException, TransformException {
 			CreateDocBlock block = define("<create-doc>hello</create-doc>");
 			setModWorkspace(content);
+			create("/content/hello.+");
 			content.documents().load(Name.create("hello"), Source.xml("<foo/>"));
 			CreateDocBlock.CreateDocSeg seg = (CreateDocBlock.CreateDocSeg) block.createSeg(mod);
 			seg.name = "hello";
-			Node root = seg.insert(db.query().single("<root/>").node());
+			Node root = seg.insert(db.query().single("<root/>").node(), modBuilder);
 			assertTrue(root.document().path().startsWith("/content/hello"));
 			assertFalse(root.document().path().equals("/content/hello"));
 			assertEquals("<root/>", root.toString());

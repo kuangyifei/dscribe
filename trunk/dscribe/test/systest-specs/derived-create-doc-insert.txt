@@ -26,6 +26,7 @@ rule copy fob name [r2]
 			<docname xmlns=''>result-f.xml</docname>
 			<mod stage='2' new=''>
 				<dependency doc='source.xml' kind='verified'/>
+				<created doc='result-f.xml'/>
 				<affected refid='_r1.f.2.'/>
 				<checksum xmlns='' digest-type='_'>_</checksum>
 			</mod>

@@ -87,7 +87,9 @@ function() {
 			function(r) {return r.length == 1 ? r[0] : new s.Sequence(r);});
 	g.Literal = op.any(g.StringLiteral, g.NumberLiteral);
 	g.VarRef = op.process(op.each(g.dollar, g.QName), function(r) {return new s.Var(r[1]);});
-	g.ParenthesizedExpr = op.between(g.lparen, op.optional(g.Expr), g.rparen);
+	g.ParenthesizedExpr = op.process(
+			op.between(g.lparen, op.optional(g.Expr), g.rparen),
+			function(r) {return r ? r : new s.Sequence([])});
 	g.ContextItemExpr = op.replace(op.token('.'), new s.ContextItem());
 	g.FunctionCall = op.process(
 			op.each(g.QName, op.between(g.lparen, op.optional(op.list(g.ExprSingle, g.comma)), g.rparen)),

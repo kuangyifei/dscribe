@@ -1,31 +1,31 @@
 <library>
 
-<include href="lzosutils/lib"/>
-<include href="baseutils/lib"/>
-<include href="magic-sentence.lzx"/>
+<include href="../../lzosutils/lib"/>
+<include href="../../baseutils/lib"/>
 
-<resource name = 'iconDelete' src = 'icons/delete_obj.gif'/>
-
-<script><![CDATA[
-
-function format(str) {
-	var result = str;
-	for (var i = 1; i < arguments.length; i++) {
-		result = result.replace("$" + i, arguments[i]);
-	}
-	return result;
-}
-
-]]></script>
-
-<class name = 'attr_override' extends = 'state' applied='true'>
-	<attribute name = 'visible' type = 'boolean'/>
+<class name = 'attr_override' extends = 'node'>
+	<attribute name = 'attr' type = 'string'/>
+	<attribute name = 'value' type = 'expression'/>
+	<handler name = 'oninit'>
+		this.oldValue = immediateparent[this.attr];
+		var v = this.value;
+		if (v == 'false') v = false;
+		else if (v == 'true') v = true;
+		else {
+			var n = Number(v);
+			if (!isNaN(n)) v = n;
+		}
+		immediateparent.setAttribute(this.attr, v);
+	</handler>
+	<handler name = 'ondestroy'>
+		immediateparent.setAttribute(this.attr, this.oldValue);
+	</handler>
 </class>
 
 <class name = 'uml_view'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<method name = 'determinePlacement' args = 'child, placement, args'><![CDATA[
-		if (child && child.constructor.tagname.startsWith('uml_')) {
+		if (child && (child.constructor.tagname.startsWith('uml_') || child.constructor.tagname.startsWith('attr_'))) {
 			return super.determinePlacement(child, placement, args);
 		} else {
 			return this;
@@ -42,10 +42,6 @@ function format(str) {
 	<view name = 'contents' width = '${parent.width}' height = '${parent.height}'/>
 
 	<handler name = 'onclick'> this.findAncestor("select").select(null); </handler>
-	<method name = 'gatherPossibleActions' args = 'box, targets'>
-		box.setTitle("Diagram");
-		box.addLink({icon: 'iconDelete', text: "Do something", action: function() {}});
-	</method>
 </class>
 
 <class name = 'uml_class' extends = 'uml_view'
@@ -124,7 +120,7 @@ function format(str) {
 </class>
 
 <class name = 'uml_member' extends = 'uml_view'
-		width = '${immediateparent.width}' clip = 'true' opacity = '0.5'>
+		width = '${immediateparent.width}' clip = 'true' opacity = '0.5' visible = '${contents.visible}'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'xml_id' type = 'string'/>
 	<attribute name = 'varnames_visibility' value = 'show' type = 'string'/>
@@ -177,7 +173,9 @@ function format(str) {
 	</handler>
 	<handler name = 'oninit' method = 'refresh'/>
 
-	<node name = 'contents'/>
+	<node name = 'contents'>
+		<attribute name = 'visible' value = 'true' type = 'boolean'/>
+	</node>
 	<rollovertext name = 'displayText' opacity = '${classroot.opacity}'>
 		<handler name = 'ontext'>
 			setAttribute("overflow", width > parent.width);
@@ -191,33 +189,6 @@ function format(str) {
 		if (!(contents.subnodes && contents.subnodes.length)) return '';
 		return renderVar(contents.subnodes[0]);
 	]]></method>
-	
-	<method name = 'gatherPossibleActions' args = 'actionBox, targets'>
-		if (targets.length != 1) return;
-		var target = targets[0];
-		actionBox.setTitle("Attribute");
-		actionBox.addLink({icon: "iconDelete", text: "Delete", actionCreator: function() {
-			var action = new lz.MagicSentenceAction();
-			action.addChoice(
-					"targetSelector",
-					"attribute " + target.name, format("/id('$1')", target.xml_id),
-					"attributes named " + target.name, format("//uml:attribute[name='$1']", target.name),
-					"all attributes of type " + target.type, format("//uml:attribute[type='$1']", target.type));
-			action.addChoice(
-					"location",
-					"class " + target.uml_class.name, format("[ancestor::uml:class/name='$1']", target.uml_class.name),
-					"all classes", "");
-			action.addChoice(
-					"scope",
-					"this diagram", format("/id('$1')", target.uml_class.diagram.xml_id),
-					"all diagrams", "");
-			action.addSentence({targetSelector: 0}, "Delete ${targetSelector} in ${scope}.");
-			action.addSentence({}, "Delete ${targetSelector} from ${location} in ${scope}.");
-			action.apply = function() {animateHide();};
-			action.unapply = function() {animateShow();};
-			return action;
-		}});
-	</method>
 </class>
 
 <class name = 'uml_operation' extends = 'uml_member'>

@@ -280,11 +280,11 @@ public class Engine {
 		LOG.debug("assigning IDs to rules that lack them");
 		for (Node rule : rulespace.query().unordered("//rule[not(@xml:id)]").nodes()) {
 			String id;
-			ItemList oldIds = prevrulespace.query().unordered("let $names := ($_1/@name/string(), $_1/alias/@name/string()) return //rule[$names = (@name, alias/@name)]/@xml:id", rule);
+			ItemList oldIds = prevrulespace.query().unordered("let $names := ($_1/@desc/string(), $_1/alias/@desc/string()) return //rule[$names = (@desc, alias/@desc)]/@xml:id", rule);
 			if (oldIds.size() == 1) {
 				id = oldIds.get(0).value();
 			} else {
-				String ruleName = rule.query().single("@name").value();
+				String ruleName = rule.query().single("@desc").value();
 				if (oldIds.size() > 1) LOG.warn("multiple old IDs match rule '" + ruleName + "' and its aliases, generating new ID");
 				id = generateUniqueId("r-" + acronymize(ruleName), workspace.database().query(rulespace, prevrulespace));
 			}
@@ -483,9 +483,9 @@ public class Engine {
 			Rule rule = ruleMap.get(ruleId);
 			if (rule == null) continue;
 			ItemList docPaths = utilQuery.unordered("distinct-values($_1[ancestor-or-self::*/@rule=$_2]/mod:dependency/@doc)", mods, ruleId);
-			List<Document> docs = new ArrayList<Document>(docPaths.size());
+			List<XMLDocument> docs = new ArrayList<XMLDocument>(docPaths.size());
 			for (String docPath : docPaths.values()) {
-				if (workspace.documents().contains(docPath)) docs.add(workspace.documents().get(docPath));
+				if (workspace.documents().contains(docPath)) docs.add(workspace.documents().get(docPath).xml());
 			}
 			rule.addTouched(docs);
 		}
@@ -568,7 +568,7 @@ public class Engine {
 		@Test public void parseRules() throws RuleBaseException, IllegalArgumentException, IllegalAccessException {
 			XMLDocument rulesDoc = rulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
-					"  <rule xml:id='r1' name='myrule'><create-doc>foobar</create-doc></rule>" +
+					"  <rule xml:id='r1' desc='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml("<modstore xmlns='" + Engine.MOD_NS + "'/>")).root();
@@ -582,108 +582,108 @@ public class Engine {
 		@Test public void assignRuleIDs_generateFreshID() {
 			rulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
-					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
-					"	<rule xml:id='r2' name='mysecondrule'/>" +
+					"  <rule desc='myrule'><create-doc>foobar</create-doc></rule>" +
+					"	<rule xml:id='r2' desc='mysecondrule'/>" +
 					"</rules>"
 			));
 			Engine engine = new Engine(workspace, null);
 			engine.assignRuleIds(rulespace, prevrulespace);
-			assertTrue(rulespace.query().exists("//rule[@name='mysecondrule'][@xml:id='r2']"));
-			assertTrue(rulespace.query().exists("//rule[@name='myrule']/@xml:id"));
-			assertFalse("r2".equals(rulespace.query().single("//rule[@name='myrule']/@xml:id").value()));
+			assertTrue(rulespace.query().exists("//rule[@desc='mysecondrule'][@xml:id='r2']"));
+			assertTrue(rulespace.query().exists("//rule[@desc='myrule']/@xml:id"));
+			assertFalse("r2".equals(rulespace.query().single("//rule[@desc='myrule']/@xml:id").value()));
 		}
 		
 		@Test public void assignRuleIDs_copyPrevID() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
-					"  <rule xml:id='r1' name='myrule'/>" +
-					"  <rule xml:id='r2' name='some other rule'/>" +
+					"  <rule xml:id='r1' desc='myrule'/>" +
+					"  <rule xml:id='r2' desc='some other rule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
-					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
+					"  <rule desc='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
 			Engine engine = new Engine(workspace, null);
 			engine.assignRuleIds(rulespace, prevrulespace);
-			assertEquals("r1", rulespace.query().single("//rule[@name='myrule']/@xml:id").value());
+			assertEquals("r1", rulespace.query().single("//rule[@desc='myrule']/@xml:id").value());
 		}
 		
 		@Test public void assignRuleIDs_matchAliasToName() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
-					"  <rule xml:id='r1' name='myrule'/>" +
-					"  <rule xml:id='r2' name='some other rule'/>" +
+					"  <rule xml:id='r1' desc='myrule'/>" +
+					"  <rule xml:id='r2' desc='some other rule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
-					"  <rule name='foo'><alias name='myrule'/><create-doc>foobar</create-doc></rule>" +
+					"  <rule desc='foo'><alias desc='myrule'/><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
 			Engine engine = new Engine(workspace, null);
 			engine.assignRuleIds(rulespace, prevrulespace);
-			assertEquals("r1", rulespace.query().single("//rule[@name='foo']/@xml:id").value());
+			assertEquals("r1", rulespace.query().single("//rule[@desc='foo']/@xml:id").value());
 		}
 		
 		@Test public void assignRuleIDs_matchNameToAlias() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
-					"  <rule xml:id='r1' name='foo'><alias name='myrule'/></rule>" +
-					"  <rule xml:id='r2' name='some other rule'/>" +
+					"  <rule xml:id='r1' desc='foo'><alias desc='myrule'/></rule>" +
+					"  <rule xml:id='r2' desc='some other rule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
-					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
+					"  <rule desc='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
 			Engine engine = new Engine(workspace, null);
 			engine.assignRuleIds(rulespace, prevrulespace);
-			assertEquals("r1", rulespace.query().single("//rule[@name='myrule']/@xml:id").value());
+			assertEquals("r1", rulespace.query().single("//rule[@desc='myrule']/@xml:id").value());
 		}
 		
 		@Test public void assignRuleIDs_matchAliasToAlias() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
-					"  <rule xml:id='r1' name='foo'><alias name='myrule'/></rule>" +
-					"  <rule xml:id='r2' name='some other rule'/>" +
+					"  <rule xml:id='r1' desc='foo'><alias desc='myrule'/></rule>" +
+					"  <rule xml:id='r2' desc='some other rule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
-					"  <rule name='bar'><alias name='myrule'/><create-doc>foobar</create-doc></rule>" +
+					"  <rule desc='bar'><alias desc='myrule'/><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
 			Engine engine = new Engine(workspace, null);
 			engine.assignRuleIds(rulespace, prevrulespace);
-			assertEquals("r1", rulespace.query().single("//rule[@name='bar']/@xml:id").value());
+			assertEquals("r1", rulespace.query().single("//rule[@desc='bar']/@xml:id").value());
 		}
 		
 		@Test public void assignRuleIDs_multipleMatch() {
 			prevrulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
-					"  <rule xml:id='r1' name='foo'><alias name='myrule'/></rule>" +
-					"  <rule xml:id='r2' name='myrule'/>" +
+					"  <rule xml:id='r1' desc='foo'><alias desc='myrule'/></rule>" +
+					"  <rule xml:id='r2' desc='myrule'/>" +
 					"</rules>"
 			));
 			rulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
-					"  <rule name='myrule'><create-doc>foobar</create-doc></rule>" +
+					"  <rule desc='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
 			Engine engine = new Engine(workspace, null);
 			engine.assignRuleIds(rulespace, prevrulespace);
-			assertTrue(rulespace.query().exists("//rule[@name='myrule']/@xml:id"));
-			assertFalse("r1".equals(rulespace.query().single("//rule[@name='myrule']/@xml:id").value()));
-			assertFalse("r2".equals(rulespace.query().single("//rule[@name='myrule']/@xml:id").value()));
+			assertTrue(rulespace.query().exists("//rule[@desc='myrule']/@xml:id"));
+			assertFalse("r1".equals(rulespace.query().single("//rule[@desc='myrule']/@xml:id").value()));
+			assertFalse("r2".equals(rulespace.query().single("//rule[@desc='myrule']/@xml:id").value()));
 		}
 		
 		@Test public void create() throws RuleBaseException, IllegalArgumentException {
 			rulespace.documents().load(Name.generate(), Source.xml(
 					"<rules xmlns= '" + Engine.MIXT_NS + "'>" +
-					"  <rule xml:id='r1' name='myrule'><create-doc>foobar</create-doc></rule>" +
+					"  <rule xml:id='r1' desc='myrule'><create-doc>foobar</create-doc></rule>" +
 					"</rules>"
 			));
 			Node modStore = workspace.documents().load(Name.generate(), Source.xml(
@@ -790,7 +790,7 @@ public class Engine {
 			Engine engine = new Engine(workspace, modStore);
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
 			mockery.checking(new Expectations() {{
-				allowing(r1).addTouched(with(anEmptyCollection(Document.class)));
+				allowing(r1).addTouched(with(anEmptyCollection(XMLDocument.class)));
 			}});
 			engine.withdrawMods(modStore.query().all("/id('m1')"));
 			assertFalse(modStore.query().exists("/id('m1')"));
@@ -812,7 +812,7 @@ public class Engine {
 			Engine engine = new Engine(workspace, modStore);
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
 			mockery.checking(new Expectations() {{
-				allowing(r1).addTouched(with(anEmptyCollection(Document.class)));
+				allowing(r1).addTouched(with(anEmptyCollection(XMLDocument.class)));
 			}});
 			engine.withdrawMods(modStore.query().all("/id('m1')"));
 			assertFalse(modStore.query().exists("/id('m1')"));
@@ -835,7 +835,7 @@ public class Engine {
 			Engine engine = new Engine(workspace, modStore);
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
 			mockery.checking(new Expectations() {{
-				allowing(r1).addTouched(with(anEmptyCollection(Document.class)));
+				allowing(r1).addTouched(with(anEmptyCollection(XMLDocument.class)));
 			}});
 			engine.withdrawMods(modStore.query().all("/id('m1')"));
 			assertFalse(modStore.query().exists("/id('m1')"));
@@ -847,7 +847,7 @@ public class Engine {
 		}
 
 		@Test public void withdrawModsWithAffectedDocsAndDependencies() {
-			final Document doc = workspace.documents().load(Name.create("a"), Source.xml(
+			final XMLDocument doc = workspace.documents().load(Name.create("a"), Source.xml(
 			"<foo><baz xml:id='a1'/></foo>"));
 			workspace.documents().load(Name.create("b"), Source.xml(
 					"<foo><bar xml:id='b1'/><bar xml:id='b2'/></foo>"));
@@ -866,7 +866,7 @@ public class Engine {
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
 			mockery.checking(new Expectations() {{
 				one(r1).addTouched(with(aCollectionOf(doc)));
-				allowing(r1).addTouched(with(anEmptyCollection(Document.class)));
+				allowing(r1).addTouched(with(anEmptyCollection(XMLDocument.class)));
 			}});
 			engine.withdrawMods(modStore.query().all("/id('m1')"));
 			assertFalse(modStore.query().exists("/id('m1')"));
@@ -894,7 +894,7 @@ public class Engine {
 			Engine engine = new Engine(workspace, modStore);
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
 			mockery.checking(new Expectations() {{
-				allowing(r1).addTouched(with(anEmptyCollection(Document.class)));
+				allowing(r1).addTouched(with(anEmptyCollection(XMLDocument.class)));
 			}});
 			engine.withdrawMods(modStore.query().all("/id('m1')"));
 			assertFalse(modStore.query().exists("/id('m1')"));
@@ -924,7 +924,7 @@ public class Engine {
 			sortControllerField.set(engine, mockery.mock(SortController.class));
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
 			mockery.checking(new Expectations() {{
-				allowing(r1).addTouched(with(anEmptyCollection(Document.class)));
+				allowing(r1).addTouched(with(anEmptyCollection(XMLDocument.class)));
 				one(engine.sortController).eventuallySort(doc.query().single("/id('b1')").node());
 			}});
 			engine.withdrawMods(modStore.query().all("/id('m1')"));
@@ -949,7 +949,7 @@ public class Engine {
 			Engine engine = new Engine(workspace, modStore);
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
 			mockery.checking(new Expectations() {{
-				allowing(r1).addTouched(with(anEmptyCollection(Document.class)));
+				allowing(r1).addTouched(with(anEmptyCollection(XMLDocument.class)));
 			}});
 			engine.withdrawRule("r1");
 			assertFalse(modStore.query().exists("/id('m1')"));
@@ -969,7 +969,7 @@ public class Engine {
 			Engine engine = new Engine(workspace, modStore);
 			final Rule r1 = mockery.mock(Rule.class, "r1"); engine.rules.add(r1); engine.ruleMap.put("r1", r1);
 			mockery.checking(new Expectations() {{
-				allowing(r1).addTouched(with(anEmptyCollection(Document.class)));
+				allowing(r1).addTouched(with(anEmptyCollection(XMLDocument.class)));
 			}});
 			engine.withdrawMod(modStore.query().single("/id('m1')").node());
 			assertFalse(modStore.query().exists("/id('m1')"));

@@ -153,7 +153,7 @@ public class SystemTest extends DatabaseTestCase {
 			mxcReader = new FileReader(new File(path));
 		}
 		try {
-			rulespace.documents().load(Name.overwrite("rules"), CompactFormTranslator.compactToXml(mxcReader));
+			rulespace.documents().load(Name.adjust("rules"), CompactFormTranslator.compactToXml(mxcReader));
 		} finally {
 			mxcReader.close();
 		}

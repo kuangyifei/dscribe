@@ -1,7 +1,7 @@
 <library>
 
-<include href="lzosutils/lib"/>
-<include href="baseutils/lib"/>
+<include href="../../lzosutils/lib"/>
+<include href="../../baseutils/lib"/>
 
 <stylesheet>
 
@@ -42,8 +42,12 @@ Viewer {
 	</method>
 	
 	<method name = 'listenNodeChanged' args = 'delegate, nodeName'>
-		if (this[nodeName]) new LzEvent(this, 'onnodechanged_' + nodeName);
-		delegate.register(this, 'onnodechanged_' + nodeName);
+		if (nodeName == '*') {
+			delegate.register(this, 'onanynodechanged');
+		} else {
+			if (this[nodeName]) new LzEvent(this, 'onnodechanged_' + nodeName);
+			delegate.register(this, 'onnodechanged_' + nodeName);
+		}
 	</method>
 </class>
 
@@ -79,10 +83,10 @@ Viewer {
 <text name = 'editTabText' text = 'Edit' x = '2' y = '2'>
 	<handler name = 'onhovering' reference = 'parent' method = 'changeColor'/>
 	<handler name = 'ondragging' reference = 'parent' method = 'changeColor'/>
-	<method name = 'changeColor' args = '_'>
+	<method name = 'changeColor' args = '_'><![CDATA[
 		var newColor = parent.dragging || parent.hovering ? 0xffffff : 0x000000;
-		if (fgcolor != newColor) setColor(newColor);
-	</method>
+		if (!('fgcolor' in this && fgcolor == newColor)) setAttribute('fgcolor', newColor);
+	]]></method>
 </text>
 
 <handler name = 'onmouseover'> setAttribute("hovering", true); </handler>
@@ -123,9 +127,7 @@ Viewer {
 	
 	<method name = 'determinePlacement' args = 'child, placement, args'>
 		if (!child) return this;
-		if (child.constructor.tagname.startsWith('uml_')
-				|| child.constructor.tagname.startsWith('mixt_')
-				|| child.constructor.tagname.startsWith('mod_')) {
+		if (child.constructor.tagname.indexOf('_') != -1) {
 			return this.main.contents;
 		} else {
 			return this;

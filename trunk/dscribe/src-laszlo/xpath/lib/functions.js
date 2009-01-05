@@ -10,7 +10,7 @@ function multiplicityOne(fname, args, index, kind) {
 		return false;
 	}
 	args[index] = args[index][0];
-	var type = kind(args[index]);
+	var type = kind(args, index);
 	if (type) {
 		console.error("[XPTY0004] call to " + fname + " needs argument #" + index + " to be a " + type + ", got " + args[index]);
 		return false;
@@ -25,7 +25,7 @@ function multiplicityOptional(fname, args, index, kind) {
 	}
 	args[index] = args[index].length == 0 ? null : args[index][0];
 	if (args[index] == null) return true;
-	var type = kind(args[index]);
+	var type = kind(args, index);
 	if (type) {
 		console.error("[XPTY0004] call to " + fname + " needs argument #" + index + " to be a " + type + ", got " + args[index]);
 		return false;
@@ -35,7 +35,7 @@ function multiplicityOptional(fname, args, index, kind) {
 
 function multiplicitySequence(fname, args, index, kind) {
 	for (var i = 0; i < args[index].length; i++) {
-		var type = kind(args[index][i]);
+		var type = kind(args[index], i);
 		if (type) {
 			console.error("[XPTY0004] call to " + fname + " needs argument #" + index + " to be a sequence of " + type + "s, got " + args[index]);
 			return false;
@@ -95,25 +95,28 @@ ArgumentValidator.prototype.useContextIfEmpty = function() {
 
 ArgumentValidator.prototype.validate = function(context, fname, args, index) {
 	if (index >= args.length) {
-		if (!this.ifMissing) {
+		if (!'ifMissing' in this) {
 			console.error("[XPTY0004] call to " + fname + " missing argument #" + index);
 			return false;
 		}
 		if (!this.ifMissing(context, fname, args, index)) return false;
 	}
-	if (args[index].length == 0 && this.ifEmpty) {
+	if (args[index].length == 0 && 'ifEmpty' in this) {
 		if (!this.ifEmpty(context, fname, args, index)) return false;
 	}
 	return this.multiplicity(fname, args, index, this.kind);
 };
 
 XPath.ArgumentConstraints = {
-	node: new ArgumentValidator(function(x) {return x.xnode ? null : "node";}),
-	item: new ArgumentValidator(function(x) {return null;}),
-	atom: new ArgumentValidator(function(x) {return (x instanceof String || typeof x == "string" || x instanceof Number || typeof x == "number") ? null : "atom";}),
-	string: new ArgumentValidator(function(x) {return (x instanceof String || typeof x == "string") ? null : "string";}),
-	number: new ArgumentValidator(function(x) {return (x instanceof Number || typeof x == "number") ? null : "number";}),
-	integer: new ArgumentValidator(function(x) {return ((x instanceof Number || typeof x == "number") && x === parseInt(x)) ? null : "integer";})
+	node: new ArgumentValidator(function(x, i) {return x[i].xnode ? null : "node";}),
+	item: new ArgumentValidator(function(x, i) {return null;}),
+	atom: new ArgumentValidator(function(x, i) {x[i] = x[i].atomized();}),
+	string: new ArgumentValidator(function(x, i) {
+		x[i] = x[i].atomized(); return (x[i] instanceof String || typeof x[i] == "string") ? null : "string";}),
+	number: new ArgumentValidator(function(x, i) {
+		x[i] = x[i].atomized(); var n = x[i].numberValue(); if (typeof n == "undefined") return "number"; x[i] = n; return null;}),
+	integer: new ArgumentValidator(function(x, i) {
+		x[i] = x[i].atomized(); var n = x[i].numberValue(); if (typeof n == "undefined" || !n.isInteger()) return "integer"; x[i] = n; return null;})
 };
 
 var arg = XPath.ArgumentConstraints;
@@ -132,7 +135,7 @@ root: {
 id: {
 	args: [arg.string.sequence(), arg.node.useContextIfMissing()],
 	fn: function(context, idrefs, node) {
-		while (node && !node.getByXmlId) node = node.xparent();
+		while (node && !('getByXmlId' in node)) node = node.xparent();
 		if (!node) {
 			console.error("internal xpath error: failed to find xml:id map");
 			return;

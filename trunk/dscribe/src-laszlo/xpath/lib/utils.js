@@ -9,7 +9,7 @@ Number.prototype.analyze = function() {};
 String.prototype.analyze = function() {};
 
 Array.prototype.atomized = function() {return this.map(function(item) {return item.atomized();});};
-Number.prototype.atomized = function() {return this;};
+Number.prototype.atomized = function() {return this.valueOf();};
 String.prototype.atomized = function() {return this.toString();};
 
 Array.prototype.serialized = function() {
@@ -24,8 +24,8 @@ Array.prototype.effectiveBooleanValue = function() {
 			var x = this[0];
 			var t = typeof x;
 			if (t == "boolean") return x;
-			if (t == "string") return x.length > 0;
-			if (t == "number") return !(x == 0 || x == Number.NaN);
+			if (t == "string" || x instanceof String) return x.length > 0;
+			if (t == "number" || x instanceof Number) return !(x == 0 || isNaN(x));
 		default:
 			if (this[0].xnode) return true;
 	}
@@ -38,13 +38,13 @@ Array.prototype.numberValue = function() {
 };
 String.prototype.numberValue = function() {
 	var r = Number(this);
-	if (r != Number.NaN || this == "NaN") return r;
+	if (!isNaN(r) || this == "NaN") return r;
 };
-Number.prototype.numberValue = function() {return this;};
+Number.prototype.numberValue = function() {return this.valueOf();};
 lz.node.prototype.numberValue = function() {};
 
 Number.prototype.isInteger = function() {
-	return this === parseInt(this);
+	return this.valueOf() === parseInt(this);
 };
 
 s.serializeToXML = function(element) {
@@ -54,7 +54,7 @@ s.serializeToXML = function(element) {
 	}
 	var name = element.xname();
 	var attributes = element.xattributes(), children = element.xchildren();
-	if (!element.text && attributes.length == 0 && children.length == 0) return "<" + name + "/>";
+	if (!element['text'] && attributes.length == 0 && children.length == 0) return "<" + name + "/>";
 	var attrStrings = [], childrenStrings = [];
 	for (var i = 0; i < attributes.length; i++) {
 		attrStrings.push(attributes[i].key + '="' + attributes[i].atomized() + '"'); // TODO: escape value
@@ -64,13 +64,13 @@ s.serializeToXML = function(element) {
 };
 
 s.equatable = function(v) {
-	if (typeof v == "number" || v instanceof Number || typeof v == "string" || v instanceof String || v.equals) return true;
+	if (typeof v == "number" || v instanceof Number || typeof v == "string" || v instanceof String || typeof v == "boolean" || v instanceof Boolean || 'equals' in v) return true;
 	console.error("[XPTY0004] operand " + v + " of type " + typeof v + " cannot be equated");
 	return false;
 };
 
 s.orderable = function(v) {
-	if (typeof v == "number" || v instanceof Number || typeof v == "string" || v instanceof String || v.lessThan) return true;
+	if (typeof v == "number" || v instanceof Number || typeof v == "string" || v instanceof String || 'lessThan' in v) return true;
 	console.error("[XPTY0004] operand " + v + " of type " + typeof v + " cannot be compared");
 	return false;
 };

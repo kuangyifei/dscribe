@@ -9,6 +9,7 @@
 			<exclude name="test/"/>
 			<exclude name="test-job/"/>
 		</filesystem>
+		<filesystem src="^/transforms" dst="transforms" quiet-period="PT1S"/>
 		<agree-checkpoint/>
 		<java-extract-source src="code"/>
 		<java-resolve-types/>
@@ -17,7 +18,7 @@
 			<calculator class="com.ideanest.dscribe.java.PackageAssignmentCalculator"/>
 			<calculator class="com.ideanest.dscribe.java.ClassAssignmentCalculator"/>
 		</assign-diagrams>
-		<mixt folder="rules" rules="^/transforms"/>
+		<mixt folder="rules" rules="transforms"/>
 		<export-diagrams rules-doc="uml-refine" dst="export" template="^/diagram-template.lzx"/>
 	</job>
 

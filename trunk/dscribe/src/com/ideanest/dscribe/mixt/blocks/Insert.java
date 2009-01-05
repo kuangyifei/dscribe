@@ -80,7 +80,7 @@ public class Insert implements BlockType {
 				int serial = insertMultiple ? 1 : -1;
 				for (Node node : nodesToInsert.nodes()) {
 					// TODO:  what happens if node is not element?
-					Node insertedNode = target.insert(node);
+					Node insertedNode = target.insert(node, modBuilder);
 					String id = modBuilder.generateId(serial++);
 					insertedNode.update().attr("xml:id", id).commit();
 					modBuilder.affect(insertedNode);
@@ -225,7 +225,8 @@ public class Insert implements BlockType {
 			setModGlobalScope(content.query());
 			
 			dependOnNearest(InsertionTarget.class, false, new InsertionTarget() {
-				public Node insert(Node node) throws TransformException {
+				public Node insert(Node node, Mod.Builder builder) throws TransformException {
+					assertSame(modBuilder, builder);
 					return outputNode.append().node(node).commit(); 
 				}
 				public boolean canInsertMultiple() {

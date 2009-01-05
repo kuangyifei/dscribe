@@ -78,7 +78,7 @@ public class Rule {
 	final String id;
 	private final String toString;
 	private final List<Block> blocks = new ArrayList<Block>();
-	private Set<Document> touched = new HashSet<Document>();
+	private Set<XMLDocument> touched = new HashSet<XMLDocument>();
 	private final Accumulator.Locator<XMLDocument> modifiedDocsLocator;
 	private int firstDifferentStage;
 	private final Node rootModNode;
@@ -94,7 +94,7 @@ public class Rule {
 		if (module.source() != null) globalScope.importModule(module.source());
 		initDefaultShim();
 		
-		validateAttributes(def, Collections.singleton("name"));
+		validateAttributes(def, Collections.singleton("desc"));
 		
 		try {
 			this.id = def.query().single("@xml:id").value();
@@ -102,7 +102,7 @@ public class Rule {
 			throw new RuleBaseException("a rule " + def.name() + " has no xml:id");
 		}
 
-		toString = buildToString(def.query().optional("@name").value());
+		toString = buildToString(def.query().optional("@desc").value());
 		LOG.debug("reading in " + this);
 		
 		rootModNode = self.rootMod().node();
@@ -266,7 +266,7 @@ public class Rule {
 		}
 	}
 	
-	<D extends Document> void addTouched(Collection<D> docs) {
+	void addTouched(Collection<XMLDocument> docs) {
 		touched.addAll(docs);
 	}
 	
@@ -292,12 +292,12 @@ public class Rule {
 			try {
 				self.verifyMods(modifiedDocs);
 				touched.addAll(modifiedDocs);
-				touchedScope = globalScope.database().query(touched).importSameModulesAs(globalScope);
+				touchedScope = globalScope.database().query().limitRootDocuments(touched).importSameModulesAs(globalScope);
 			} catch (TransformException e) {
 				// inconsistent state, rule withdrawn, do global processing after all
 			}
 		}
-		touched = new HashSet<Document>();	// don't clear, old set still referenced by touchedScope
+		touched = new HashSet<XMLDocument>();	// don't clear, old set still referenced by touchedScope
 				
 		int lastStageNumModsResolved = 0;
 		// The stage counter is the child stage that we'll be resolving at each iteration, based on stage-1.
@@ -509,8 +509,8 @@ public class Rule {
 		
 		@Test public void sameDefsWithName() throws RuleBaseException {
 			Rule rule = new Rule(
-					makeRule("xml:id='r1' name='myrule'", "<create-doc>foobar</create-doc>"),
-					makeRule("xml:id='r1' name='myrule'", "<create-doc>foobar</create-doc>"),
+					makeRule("xml:id='r1' desc='myrule'", "<create-doc>foobar</create-doc>"),
+					makeRule("xml:id='r1' desc='myrule'", "<create-doc>foobar</create-doc>"),
 					engine, null, new Engine.Module(ruleDoc), null);
 			assertThat(rule.toString(), containsString("r1"));
 			assertThat(rule.toString(), containsString("myrule"));

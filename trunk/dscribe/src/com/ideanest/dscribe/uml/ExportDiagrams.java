@@ -52,11 +52,17 @@ public class ExportDiagrams extends TaskBase {
 	private String extractDiagram(Node diagram) throws IOException, ExportException {
 		Node rules = findRules();
 		return template
+			.replace("$(highSerial)", workspace.query().single("max(/a:triggers[@kind='stored']/*/@serial)").value())
+			.replace("$(actionIdBase)", cycle().generateUid("a") + "-")
 			.replace("$(diagram)", collapseNamespaces(diagram).toString())
 			.replace("$(rules)", collapseNamespaces(rules).toString())
 			.replace("$(modstore)", collapseNamespaces(filterMods(diagram, rules)).toString())
-			.replace("$(candidates)", collapseNamespaces(filterActions(diagram, workspace.query().single("/a:candidates").node())).toString())
-			.replace("$(triggers)", collapseNamespaces(filterActions(diagram, workspace.query().single("/a:triggers").node())).toString());
+			.replace("$(actions)",
+					collapseNamespaces(filterActions(diagram, workspace.query().single("/a:candidates[@kind='derived'").node())).toString()
+					+ "\n"
+					+ collapseNamespaces(filterActions(diagram, workspace.query().single("/a:triggers[@kind='derived']").node())).toString()
+					+ "\n"
+					+ collapseNamespaces(filterActions(diagram, workspace.query().single("/a:triggers[@kind='stored']").node())).toString());
 	}
 	
 	private Node filterActions(Node diagram, Node actions) {
@@ -81,10 +87,13 @@ public class ExportDiagrams extends TaskBase {
 				"	else ()" +
 				"};" +
 				"element mod:modstore {" +
-				"	for $mods in //mod:mods[@rule=$rules/rule/@xml:id]" +
+				"	for $mods in //mod:mods[@rule=$rules/mixt:rule/@xml:id]" +
 				"	let $affectingMods := $mods//mod:mod[exists($diagram/id(mod:affected/@refid))]," +
 				"			$ancestorMods := $affectingMods/ancestor::*" +
-				"	return local:filter($mods, $ancestorMods, $affectingMods)" +
+				"	return element mod:mods {" +
+				"		$mods/@*," +
+				"		for $mod in $mods/* return local:filter($mod, $ancestorMods, $affectingMods)" +
+				"	}" +
 				"}"
 		).node();
 	}
@@ -107,6 +116,7 @@ public class ExportDiagrams extends TaskBase {
 	
 	private Node collapseNamespaces(Node node) {
 		return node.query().single(
+				"declare default element namespace '';" +
 				"declare function local:collapse($item) {" +
 				"	typeswitch ($item)" +
 				"		case element() return local:collapse-element($item)" +
@@ -114,13 +124,13 @@ public class ExportDiagrams extends TaskBase {
 				"		default return $item" +
 				"};" +
 				"declare function local:collapse-element($e) {" +
-				"	element {translate(name($e), ':', '_')} {" +
+				"	element {translate(name($e), ':-.', '___')} {" +
 				"		(for $a in $e/attribute::* return local:collapse-attribute($a)," +
 				"		 for $x in $e/node() return local:collapse($x))" +
 				"	}" +
 				"};" +
 				"declare function local:collapse-attribute($a) {" +
-				"	attribute {translate(name($a), ':', '_')} {string($a)}" +
+				"	attribute {translate(name($a), ':-.', '___')} {string($a)}" +
 				"};" +
 				"local:collapse(.)"
 		).node();
