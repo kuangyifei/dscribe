@@ -1,0 +1,58 @@
+<library>
+
+<class name = 'effect' extends = 'node'>
+	<attribute name = 'xml_id' type = 'string'/>
+	<handler name = 'onconstruct'>
+		this.target = this.immediateparent;
+		while (this.target['name'] != 'contents') this.target = this.target.immediateparent;
+		this.target = this.target.classroot;
+	</handler>
+	<method name = 'isLoading'>
+		return this.findAncestorProperty('loading');
+	</method>
+</class>
+
+<class name = 'effect_visibility' extends = 'effect'>
+	<attribute name = 'desired' type = 'boolean'/>
+	<handler name = 'oninit'>
+		this.oldVisible = target.visible;
+		var desiredVisible = desired == 'true';
+		if (isLoading()) {
+			setAttribute('visible', desiredVisible);
+			return;
+		}
+		if (target.visible == desiredVisible) return;
+		if (target.visible) animateHide(); else animateShow();
+	</handler>
+	<handler name = 'ondestroy'>
+		if (target.visible == oldVisible) return;
+		if (target.visible) animateHide(); else animateShow();
+	</handler>
+	
+	<method name = 'findSetHeightContainer'><![CDATA[
+		return target.parent.findFormalAncestorSuchThat(function() {
+				return this.hassetheight && !(this instanceof lz.uml_diagram);});
+	]]></method>
+	
+	<method name = 'animateShow'>
+		target.setAttribute('height', 0);
+		target.show();
+		var heightDelta = target.measureHeight();
+		console.log("heightDelta " + heightDelta);
+		target.animate("height", heightDelta, 150, false, {motion: "linear"});
+		var container = findSetHeightContainer();
+		if (container) container.animate("height", heightDelta, 150, true, {motion: "linear"});
+	</method>
+
+	<method name = 'animateHide'>
+		target.findAncestor("deselect").deselect(target);
+		var animator = target.animate("height", 0, 150, false, {motion: "linear"});
+		new LzDelegate(target, "hideDelegate", animator, "onstop");
+		var container = findSetHeightContainer();
+		if (container) container.animate("height", -target.measureHeight(), 150, true, {motion: "linear"});
+	</method>
+	
+</class>
+
+
+</library>

@@ -27,7 +27,8 @@ lz.MagicSentence.prototype.addSentence = function(pattern, text) {
 
 lz.MagicSentence.prototype.roll = function(choiceName) {
 	var choice = this.choices[choiceName];
-	this.action.setAttribute(choiceName, choice.list[(choice.list.indexOf(this.action[choiceName]) + 1) % choice.list.length]);
+	this.action.setXmlAttribute(choiceName, choice.list[(choice.list.indexOf(this.action[choiceName]) + 1) % choice.list.length]);
+	this.action.findAncestor("recompute").recompute();
 }
 
 lz.MagicSentence.prototype.getCurrentSentenceTemplate = function() {

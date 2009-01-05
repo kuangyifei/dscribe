@@ -29,9 +29,9 @@
 
 ## check file actions/candidates.xml
 <a:candidates xmlns:a='http://ideanest.com/dscribe/ns/actions' xml:id='_' kind='derived'>
-	<a:set-property diagram='d1' target='c1a1' attr='visible' value='false' action='act01' specificity='3' serial='123' xml:id='_' override='false'>
-		<u:key xmlns:u='http://ideanest.com/dscribe/ns/util' value='set-property-c1a1-visible' xml:id='_'/>
-	</a:set-property>
+	<a:muton diagram='d1' target='c1a1' effect='visibility' desired='false' action='act01' specificity='3' serial='123' xml:id='_' override='false'>
+		<a:muton-key value='c1a1-visibility' xml:id='_'/>
+	</a:muton>
 </a:candidates>
 
 ## check file diagram.xml
@@ -41,7 +41,7 @@
 		<compartment kind='attribute' xml:id='c1a'>
 			<attribute depicts='j2' xml:id='c1a1'>
 				<name xml:id='c1a1n'>msg</name>
-				<override xmlns='http://ideanest.com/dscribe/ns/attribute-overrides' visible='false' xml:id='_'/>
+				<visibility xmlns='http://ideanest.com/dscribe/ns/effects' desired='false' xml:id='_'/>
 			</attribute>
 		</compartment>
 		<compartment kind='operation' xml:id='c1o'>

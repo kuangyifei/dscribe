@@ -5,7 +5,7 @@
 	
 	<resource name = 'iconDelete' src = '../icons/delete_obj.gif'/>
 	
-	<class name = 'u_key' extends = 'node'>
+	<class name = 'a_muton_key' extends = 'node'>
 		<attribute name = 'xml_id' type = 'string'/>
 		<attribute name = 'value' type = 'string'/>
 	</class>
@@ -29,13 +29,10 @@
 	<class name = 'a_muton' extends = 'a_base'>
 		<attribute name = 'action' type = 'string'/>
 		<attribute name = 'specificity' type = 'number'/>
-	</class>
-	
-	<class name = 'a_set_property' extends = 'a_muton'>
 		<attribute name = 'target' type = 'string'/>
 		<attribute name = 'diagram' type = 'string'/>
-		<attribute name = 'attr' type = 'string'/>
-		<attribute name = 'value' type = 'string'/>
+		<attribute name = 'effect' type = 'string'/>
+		<attribute name = 'desired' type = 'string'/>
 	</class>
 	
 	// -------- Actions
@@ -68,11 +65,11 @@
 				'any', 'all classes'
 			);
 			magic.addChoice('override',
-				'true', 'overriding previous actions',
-				'false', 'unless contradicted by a more specific previous action'
+				'true', 'overriding all',
+				'false', 'deferring to more specific'
 			);
-			magic.addSentence({targetSelector: 'by-id'}, 'Delete ${targetSelector} in ${scope}, ${override}.');
-			magic.addSentence({}, 'Delete ${targetSelector} from ${location} in ${scope}, ${override}.');
+			magic.addSentence({targetSelector: 'by-id'}, 'Delete ${targetSelector} in ${scope} (${override} previous actions).');
+			magic.addSentence({}, 'Delete ${targetSelector} from ${location} in ${scope} (${override} previous actions).');
 		</method>
 	</class>
 	

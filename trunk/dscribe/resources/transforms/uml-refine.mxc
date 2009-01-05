@@ -1,10 +1,9 @@
 namespace uml http://ideanest.com/dscribe/ns/uml
 namespace a http://ideanest.com/dscribe/ns/actions
-namespace attr http://ideanest.com/dscribe/ns/attribute-overrides
-namespace u http://ideanest.com/dscribe/ns/util
+namespace effect http://ideanest.com/dscribe/ns/effects
 
 function scope($action):
-	if ($action/@scope='diagram') then /id($action/@diagram) else /
+	if ($action/@scope='diagram') then /id($action/@diagram) else /uml:diagram
 
 function specificity($action):
 	(if ($action/@targetSelector = 'by-id') then 2
@@ -23,8 +22,8 @@ function actionProperties($action):
 rule deconflict candidate actions
 	for all $candidates:		/a:candidates
 	with some $c0:			$candidates/*
-	with distinct $key:		$c0/u:key/@value
-	with some $c1:			$c0[u:key/@value = $key]
+	with distinct $key:		$c0/a:muton-key/@value
+	with some $c1:			$c0[a:muton-key/@value = $key]
 	with some $minserial:	max((0, $c1[@override='true']/@serial))
 	with some $c2:			$c1[@serial >= $minserial]
 	with some $minspecificity: max((0, $c2/@specificity))
@@ -33,15 +32,15 @@ rule deconflict candidate actions
 	for each target:			/a:triggers[@kind = 'derived']
 	insert:						$c3[@serial = $highserial]
 
-rule derive keys for set-property actions
-	for each $action: /a:candidates/a:set-property
-	for each target: $action
-	insert: element u:key {attribute value {string-join(("set-property", $action/@target, $action/@attr), "-")}}
+rule derive keys for mutons
+	for each $muton: /a:candidates/a:muton
+	for each target: $muton
+	insert: element a:muton-key {attribute value {string-join(($muton/@target, $muton/@effect), "-")}}
 
-rule apply set-property actions
-	for each $action: /a:triggers/a:set-property
-	for each target: /id($action/@target)
-	insert: element attr:override {$action/@attr, $action/@value}
+rule apply mutons
+	for each $muton: /a:triggers/a:muton
+	for each target: /id($muton/@target)
+	insert: element {string-join(('effect', $muton/@effect), ':')} {$muton/@desired}
 
 
 rule apply delete-attribute actions
@@ -49,16 +48,16 @@ rule apply delete-attribute actions
 	for each $attribute:
 		local:scope($action)/
 		(if ($action/@targetSelector='by-id') then id($action/@selection)
-			else if ($action/@targetSelector='by-elemName') then descendant::uml:attribute[name=$action/@elemName]
-			else if ($action/@targetSelector='by-elemType') then descendant::uml:attribute[type=$action/@elemType]
+			else if ($action/@targetSelector='by-elemName') then descendant::uml:attribute[uml:var/uml:name=$action/@elemName]
+			else if ($action/@targetSelector='by-elemType') then descendant::uml:attribute[uml:var/uml:type=$action/@elemType]
 			else ())/ 
 		(if ($action/@location='in-className') then .[ancestor::uml:class/uml:blockname=$action/@className] else .)
 	for each target:	/a:candidates[@kind = 'derived']
 	insert:
-		element a:set-property {
+		element a:muton {
 			attribute target {$attribute/@xml:id},
 			attribute diagram {$attribute/root()/*/@xml:id},
-			attribute attr {'visible'},
-			attribute value {'false'},
+			attribute effect {'visibility'},
+			attribute desired {'false'},
 			local:actionProperties($action)
 		}

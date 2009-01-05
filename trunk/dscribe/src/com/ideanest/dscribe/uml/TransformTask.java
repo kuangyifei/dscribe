@@ -87,6 +87,7 @@ public class TransformTask extends TaskBase {
 				loadRulesFile(new File(rules, relativeName), target);
 			}
 		}
+		
 	}
 	
 	private void loadRulesFile(File rulesFile, Folder target) throws FileNotFoundException, IOException, ParseException {
@@ -114,7 +115,7 @@ public class TransformTask extends TaskBase {
 		// Copy or create.
 		Node modStore = prevspace.query().optional("/mod:modstore").node();
 		if (inherit && modStore.extant()) {
-			cycle().inherit(modStore.document());
+			modStore = cycle().inherit(modStore.document()).root();
 			// Inherit any documents that were created by the previous run of the transform.
 			for (String relativePath : prevspace.query().unordered("distinct-values(//mod:created/@doc)").values()) {
 				cycle().inherit(prevspace.documents().get(relativePath));

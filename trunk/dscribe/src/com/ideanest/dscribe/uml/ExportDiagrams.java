@@ -51,21 +51,27 @@ public class ExportDiagrams extends TaskBase {
 	
 	private String extractDiagram(Node diagram) throws IOException, ExportException {
 		Node rules = findRules();
+		
+		StringBuilder actions = new StringBuilder();
+		actions.append(collapseNamespaces(filterActions(diagram, workspace.query().single("/a:candidates[@kind='derived']").node())));
+		actions.append("\n");
+		actions.append(collapseNamespaces(filterActions(diagram, workspace.query().single("/a:triggers[@kind='derived']").node())));
+		for (Node node : workspace.query().all("/a:triggers[@kind='stored']").nodes()) {
+			actions.append(collapseNamespaces(filterActions(diagram, node)));
+			actions.append("\n");
+		}
+
 		return template
-			.replace("$(highSerial)", workspace.query().single("max(/a:triggers[@kind='stored']/*/@serial)").value())
+			.replace("$(highSerial)", workspace.query().single("max((0, /a:triggers[@kind='stored']/*/@serial))").value())
 			.replace("$(actionIdBase)", cycle().generateUid("a") + "-")
 			.replace("$(diagram)", collapseNamespaces(diagram).toString())
 			.replace("$(rules)", collapseNamespaces(rules).toString())
 			.replace("$(modstore)", collapseNamespaces(filterMods(diagram, rules)).toString())
-			.replace("$(actions)",
-					collapseNamespaces(filterActions(diagram, workspace.query().single("/a:candidates[@kind='derived'").node())).toString()
-					+ "\n"
-					+ collapseNamespaces(filterActions(diagram, workspace.query().single("/a:triggers[@kind='derived']").node())).toString()
-					+ "\n"
-					+ collapseNamespaces(filterActions(diagram, workspace.query().single("/a:triggers[@kind='stored']").node())).toString());
+			.replace("$(actions)", actions.toString());
 	}
 	
 	private Node filterActions(Node diagram, Node actions) {
+		if (!actions.extant()) return actions;	// null node
 		return workspace.query().let("$actions", actions).let("$diagram", diagram).single(
 				"let $diagramId := $diagram/@xml:id " +
 				"return element {node-name($actions)} {" +
@@ -115,6 +121,7 @@ public class ExportDiagrams extends TaskBase {
 	}
 	
 	private Node collapseNamespaces(Node node) {
+		if (!node.extant()) return node;
 		return node.query().single(
 				"declare default element namespace '';" +
 				"declare function local:collapse($item) {" +

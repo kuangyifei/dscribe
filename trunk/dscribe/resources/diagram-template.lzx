@@ -12,8 +12,6 @@ $(rules)
 $(modstore)
 		
 $(actions)
-		
-$(triggers)
 
 <a_triggers kind = 'session' xml_id = 'history'/>
 		

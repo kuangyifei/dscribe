@@ -100,6 +100,7 @@ Viewer {
 	<attribute name = 'defaultplacement' value = 'custom_method' type = 'string'/>
 	<attribute name = 'padding' value = '$style{"margin"}' type = 'number'/>
 	<attribute name = 'diagram' value = '${main.contents.subviews[0]}' type = 'expression'/>
+	<attribute name = 'loading' value = 'true' type = 'boolean'/>
 	
 	<view name = 'main'
 			x = '${("sidebar" in parent ? parent.sidebar.x + parent.sidebar.width : 0) + 2}'
@@ -133,6 +134,13 @@ Viewer {
 			return this;
 		}
 	</method>
+	
+	<method name = 'select' args = 'item'/>
+	<method name = 'deselect' args = 'item'/>
+	
+	<handler name = 'oninit'>
+		setAttribute('loading', false);
+	</handler>
 	
 </class>
 

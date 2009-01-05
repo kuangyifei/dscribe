@@ -2,35 +2,21 @@
 
 <include href="../../lzosutils/lib"/>
 <include href="../../baseutils/lib"/>
-
-<class name = 'attr_override' extends = 'node'>
-	<attribute name = 'attr' type = 'string'/>
-	<attribute name = 'value' type = 'expression'/>
-	<handler name = 'oninit'>
-		this.oldValue = immediateparent[this.attr];
-		var v = this.value;
-		if (v == 'false') v = false;
-		else if (v == 'true') v = true;
-		else {
-			var n = Number(v);
-			if (!isNaN(n)) v = n;
-		}
-		immediateparent.setAttribute(this.attr, v);
-	</handler>
-	<handler name = 'ondestroy'>
-		immediateparent.setAttribute(this.attr, this.oldValue);
-	</handler>
-</class>
+<include href="uml-effects.lzx"/>
 
 <class name = 'uml_view'>
+	<attribute name = 'depicts' type = 'string'/>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<method name = 'determinePlacement' args = 'child, placement, args'><![CDATA[
-		if (child && (child.constructor.tagname.startsWith('uml_') || child.constructor.tagname.startsWith('attr_'))) {
+		if (child && (child.constructor.tagname.startsWith('uml_') || child.constructor.tagname.startsWith('effect_'))) {
 			return super.determinePlacement(child, placement, args);
 		} else {
 			return this;
 		}
 	]]></method>
+	<method name = 'hideDelegate' args = '_'>
+		this.hide();
+	</method>
 </class>
 
 <class name = 'uml_diagram'
@@ -38,6 +24,8 @@
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'title' type = 'string' value = 'Untitled Diagram'/>
 	<attribute name = 'xml_id' type = 'string'/>
+	<attribute name = 'kind' type = 'string'/>
+	<attribute name = 'diagram' type = 'string'/>
 	
 	<view name = 'contents' width = '${parent.width}' height = '${parent.height}'/>
 
@@ -46,13 +34,19 @@
 
 <class name = 'uml_class' extends = 'uml_view'
 		onmousedown = 'dragger.apply()'
-		onmouseup = 'dragger.remove()'>
+		onmouseup = 'dragger.remove()'
+		width = '150'>
 	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'padding' value = '$style{"padding"}' type = 'size'/>
 	<attribute name = 'color' value = '$style{"color"}' type = 'color'/>
 	<attribute name = 'xml_id' type = 'string'/>
 	<handler name = 'onclick'> this.findAncestor("select").select(this); </handler>
 
+	<method name = 'select' args = 'item'>
+		this.bringToFront();
+		immediateparent.findAncestor("select").select(item);
+	</method>
+	
 	<dragstate name = 'dragger'
 		drag_min_x = '0'
 		drag_max_x = '${immediateparent.mask.getAttributeRelative("width", immediateparent) - width}'
@@ -60,6 +54,7 @@
 		drag_max_y = '${immediateparent.mask.getAttributeRelative("height", immediateparent) - height}'>
 		<handler name = 'onapply'>
 			if (!this.findAncestorProperty("editMode")) this.remove();
+			parent.bringToFront();
 		</handler>
 	</dragstate>
 	
@@ -126,28 +121,7 @@
 	<attribute name = 'varnames_visibility' value = 'show' type = 'string'/>
 	<attribute name = 'vartypes_visibility' value = 'show' type = 'string'/>
 	
-	<method name = 'findSetHeightContainer'><![CDATA[
-		return parent.findFormalAncestorSuchThat(function() {
-				return this.hassetheight && !(this instanceof lz.uml_diagram);});
-	]]></method>
-	
-	<method name = 'animateShow'>
-		this.setHeight(0);
-		this.show();
-		this.animate("height", measureHeight(), 150, false, {motion: "linear"});
-		var container = this.findSetHeightContainer();
-		if (container) container.animate("height", measureHeight(), 150, true, {motion: "linear"});
-	</method>
-	<method name = 'animateHide'>
-		var self = this;
-		this.findAncestor("deselect").deselect(this);
-		var animator = this.animate("height", 0, 150, false, {motion: "linear"});
-		new LzDelegate(this, "hide", animator, "onstop");
-		var container = this.findSetHeightContainer();
-		if (container) container.animate("height", -height, 150, true, {motion: "linear"});
-	</method>
-	
-	<method name = 'refresh' args = 'unused'>
+	<method name = 'refresh' args = '_'>
 		displayText.setAttribute('text', this.computeText());
 	</method>
 
@@ -206,7 +180,7 @@
 		var s = oname.text + '(';
 		if (args_visibility == 'elide') {
 			s += '...';
-		} else if (oargs && args_visibility == 'show') {
+		} else if (oargs && oargs.subnodes && args_visibility == 'show') {
 			s += oargs.subnodes.map(function(arg) {return renderVar(arg);}).join(', ');
 		}
 		s += ')';
