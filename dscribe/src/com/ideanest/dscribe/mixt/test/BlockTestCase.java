@@ -4,6 +4,7 @@ import static com.ideanest.dscribe.mixt.test.Matchers.emptyCollectionOf;
 import static org.junit.Assert.*;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 import org.exist.fluent.*;
 import org.hamcrest.*;
@@ -245,6 +246,19 @@ public abstract class BlockTestCase extends DatabaseTestCase {
 			Sequence seq = mockery.sequence("modBuilder pre-commit supplement");
 			allowing(modBuilder).supplement(); will(returnValue(supplementBuilder)); inSequence(seq);
 			modBuilderPriors.add(seq);
+		}});
+	}
+	
+	public void create(final String docPathPattern) {
+		mockery.checking(new Expectations() {{
+			atLeast(1).of(modBuilder).create(with(new TypeSafeMatcher<XMLDocument>() {
+				@Override public boolean matchesSafely(XMLDocument doc) {
+					return Pattern.matches(docPathPattern, doc.path());
+				}
+				@Override	public void describeTo(Description description) {
+					description.appendText("doc with path matching ").appendValue(docPathPattern);
+				}
+			}));
 		}});
 	}
 	

@@ -1,7 +1,7 @@
 <library>
-<include href="lzosutils/lib"/>
-<include href="baseutils/lib"/>
-<include href="xpath/lib"/>
+<include href="../../lzosutils/lib"/>
+<include href="../../baseutils/lib"/>
+<include href="../../xpath/lib"/>
 <script src="md5.js"/>
 
 <class name = 'block' extends = 'node'>
@@ -13,7 +13,7 @@
 	<attribute name = 'mayBeChanging' value = 'false' type = 'boolean'/>
 	
 	<handler name = 'oninit'><![CDATA[
-		setAttribute('text', this.text.replace('&apos;', "'").replace('&quot;', '"'));
+		setAttribute('text', this.text.replace('&apos;', "'").replace('&quot;', '"').replace('&gt;', '>').replace('&lt;', '<').replace('&amp;', '&'));
 		this.setAttribute('query', XPath.parse(this.text));
 		if (this.query) this.setAttribute('text', null);
 	]]></handler>
@@ -21,8 +21,16 @@
 	<method name = 'analyze' args = 'env'>
 		if (this.query) {
 			var analysis = XPath.analyze(this.query, env);
-			analysis.referencedNodeNames.forEach(function(name) {
-				this.callAncestor('listenNodeChanged', delegate, name);}, this);
+			console.log("Dependencies for " + query.queryText + ":");
+			if (analysis.bounded) {
+				console.log("   " + analysis.referencedNodeNames);
+				analysis.referencedNodeNames.forEach(function(name) {
+					this.callAncestor('listenNodeChanged', delegate, name);}, this);
+			} else {
+				console.log("   *");
+				// listen for any node changed
+				this.callAncestor('listenNodeChanged', delegate, '*');
+			}
 		}
 	</method>
 	
@@ -49,12 +57,12 @@
 	<attribute name = 'each' type = 'string'/>
 	<attribute name = 'all' type = 'string'/>
 	<method name = 'recompute' args = 'baseMod, env'>
-		if (this.each) recomputeEach(baseMod, env); else recomputeAll(baseMod, env);
+		if ('each' in this) recomputeEach(baseMod, env); else recomputeAll(baseMod, env);
 	</method>
 	<method name = 'recomputeEach' args = 'baseMod, env'>
 		var newRefs = {};
 		this.runQuery(env).forEach(function(node) {
-			if (node.xml_id) {
+			if ('xml_id' in node) {
 				newRefs[node.xml_id] = node;
 			} else {
 				console.error('node selected by for block has no xml_id: ' + node);
@@ -85,7 +93,7 @@
 		new lz.mod_mod(baseMod, {references: newRefs});
 	]]></method>
 	<method name = 'bind' args = 'mod, env'>
-		env.pushVar(this.each ? this.each : this.all, mod.references);
+		env.pushVar('each' in this ? this.each : this.all, mod.references);
 	</method>
 </class>
 
@@ -94,14 +102,14 @@
 	<attribute name = 'any' type = 'string'/>
 	<attribute name = 'distinct' type = 'string'/>
 	<handler name = 'oninit'>
-		this.varName = this.some ? this.some : this.any ? this.any : this.distinct;
+		this.varName = 'some' in this ? this.some : ('any' in this ? this.any : this.distinct);
 	</handler>
 	<method name = 'recompute' args = 'baseMod, env'>
-		if (this.distinct) recomputeDistinct(baseMod, env); else recomputeBlind(baseMod, env);
+		if ('distinct' in this) recomputeDistinct(baseMod, env); else recomputeBlind(baseMod, env);
 	</method>
 	<method name = 'recomputeBlind' args = 'baseMod, env'><![CDATA[
 		var values = this.runQuery(env);
-		if (baseMod.subnodes && baseMod.subNodes.length) {
+		if (baseMod.subnodes && baseMod.subnodes.length) {
 			if (values.equals(baseMod.subnodes[0].values)) return;
 			baseMod.subnodes[0].destroy();
 		}
@@ -110,7 +118,7 @@
 	]]></method>
 	<method name = 'recomputeDistinct' args = 'baseMod, env'><![CDATA[
 	    var values = {};
-		this.runQuery(env).forEach(function(val) {values[val] = true;});
+		this.runQuery(env).forEach(function(val) {values[val.atomized()] = true;});
 		if (baseMod.subnodes) {
 			var oldMods = baseMod.subnodes.slice();
 			oldMods.forEach(function(oldMod) {
@@ -122,10 +130,24 @@
 				}
 			});
 		}
-		for (var key in values) {
-			var encodedKey = 
-			new lz.mod_mod(baseMod, {values: [values[key]], key: encodedKey});
+		for (var key in values) new lz.mod_mod(baseMod, {values: [key], key: sanitizeKey(key)});
+	]]></method>
+	<method name = 'sanitizeKey' args = 'key'><![CDATA[
+		var encodedChars = [];
+		key = String(key);
+		for (var i = 0; i < key.length; i++) {
+			var code = key.charCodeAt(i);
+			if (code >= 0x61 && code <= 0x7a || code >= 0x41 && code <= 0x5a || code >= 0x30 && code <= 0x39) {
+				// letters and digits are OK
+				var c = key.charAt(i);
+			} else if (code == 0x2d) {	// dash
+				var c = '--';
+			} else {
+				var c = '-' + code.toString(16) + '-';
+			}
+			encodedChars.push(c);
 		}
+		return encodedChars.join('');
 	]]></method>
 	<method name = 'bind' args = 'mod, env'>
 		env.pushVar(this.varName, mod.values);
@@ -158,7 +180,7 @@
 					'xml_id',
 					newMod.findAncestorProperty('xml_id') + newMod.stage + (serial >= 0 ? '-' + serial : '') + '.');
 			serial++;
-			if (element.refresh) element.refresh();
+			if ('refresh' in element) element.refresh();
 		});
 	]]></method>
 	<method name = 'bind' args = 'mod, env'>
@@ -167,6 +189,7 @@
 </class>
 
 <class name = 'mixt_rule' extends = 'node'>
+	<attribute name = 'desc' type = 'string'/>
 	<attribute name = 'xml_id' type = 'string'/>
 	<attribute name = 'description' type = 'string'/>
 
@@ -197,7 +220,7 @@
 		this.arglist = this.args ? this.args.split(',') : [];
 		for (var i = 0; i < this.arglist.length; i++) this.arglist[i] = this.arglist[i].strip();
 		var self = this;
-		parent.functions[this.name] = {
+		parent.functions['local:' + this.name] = {
 			args: this.arglist.map(function() {return XPath.ArgumentConstraints.item.sequence();}),
 			fn: function(context) {
 				var fnargs = arguments.slice(1);
@@ -244,14 +267,14 @@
 	<attribute name = 'delegate' value = '$once{new LzDelegate(this, "handleChange")}' type = 'expression'/>
 	
 	<handler name = 'oninit'><![CDATA[
-		if (!this.rule && parent.rule) this.setXmlAttribute('rule', parent.rule);
-		if (!this.stage) this.setXmlAttribute('stage', parent.stage+1);
-		if (!this.xml_id && this.key) this.setXmlAttribute('xml_id', this.findAncestorProperty('xml_id') + this.key + '.');
+		if (!('rule' in this) && parent.rule) this.setXmlAttribute('rule', parent.rule);
+		if (!('stage' in this)) this.setXmlAttribute('stage', parent.stage+1);
+		if (!('xml_id' in this) && 'key' in this) this.setXmlAttribute('xml_id', this.findAncestorProperty('xml_id') + this.key + '.');
 		this.parent.childChanged();
 	]]></handler>
 	
 	<handler name = 'ondestroy'>
-		if (this.affected) this.affected.forEach(function(node) {
+		if (this['affected']) this.affected.forEach(function(node) {
 			node.destroy();
 		});
 	</handler>
@@ -302,6 +325,7 @@
 
 <class name = 'mod_modstore' extends = 'node'>
 	<method name = 'connectRules' args = 'ruleMap'>
+		if (!this.subnodes) return;
 		this.subnodes.forEach(function(rootmod) {
 			var rule = ruleMap[rootmod.rule];
 			rootmod.traverse(function(mod) {
@@ -310,6 +334,7 @@
 		});
 	</method>
 	<method name = 'recompute' args = 'env'>
+		if (!this.subnodes) return;
 		this.subnodes.forEach(function(rootmod) {
 			rootmod.recompute(env);
 		});
@@ -344,10 +369,19 @@
 		this.setAttribute('changesMade', true);
 	</handler>
 	<method name = 'recompute'>
+		var t1 = new Date().getTime();
+		var iter = 0;
 		do {
+			if (++iter > 10) {
+				console.error('MIXT engine running for 10 iterations, aborting');
+				return;
+			}
+			console.log('--- MIXT iteration ' + iter);
 			this.setAttribute('changesMade', false);
 			modstore.recompute(this.env);
 		} while (this.changesMade);
+		var t2 = new Date().getTime();
+		console.log((t2 - t1) + "ms for MIXT run, " + iter + " iterations");
 	</method>
 </class>
 

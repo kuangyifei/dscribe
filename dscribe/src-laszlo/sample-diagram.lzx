@@ -1,11 +1,9 @@
-<canvas width='800' height='600'>
-	<debug y = '400' height = '200'/>
-	<include href='diagram-editor.lzx'/>
-	<include href='uml-lib.lzx'/>
+<canvas width='100%' height='800'>
+	<debug y = '400' height = '400'/>
+	<include href='diagrams/lib/diagram-editor.lzx'/>
+	<include href='diagrams/lib/uml-actions.lzx'/>
 	
-	<!-- <view bgcolor='green' x='250' y='150' width='100' height='100'/> -->
-
-	<Editor x = '20' y = '20' width = '600' height = '350' editMode = 'true'>
+	<Editor x = '20' y = '20' width = '${parent.width - 40}' height = '360' editMode = 'true' highSerial = '0' actionIdBase = 'a1-1'>
 	
 		<uml_diagram title = 'Sample Diagram' xml_id='d1'>
 			<uml_class x='20' y='20' width='100' xml_id='c1'>
@@ -21,24 +19,81 @@
 							<uml_var><uml_name>y</uml_name><uml_type>Point</uml_type></uml_var>
 						</uml_args>
 						<uml_type>int</uml_type>
-						<attr_override visible='false'/>
 					</uml_operation>
 				</uml_compartment>
 			</uml_class>
 		</uml_diagram>
 		
-		<mixt_rules>
-			<mixt_function name = 'u_hello' args = '$name'>string-join(('hello', $name), ' ')</mixt_function>
-			<mixt_rule xml_id='r01'>
-				<mixt_for each='target'>//uml:compartment[@kind='attributes']</mixt_for>
-				<mixt_insert>element uml:attribute {element uml:var {element uml:name {text {u_hello('world')}}}}</mixt_insert>
-			</mixt_rule>
-		</mixt_rules>
+<mixt_rules>
+    <mixt_function name="scope" args="$action">if ($action/@scope='diagram') then /id($action/@diagram) else /
+</mixt_function>
+    <mixt_function name="specificity" args="$action">(if ($action/@targetSelector = 'by-id') then 2
+	else if ($action/@location != 'any') then 1 else 0) +
+(if ($action/@scope = 'diagram') then 1 else 0)
+</mixt_function>
+    <mixt_function name="actionProperties" args="$action">(
+	attribute action {$action/@xml:id},
+	attribute specificity {local:specificity($action)},
+	attribute serial {$action/@serial},
+	attribute override {$action/@override}
+)
+</mixt_function>
+    <mixt_rule desc="deconflict candidate actions" xml_id="r-dca">
+        <mixt_for all="$candidates">/a:candidates</mixt_for>
+        <mixt_with some="$c0">$candidates/*</mixt_with>
+        <mixt_with distinct="$key">$c0/u:key/@value</mixt_with>
+        <mixt_with some="$c1">$c0[u:key/@value = $key]</mixt_with>
+        <mixt_with some="$minserial">max((0, $c1[@override='true']/@serial))</mixt_with>
+        <mixt_with some="$c2">$c1[@serial &gt;= $minserial]</mixt_with>
+        <mixt_with some="$minspecificity">max((0, $c2/@specificity))</mixt_with>
+        <mixt_with some="$c3">$c2[@specificity &gt;= $minspecificity]</mixt_with>
+        <mixt_with some="$highserial">max($c3/@serial)</mixt_with>
+        <mixt_for each="target">/a:triggers[@kind = 'derived']</mixt_for>
+        <mixt_insert>$c3[@serial = $highserial]</mixt_insert>
+    </mixt_rule>
+    <mixt_rule desc="derive keys for set-property actions" xml_id="r-dkfspa">
+        <mixt_for each="$action">/a:candidates/a:set-property</mixt_for>
+        <mixt_for each="target">$action</mixt_for>
+        <mixt_insert>element u:key {attribute value {string-join(("set-property", $action/@target, $action/@attr), "-")}}</mixt_insert>
+    </mixt_rule>
+    <mixt_rule desc="apply set-property actions" xml_id="r-aspa">
+        <mixt_for each="$action">/a:triggers/a:set-property</mixt_for>
+        <mixt_for each="target">/id($action/@target)</mixt_for>
+        <mixt_insert>element attr:override {$action/@attr, $action/@value}</mixt_insert>
+    </mixt_rule>
+    <mixt_rule desc="apply delete-attribute actions" xml_id="r-adaa">
+        <mixt_for each="$action">/a:triggers/a:delete-attribute[@enabled='true']</mixt_for>
+        <mixt_for each="$attribute">local:scope($action)/
+(if ($action/@targetSelector='by-id') then id($action/@selection)
+	else if ($action/@targetSelector='by-elemName') then descendant::uml:attribute[name=$action/@elemName]
+	else if ($action/@targetSelector='by-elemType') then descendant::uml:attribute[type=$action/@elemType]
+	else ())/
+(if ($action/@location='in-className') then .[ancestor::uml:class/uml:blockname=$action/@className] else .)
+</mixt_for>
+        <mixt_for each="target">/a:candidates[@kind = 'derived']</mixt_for>
+        <mixt_insert>element a:set-property {
+	attribute target {$attribute/@xml:id},
+	attribute diagram {$attribute/root()/*/@xml:id},
+	attribute attr {'visible'},
+	attribute value {'false'},
+	local:actionProperties($action)
+}</mixt_insert>
+    </mixt_rule>
+</mixt_rules>
 		
-		<mod_modstore>
-			<mod_mods rule='r01' xml_id='_r01.'/>
-		</mod_modstore>
-	
+<mod_modstore>
+    <mod_mods rule="r-dca" xml_id="_r-dca."/>
+    <mod_mods rule="r-dkfspa" xml_id="_r-dkfspa."/>
+    <mod_mods rule="r-aspa" xml_id="_r-aspa."/>
+    <mod_mods rule="r-adaa" xml_id="_r-adaa."/>
+</mod_modstore>
+		
+<a_candidates kind="derived" xml_id="_r-ccc.1."/>
+		
+<a_triggers kind="derived" xml_id="_r-ctc.1."/>
+
+<a_triggers kind = 'session' xml_id = 'history'/>
+		
 	</Editor>
 
 </canvas>

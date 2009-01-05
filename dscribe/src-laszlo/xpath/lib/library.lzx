@@ -24,12 +24,12 @@ XPath.Environment.prototype.teardown = function() {
 	this.roots.forEach(function(root) {delete root.xparent;});
 };
 XPath.Environment.prototype.pushVar = function(key, value) {
+	this.pushedVars.push({key: key, value: this.vars[key]});
 	if (key) this.vars[key] = value;
-	this.pushedVars.push(key);
 };
 XPath.Environment.prototype.popVar = function() {
-	var key = this.pushedVars.pop();
-	if (key) delete this.vars[key];
+	var entry = this.pushedVars.pop();
+	if (typeof entry.value == 'undefined') delete this.vars[entry.key]; else this.vars[entry.key] = entry.value;
 };
 
 XPath.parse = function(s) {
@@ -50,6 +50,7 @@ XPath.parse = function(s) {
 		}
 	}
 	XPath.parse.cache[s] = r[0];
+	r[0].queryText = s;
 	return r[0];
 };
 
@@ -65,17 +66,26 @@ lz.node.prototype.query = function(xpath, env) {
 	if (!env) env = new XPath.Environment();
 	env.setup();
 	var t2 = new Date().getTime();
-	var result;
-	var expr = (typeof xpath == 'string' || xpath instanceof String) ? XPath.parse(xpath) : xpath;
+	if (typeof xpath == 'string' || xpath instanceof String) {
+		var expr =  XPath.parse(xpath);
+	} else {
+		var expr = xpath;
+		xpath = xpath.queryText;
+	}
 	var t3 = new Date().getTime();
 	if (expr) {
 		var context = {item: this, position: 1, size: 1, env: env};
-		result = expr.eval(context);
+		var result = expr.eval(context);
 	}
 	var t4 = new Date().getTime();
 	env.teardown();
 	var t5 = new Date().getTime();
-	console.log((t5 - t1) + "ms for query " + xpath + " (" + (t3-t2) + "ms parse, " + (t4-t3) + "ms eval)");
+	var len = result ? result.length : 0;
+	var vars = [];
+	for (var v in env.vars) {
+		vars.push(v + ' = ' + env.vars[v]);
+	}
+	console.log((t5 - t1) + "ms (" + (t3-t2) + "ms parse, " + (t4-t3) + "ms eval), " + len + " result".pluralize(len) + ", for query " + xpath + (vars.length ? ' {' + vars.join(', ') + '}' : ''));
 	return result;
 };
 

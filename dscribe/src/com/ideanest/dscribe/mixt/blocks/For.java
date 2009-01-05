@@ -161,9 +161,9 @@ public class For implements BlockType {
 					throw new TransformException("query didn't select node with id " + node.query().single("@xml:id").value());
 			}
 				
-			public Node insert(Node node) throws TransformException {
+			public Node insert(Node node, Mod.Builder modBuilder) throws TransformException {
 				if (target) return mod.references().get(0).append().node(node).commit();
-				return mod.nearest(InsertionTarget.class).insert(node);
+				return mod.nearest(InsertionTarget.class).insert(node, modBuilder);
 			}
 			
 			public boolean canInsertMultiple() throws TransformException {
@@ -366,7 +366,7 @@ public class For implements BlockType {
 			final Node selectedNode = content.query().single("//java:class").node();
 			setModReferences(selectedNode);
 			ForBlock.ForEachSeg seg = (ForBlock.ForEachSeg) block.createSeg(mod);
-			seg.insert(db.query().single("<java:method xml:id='m3' name='between'/>").node());
+			seg.insert(db.query().single("<java:method xml:id='m3' name='between'/>").node(), modBuilder);
 			assertTrue(seg.canInsertMultiple());
 			assertTrue(selectedNode.query().exists("java:method[@xml:id='m3']"));
 		}
@@ -376,8 +376,9 @@ public class For implements BlockType {
 			ForOneBlock block = define("<for one='$x'> //java:class </for>");
 			final Node nodeToInsert = db.query().single("<bar/>").node(), insertedNode = db.query().single("<foo/>").node();
 			InsertionTarget insertionTarget = new InsertionTarget() {
-				public Node insert(Node node) throws TransformException {
+				public Node insert(Node node, Mod.Builder builder) throws TransformException {
 					assertSame(nodeToInsert, node);
+					assertSame(modBuilder, builder);
 					return insertedNode;
 				}
 				public boolean canInsertMultiple() throws TransformException {
@@ -386,7 +387,7 @@ public class For implements BlockType {
 			};
 			setModNearestAncestorImplementing(InsertionTarget.class, insertionTarget);
 			ForBlock.ForEachSeg seg = (ForBlock.ForEachSeg) block.createSeg(mod);
-			assertSame(insertedNode, seg.insert(nodeToInsert));
+			assertSame(insertedNode, seg.insert(nodeToInsert, modBuilder));
 			assertFalse(seg.canInsertMultiple());
 		}
 

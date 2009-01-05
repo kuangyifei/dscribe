@@ -81,5 +81,5 @@
     });
 
 })(function(n, fn) {
-	if (!(n in lz.drawview.prototype)) lz.drawview.prototype.addProperty(n, fn);
+	lz.drawview.addProperty(n, fn);
 });

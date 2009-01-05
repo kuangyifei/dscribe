@@ -2,7 +2,7 @@ function() {
 
 var s = XPath.Semantics;
 
-s.QName = function(s) {this.full = s; this.flat = s.replace(':', '_').replace('-', '_', 'g'); this.qualified = s.indexOf(":") != -1;};
+s.QName = function(s) {this.full = s; this.flat = s.replace(':', '_').replace('-', '_'); this.qualified = s.indexOf(":") != -1;};
 s.QName.prototype.equals = function(that) {return this.full == that.full;}  // ignores actual namespace
 s.QName.prototype.toString = function() {return "QName(" + this.full + ")";};
 s.QName.prototype.atomized = function() {return this.flat;};
@@ -193,12 +193,12 @@ s.newComparison = function(a, op, b) {
 
 s.ValueComparison = function(a, op, b) {this.a = a; this.op = op; this.opfn = this.opTable[op]; this.b = b;}
 s.ValueComparison.prototype.opTable = {
-	'eq': function(a,b) {if (s.equatable(a)) return a.equals ? a.equals(b) : a == b;},
-	'ne': function(a,b) {if (s.equatable(a)) return a.equals ? !a.equals(b) : a != b;},
-	'lt': function(a,b) {if (s.orderable(a)) return a.lessThan ? a.lessThan(b) : a < b;},
-	'le': function(a,b) {if (s.orderable(a)) return a.lessThan ? a.equals(b) || a.lessThan(b) : a <= b;},
-	'gt': function(a,b) {if (s.orderable(a)) return a.lessThan ? !(a.equals(b) || a.lessThan(b)): a > b;},
-	'ge': function(a,b) {if (s.orderable(a)) return a.lessThan ? !a.lessThan(b) : a >= b;}
+	'eq': function(a,b) {if (s.equatable(a)) return 'equals' in a ? a.equals(b) : a == b;},
+	'ne': function(a,b) {if (s.equatable(a)) return 'equals' in a ? !a.equals(b) : a != b;},
+	'lt': function(a,b) {if (s.orderable(a)) return 'lessThan' in a ? a.lessThan(b) : a < b;},
+	'le': function(a,b) {if (s.orderable(a)) return 'lessThan' in a ? a.equals(b) || a.lessThan(b) : a <= b;},
+	'gt': function(a,b) {if (s.orderable(a)) return 'lessThan' in a ? !(a.equals(b) || a.lessThan(b)): a > b;},
+	'ge': function(a,b) {if (s.orderable(a)) return 'lessThan' in a ? !a.lessThan(b) : a >= b;}
 };
 s.ValueComparison.prototype.toString = function() {return "ValueComparison(" + this.a + " " + this.op + " " + this.b + ")";};
 s.ValueComparison.prototype.eval = function(context) {
@@ -236,10 +236,15 @@ s.GeneralComparison.prototype.eval = function(context) {
 		var wa = va[i];
 		for (var j = 0; j < vb.length; j++) {
 			var wb = vb[j];
-			if (typeof wa == "number" && typeof wb != "number") {wb = wb.numberValue(); if (typeof wb == "undefined") return;}
-			else if (typeof wa != "number" && typeof wb == "number") {wa = wa.numberValue(); if (typeof wa == "undefined") return;}
-			else if (typeof wa == "object" && typeof wb == "string") {wb = new wa.constructor(wb); if (typeof wb == "undefined") return;}
-			else if (typeof wb == "object" && typeof wa == "string") {wa = new wb.constructor(wa); if (typeof wa == "undefined") return;}
+			if ((typeof wa == "number" || wa instanceof Number) && !(typeof wb == "number" || wb instanceof Number)) {
+				wb = wb.numberValue(); if (typeof wb == "undefined") return;
+			} else if (!(typeof wa == "number" || wa instanceof Number) && (typeof wb == "number" || wb instanceof Number)) {
+				wa = wa.numberValue(); if (typeof wa == "undefined") return;
+			} else if (typeof wa == "object" && (typeof wb == "string" || wb instanceof String)) {
+				wb = new wa.constructor(wb); if (typeof wb == "undefined") return;
+			} else if (typeof wb == "object" && (typeof wa == "string" || wb instanceof String)) {
+				wa = new wb.constructor(wa); if (typeof wa == "undefined") return;
+			}
 			if (this.opfn(wa, wb)) return [true];
 		}
 	}

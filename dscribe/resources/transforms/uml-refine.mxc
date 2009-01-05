@@ -16,24 +16,16 @@ function actionProperties($action):
 		attribute action {$action/@xml:id},
 		attribute specificity {local:specificity($action)},
 		attribute serial {$action/@serial},
-		if ($action/@override) then attribute override {} else ()
+		attribute override {$action/@override}
 	)
 
 
-rule create candidates container
-	create-doc:		actions/candidates.xml
-	insert:			element a:candidates {attribute kind {'derived'}}
-
-rule create triggers container
-	create-doc:		actions/triggers.xml
-	insert:			element a:triggers {attribute kind {'derived'}}
-
 rule deconflict candidate actions
 	for all $candidates:		/a:candidates
-	with some $c0:			$candidates/a:*
+	with some $c0:			$candidates/*
 	with distinct $key:		$c0/u:key/@value
 	with some $c1:			$c0[u:key/@value = $key]
-	with some $minserial:	max((0, $c1[@override]/@serial))
+	with some $minserial:	max((0, $c1[@override='true']/@serial))
 	with some $c2:			$c1[@serial >= $minserial]
 	with some $minspecificity: max((0, $c2/@specificity))
 	with some $c3:			$c2[@specificity >= $minspecificity]
@@ -49,19 +41,18 @@ rule derive keys for set-property actions
 rule apply set-property actions
 	for each $action: /a:triggers/a:set-property
 	for each target: /id($action/@target)
-	insert: element attr:override {attribute {$action/@attr} {$action/@value}}
+	insert: element attr:override {$action/@attr, $action/@value}
 
 
 rule apply delete-attribute actions
-	for each $action:	/a:triggers/a:delete-attribute
+	for each $action:	/a:triggers/a:delete-attribute[@enabled='true']
 	for each $attribute:
 		local:scope($action)/
 		(if ($action/@targetSelector='by-id') then id($action/@selection)
-			else if ($action/@targetSelector='by-origin') then descendant::uml:attribute[depicts=$action/@origin]
-			else if ($action/@targetSelector='by-name') then descendant::uml:attribute[name=$action/@name]
-			else if ($action/@targetSelector='by-type') then descendant::uml:attribute[type=$action/@type]
+			else if ($action/@targetSelector='by-elemName') then descendant::uml:attribute[name=$action/@elemName]
+			else if ($action/@targetSelector='by-elemType') then descendant::uml:attribute[type=$action/@elemType]
 			else ())/ 
-		(if ($action/@location='in-class-name') then .[ancestor::uml:class/name=$action/@className] else .)
+		(if ($action/@location='in-className') then .[ancestor::uml:class/uml:blockname=$action/@className] else .)
 	for each target:	/a:candidates[@kind = 'derived']
 	insert:
 		element a:set-property {

@@ -1,0 +1,80 @@
+<library>
+	<include href='uml-views.lzx'/>
+	<include href='magic-sentence.lzx'/>
+	<include href='../../xpath/lib'/>
+	
+	<resource name = 'iconDelete' src = '../icons/delete_obj.gif'/>
+	
+	<class name = 'u_key' extends = 'node'>
+		<attribute name = 'xml_id' type = 'string'/>
+		<attribute name = 'value' type = 'string'/>
+	</class>
+	
+	<class name = 'a_container' extends = 'node'>
+		<attribute name = 'xml_id' type = 'string'/>
+		<attribute name = 'kind' type = 'string'/>
+	</class>
+	
+	<class name = 'a_candidates' extends = 'a_container'/>
+	<class name = 'a_triggers' extends = 'a_container'/>
+
+	<class name = 'a_base' extends = 'node'>
+		<attribute name = 'xml_id' type = 'string'/>
+		<attribute name = 'serial' type = 'number'/>
+		<attribute name = 'override' type = 'string' value = 'true'/>
+	</class>
+	
+	// -------- Mutons
+	
+	<class name = 'a_muton' extends = 'a_base'>
+		<attribute name = 'action' type = 'string'/>
+		<attribute name = 'specificity' type = 'number'/>
+	</class>
+	
+	<class name = 'a_set_property' extends = 'a_muton'>
+		<attribute name = 'target' type = 'string'/>
+		<attribute name = 'diagram' type = 'string'/>
+		<attribute name = 'attr' type = 'string'/>
+		<attribute name = 'value' type = 'string'/>
+	</class>
+	
+	// -------- Actions
+	
+	<class name = 'a_action' extends = 'a_base'>
+		<attribute name = 'enabled' type = 'string'/>
+		<attribute name = 'diagram' type = 'string'/>
+	</class>
+
+	<class name = 'a_delete_attribute' extends = 'a_action'>
+		<attribute name = 'scope' type = 'string'/>
+		<attribute name = 'targetSelector' type = 'string'/>
+		<attribute name = 'selection' type = 'string'/>
+		<attribute name = 'elemName' type = 'string'/>
+		<attribute name = 'elemType' type = 'string'/>
+		<attribute name = 'location' type = 'string'/>
+		<attribute name = 'className' type = 'string'/>
+		<method name = 'fillMagicSentence' args = 'magic'>
+			magic.addChoice('scope',
+				'all', 'all diagrams',
+				'diagram', 'this diagram'
+			);
+			magic.addChoice('targetSelector',
+				'by-id', 'attribute ' + elemName,
+				'by-elemName', 'attributes named ' + elemName,
+				'by-elemType', 'attributes of type ' + elemType
+			);
+			magic.addChoice('location',
+				'in-className', 'class ' + className,
+				'any', 'all classes'
+			);
+			magic.addChoice('override',
+				'true', 'overriding previous actions',
+				'false', 'unless contradicted by a more specific previous action'
+			);
+			magic.addSentence({targetSelector: 'by-id'}, 'Delete ${targetSelector} in ${scope}, ${override}.');
+			magic.addSentence({}, 'Delete ${targetSelector} from ${location} in ${scope}, ${override}.');
+		</method>
+	</class>
+	
+	<script src='uml-actions.js'/>	
+</library>

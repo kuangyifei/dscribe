@@ -4,7 +4,7 @@ var s = XPath.Semantics;
 
 lz.node.prototype.fireElementChanged = function() {
 	var element = this;
-	while (element.onelementchanged) {
+	while ('onelementchanged' in element) {
 		element.onelementchanged.sendEvent(this);
 		element = element.parent;
 	}
@@ -24,7 +24,7 @@ function() {
 		this.container = this.findAncestor('fireNodeChanged');
 		if (this.container) {
 			new lz.DeclaredEventClass(this, 'onelementchanged');
-			if ('xml_id' in this) this.container.trackXmlId(this, null, this.xml_id);
+			if ('xml_id' in args) this.container.trackXmlId(this, null, args.xml_id);
 			for (var key in this.savedArgs) this.container.fireNodeChanged('@' + key);
 			this.container.fireNodeChanged(this.constructor.tagname);
 		}
@@ -36,16 +36,16 @@ function() {
 			this.fireElementChanged();
 			// Prevent subnodes from firing redundant element change events on ancestors.
 			delete this['onelementchanged'];
-			this.container.trackXmlId(this, this.xml_id, null);
+			if ('xml_id' in this) this.container.trackXmlId(this, this.xml_id, null);
 			for (var key in this.savedArgs) this.container.fireNodeChanged('@' + key);
 			this.container.fireNodeChanged(this.constructor.tagname);
 		}
-		oldDestroy();
+		oldDestroy.call(this);
 	};
 }();
 
 lz.node.prototype.setXmlAttribute = function(name, value) {
-	var oldXmlId = this.xml_id;
+	var oldXmlId = 'xml_id' in this ? this.xml_id : null;
 	this.setAttribute(name, value);
 	this.savedArgs[name] = value != null;
 	if (this.container) {
@@ -55,8 +55,18 @@ lz.node.prototype.setXmlAttribute = function(name, value) {
 	}
 };
 
+lz.node.prototype.findDefaultPlacement = function() {
+	var node = this;
+	var prevNode;
+	do {
+		prevNode = node;
+		if (node.defaultplacement) node = node.determinePlacement(this, node.defaultplacement);
+	} while (prevNode != node);
+	return node;
+};
+
 lz.node.prototype.insertCopy = function(elements) {
-	var self = this;
+	var node = this;
 	return elements.map(function(element) {
 		var attrDict = {};
 		element.xattributes().forEach(function(attr) {
@@ -65,7 +75,7 @@ lz.node.prototype.insertCopy = function(elements) {
 		var elementChildren = element.xchildren();
 		var textChildOnly = (elementChildren.length == 1 && elementChildren[0].xnode == 'text');
 		if (textChildOnly) attrDict['text'] = elementChildren[0].atomized();
-		var elementCopy = new lz[element.xname()](self, attrDict);
+		var elementCopy = new lz[element.xname()](node, attrDict);
 		if (!textChildOnly) elementCopy.insertCopy(element.xchildren());
 		return elementCopy;
 	});
@@ -80,16 +90,11 @@ lz.node.prototype.xparent = function() {
 };
 
 lz.node.prototype.xchildren = function() {
-	var node = this;
-	var prevNode;
-	do {
-		prevNode = node;
-		if (node.defaultplacement) node = node.determinePlacement(null, node.defaultplacement);
-	} while (prevNode != node);
+	var node = this.findDefaultPlacement();
 	var textChildren = "text" in node ? [new s.TextNode(node)] : [];
 	this.xchildren = function() {
 		if (!node.subnodes) return textChildren;
-		if (node.layouts && node.layouts.length) {
+		if ('layouts' in node && node.layouts && node.layouts.length) {
 			return node.subnodes.select(function(child) {return !node.layouts.find(child);});
 		} else {
 			return node.subnodes;
@@ -119,7 +124,10 @@ lz.node.prototype.xattribute = function(name) {
 	return new s.AttributeNode(this, name);
 };
 
-lz.node.prototype.atomized = function() {return !this.subnodes && this.text ? this.text : "";};
+lz.node.prototype.atomized = function() {
+	var t = this.xchildren();
+	return (t.length == 1 && t[0] instanceof s.TextNode) ? t[0].atomized() : "";
+};
 lz.node.prototype.serialized = function() {return s.serializeToXML(this);};
 
 s.ConstructedElementNode = function(name) {this.name = name; this.attributes = []; this.text = ""; this.children = [];};
@@ -172,6 +180,14 @@ s.DocumentNode.prototype.xname = function() {return null;};
 s.DocumentNode.prototype.xparent = function() {return null;};
 s.DocumentNode.prototype.xchildren = function() {return [this.root];};
 s.DocumentNode.prototype.listenForChanges = function(delegate) {this.root.listenForChanges(delegate);};
+s.DocumentNode.prototype.getByXmlId = function(value) {
+	var container = this.root.findAncestor('getByXmlId');
+	if (container == null || container == this) return null;
+	this.getByXmlId = function(v) {
+		return container.getByXmlId(v);
+	};
+	return this.getByXmlId(value);
+};
 s.DocumentNode.prototype.toString = function() {return "document(" + this.root + ")";};
 
 s.TextNode = function(node) {this.node = node;};

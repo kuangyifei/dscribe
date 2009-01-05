@@ -1,7 +1,6 @@
 <library>
 
 <include href="diagram-viewer.lzx"/>
-<include href="xpath/lib"/>
 <include href='mixt.lzx'/>
 
 <stylesheet>
@@ -25,10 +24,10 @@ SimpleActionLink {
 
 </stylesheet>
 
-<resource name = 'iconUndo_on' src = 'icons/undo_edit_on.gif'/>
-<resource name = 'iconUndo_off' src = 'icons/undo_edit_off.gif'/>
-<resource name = 'iconRedo_on' src = 'icons/redo_edit_on.gif'/>
-<resource name = 'iconRedo_off' src = 'icons/redo_edit_off.gif'/>
+<resource name = 'iconUndo_on' src = '../icons/undo_edit_on.gif'/>
+<resource name = 'iconUndo_off' src = '../icons/undo_edit_off.gif'/>
+<resource name = 'iconRedo_on' src = '../icons/redo_edit_on.gif'/>
+<resource name = 'iconRedo_off' src = '../icons/redo_edit_off.gif'/>
 
 <class name = 'SimpleActionLink'>
 	<attribute name = 'icon' type = 'string'/>
@@ -186,6 +185,8 @@ SimpleActionLink {
 	<attribute name = 'nextActionIndex' value = '0' type = 'number'/>
 	<attribute name = 'scrolling' value = 'false' type = 'boolean'/>
 	
+	<node name = 'holdingArea'/>
+	
 	<HistoryBox name = 'box' title = 'Last Action' titleAlign = 'center'/>
 	<iconbutton enabledIcon = 'iconUndo_on' disabledIcon = 'iconUndo_off'
 		x= '${parent.box.x}'
@@ -198,13 +199,14 @@ SimpleActionLink {
 	
 	<handler name = 'oninit'> addPlaceholder(); </handler>
 	
-	<method name = 'execute' args = 'action'>
-		action.createView(this);
+	<method name = 'execute' args = 'action'><![CDATA[
+		createView(action);
 		scrollActionViews("left");
-		action.apply();
+		for (var i = nextActionIndex; i < actions.length; i++) actions[i].destroy();
 		actions.splice(nextActionIndex, actions.length - nextActionIndex, action);
 		setAttribute("nextActionIndex", nextActionIndex + 1);
-	</method>
+		this.callAncestor("recompute");
+	]]></method>
 	
 	<method name = 'scrollActionViews' args = 'direction'><![CDATA[
 		setAttribute("scrolling", true);
@@ -212,15 +214,14 @@ SimpleActionLink {
 		var views = box.contents.subviews;
 		
 		var animator = views[0].animate("x", delta, 150, true, {motion: "linear"});
-		new LzDelegate(views[0], "destroy", animator, "onstop");
 		new LzDelegate(this, "stopScrolling", animator, "onstop");
 		
-		views[1].setX(-delta);
+		views[1].setAttribute("x", -delta);
 		views[1].animate("x", delta, 150, true, {motion: "linear"});
 		
 		if (views[1].height > views[0].height) {
 			var properHeight = views[1].height;
-			views[1].setHeight(views[0].height);
+			views[1].setAttribute("height", views[0].height);
 			views[1].animate("height", properHeight, 150, false, {motion: "linear"});
 		} else {
 			views[0].animate("height", views[1].height, 150, false, {motion: "linear"});
@@ -228,6 +229,7 @@ SimpleActionLink {
 	]]></method>
 	
 	<method name = 'stopScrolling' args = '_'>
+		box.contents.subviews[0].destroy();
 		setAttribute("scrolling", false);
 	</method>
 	
@@ -239,18 +241,26 @@ SimpleActionLink {
 		if (nextActionIndex == 1) {
 			addPlaceholder();
 		} else {
-			actions[nextActionIndex-2].createView(this);
+			createView(actions[nextActionIndex-2]);
 		}
 		scrollActionViews("right");
-		actions[nextActionIndex-1].unapply();
+		actions[nextActionIndex-1].setXmlAttribute('enabled', 'false');
 		setAttribute("nextActionIndex", nextActionIndex - 1);
+		this.callAncestor("recompute");
 	</method>
 	
 	<method name = 'redo'>
-		actions[nextActionIndex].createView(this);
+		createView(actions[nextActionIndex]);
 		scrollActionViews("left");
-		actions[nextActionIndex].apply();
+		actions[nextActionIndex].setXmlAttribute('enabled', 'true');
 		setAttribute("nextActionIndex", nextActionIndex + 1);
+		this.callAncestor("recompute");
+	</method>
+	
+	<method name = 'createView' args = 'action'>
+		var magic = new lz.MagicSentence(action);
+		action.fillMagicSentence(magic);
+		magic.createView(this);
 	</method>
 </class>
 
@@ -281,6 +291,10 @@ SimpleActionLink {
 <class name = 'Editor' extends = 'Viewer' clip = 'true'>
 	<attribute name = 'selection' value = '$once{[]}' type = 'expression'/>
 	<attribute name = 'editMode' value = 'false' type = 'boolean'/>
+	<attribute name = 'highSerial' type = 'number'/>
+	<attribute name = 'actionIdBase' type = 'string'/>
+	<attribute name = 'actionCounter' value = '0' type = 'number'/>
+	<attribute name = 'historyActions' type = 'expression'/>
 
 	<view name = 'sidebar'
 			bgcolor = '$style{"barcolor"}' clip = 'true'
@@ -301,6 +315,7 @@ SimpleActionLink {
 	<MixtEngine name = 'engine' xmlContainer = '$once{parent.main.contents}'/>
 	
 	<handler name = 'oninit'>
+		this.setAttribute('historyActions', this.query('/a:triggers[@kind="session"]', engine.env)[0]);
 		this.main.titlebar.editTab.setAttribute('dragger', this.sidebar.dragger);
 		this.main.titlebar.editTab.setAttribute('visible', true);
 	</handler>
@@ -344,8 +359,17 @@ SimpleActionLink {
 		setAttribute("selection", newSelection);
 	</method>
 	
-	<method name = 'execute' args = 'actionFn'>
-		sidebar.bars.historybar.execute(actionFn.call(null));
+	<method name = 'execute' args = 'actionCreator'>
+		var action = actionCreator.call(null, historyActions);
+		action.setXmlAttribute('enabled', 'true');
+		this.setAttribute('actionCounter', actionCounter + 1)
+		action.setXmlAttribute('xml_id', actionIdBase + actionCounter);
+		action.setXmlAttribute('serial', String(highSerial + actionCounter));
+		sidebar.bars.historybar.execute(action);
+	</method>
+	
+	<method name = 'recompute'>
+		engine.recompute();
 	</method>
 </class>
 

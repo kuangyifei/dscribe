@@ -6,7 +6,8 @@ var s = XPath.Semantics;
 s.Path = function(fromRoot, steps) {
 	this.fromRoot = fromRoot;
 	for (var i = steps.length - 2; i >= 0; i--) {
-		if (steps[i].axis == "descendant-or-self" &&
+		if ('axis' in steps[i] &&
+				steps[i].axis == "descendant-or-self" &&
 				steps[i].nodeName == "*" &&
 				!steps[i].predicates &&
 				steps[i+1].axis == "child") {
@@ -167,9 +168,9 @@ s.AxisStep.prototype.analyze = function(analysis) {
 		analysis.bounded = false;
 		return;
 	}
-	if (!analysis.referencedNodeNames.find(this.nodeName.flat)) {
-		analysis.referencedNodeNames.push(this.nodeName.flat);
-	}
+	var key = this.nodeName.flat;
+	if (this.axis == 'attribute') key = '@' + key;
+	if (!analysis.referencedNodeNames.find(key)) analysis.referencedNodeNames.push(key);
 	s.analyzePredicates(this.predicates, analysis);
 };
 

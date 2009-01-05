@@ -1,0 +1,10 @@
+namespace a http://ideanest.com/dscribe/ns/actions
+
+rule create candidates container
+	create-doc:		actions/candidates.xml
+	insert:			element a:candidates {attribute kind {'derived'}}
+
+rule create triggers container
+	create-doc:		actions/triggers.xml
+	insert:			element a:triggers {attribute kind {'derived'}}
+

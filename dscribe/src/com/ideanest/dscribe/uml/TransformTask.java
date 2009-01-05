@@ -115,9 +115,10 @@ public class TransformTask extends TaskBase {
 		Node modStore = prevspace.query().optional("/mod:modstore").node();
 		if (inherit && modStore.extant()) {
 			cycle().inherit(modStore.document());
-			// Inherit any documents that were affected by the previous run of the transform.
-			// TODO: if any of these were previously inherited, this will create a duplicate copy -- fix or ignore?
-			cycle().inherit(prevspace.query().unordered("/id($_1//mod:affected/@refid)", modStore).nodes().documents());
+			// Inherit any documents that were created by the previous run of the transform.
+			for (String relativePath : prevspace.query().unordered("distinct-values(//mod:created/@doc)").values()) {
+				cycle().inherit(prevspace.documents().get(relativePath));
+			}
 		} else {
 			modStore = workspace.documents().load(
 					Name.adjust("mods"), Source.xml("<modstore xmlns='" + Engine.MOD_NS + "'/>")).root();
