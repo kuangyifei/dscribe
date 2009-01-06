@@ -29,9 +29,7 @@
 
 ## check file actions/candidates.xml
 <a:candidates xmlns:a='http://ideanest.com/dscribe/ns/actions' xml:id='_' kind='derived'>
-	<a:muton diagram='d1' target='c1a1' effect='visibility' desired='false' action='act01' specificity='3' serial='123' xml:id='_' override='false'>
-		<a:muton-key value='c1a1-visibility' xml:id='_'/>
-	</a:muton>
+	<a:muton diagram='d1' target='c1a1' effect='visibility' desired='false' key='c1a1-visibility' action='act01' specificity='3' serial='123' xml:id='_' override='false'/>
 </a:candidates>
 
 ## check file diagram.xml

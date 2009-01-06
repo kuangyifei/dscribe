@@ -4,6 +4,7 @@
 	<include href='../../xpath/lib'/>
 	
 	<resource name = 'iconDelete' src = '../icons/delete_obj.gif'/>
+	<resource name = 'iconSave' src = '../icons/save_edit.gif'/>
 	
 	<class name = 'a_muton_key' extends = 'node'>
 		<attribute name = 'xml_id' type = 'string'/>

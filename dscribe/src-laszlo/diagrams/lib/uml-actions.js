@@ -1,6 +1,11 @@
 lz.uml_diagram.addProperty('gatherPossibleActions', function(box, targets) {
 	box.setTitle("Diagram");
-	box.addLink({icon: 'iconDelete', text: "Do something", actionCreator: function() {}});
+	box.addLink({icon: 'iconSave', text: "Save edits", actionCreator: function(parent) {
+		var oldKind = parent.kind;
+		parent.setAttribute('kind', 'stored');
+		lz.Browser.setClipboard(XPath.Semantics.serializeToXML(parent));
+		parent.setAttribute('kind', oldKind);
+	}});
 });
 
 lz.uml_attribute.addProperty('gatherPossibleActions', function(box, targets) {

@@ -38,7 +38,6 @@
 		target.setAttribute('height', 0);
 		target.show();
 		var heightDelta = target.measureHeight();
-		console.log("heightDelta " + heightDelta);
 		target.animate("height", heightDelta, 150, false, {motion: "linear"});
 		var container = findSetHeightContainer();
 		if (container) container.animate("height", heightDelta, 150, true, {motion: "linear"});
