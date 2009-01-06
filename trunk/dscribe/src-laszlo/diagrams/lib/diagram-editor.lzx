@@ -361,6 +361,7 @@ SimpleActionLink {
 	
 	<method name = 'execute' args = 'actionCreator'>
 		var action = actionCreator.call(null, historyActions);
+		if (!action) return;
 		action.setXmlAttribute('enabled', 'true');
 		this.setAttribute('actionCounter', actionCounter + 1)
 		action.setXmlAttribute('xml_id', actionIdBase + actionCounter);

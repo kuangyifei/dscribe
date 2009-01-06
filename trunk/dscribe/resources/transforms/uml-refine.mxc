@@ -18,12 +18,22 @@ function actionProperties($action):
 		attribute override {$action/@override}
 	)
 
+function muton($action, $target, $effect, $desired):
+	element a:muton {
+		attribute diagram {$target/root()/uml:diagram/@xml:id},
+		attribute target {$target/@xml:id},
+		attribute effect {$effect},
+		attribute key {string-join(($target/@xml:id, $effect), '-')},
+		attribute desired {$desired},
+		local:actionProperties($action)
+	}
+
 
 rule deconflict candidate actions
 	for all $candidates:		/a:candidates
-	with some $c0:			$candidates/*
-	with distinct $key:		$c0/a:muton-key/@value
-	with some $c1:			$c0[a:muton-key/@value = $key]
+	with some $c0:			$candidates/a:muton
+	with distinct $key:		$c0/@key
+	with some $c1:			$c0[@key = $key]
 	with some $minserial:	max((0, $c1[@override='true']/@serial))
 	with some $c2:			$c1[@serial >= $minserial]
 	with some $minspecificity: max((0, $c2/@specificity))
@@ -31,11 +41,6 @@ rule deconflict candidate actions
 	with some $highserial:	max($c3/@serial)
 	for each target:			/a:triggers[@kind = 'derived']
 	insert:						$c3[@serial = $highserial]
-
-rule derive keys for mutons
-	for each $muton: /a:candidates/a:muton
-	for each target: $muton
-	insert: element a:muton-key {attribute value {string-join(($muton/@target, $muton/@effect), "-")}}
 
 rule apply mutons
 	for each $muton: /a:triggers/a:muton
@@ -53,11 +58,4 @@ rule apply delete-attribute actions
 			else ())/ 
 		(if ($action/@location='in-className') then .[ancestor::uml:class/uml:blockname=$action/@className] else .)
 	for each target:	/a:candidates[@kind = 'derived']
-	insert:
-		element a:muton {
-			attribute target {$attribute/@xml:id},
-			attribute diagram {$attribute/root()/*/@xml:id},
-			attribute effect {'visibility'},
-			attribute desired {'false'},
-			local:actionProperties($action)
-		}
+	insert:	local:muton($action, $attribute, 'visibility', 'false')

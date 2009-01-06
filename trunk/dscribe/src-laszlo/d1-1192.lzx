@@ -21,6 +21,12 @@
                     <uml_type>java.lang.String</uml_type>
                 </uml_var>
             </uml_attribute>
+            <uml_attribute depicts="j1-234a" xml_id="_r-cfta.j1-234a._r-ccc-3._r-cctd.m1-1227.j1-232._r-cd.m1-1193.2..3..1-1..2.">
+	            <uml_var>
+	                <uml_name>prevKey</uml_name>
+	                <uml_type>java.lang.String</uml_type>
+	            </uml_var>
+	        </uml_attribute>
         </uml_compartment>
         <uml_compartment kind="operations" xml_id="_r-ccc-3._r-cctd.m1-1227.j1-232._r-cd.m1-1193.2..3..1-2.">
             <uml_operation depicts="j1-235" xml_id="_r-cmto.j1-235._r-ccc-3._r-cctd.m1-1227.j1-232._r-cd.m1-1193.2..3..1-2..2.">
@@ -67,10 +73,16 @@
         <uml_compartment kind="attributes" xml_id="_r-ccc-3._r-cctd.m1-1247.j1-344._r-cd.m1-1193.2..3..1-1.">
             <uml_attribute depicts="j1-345" xml_id="_r-cfta.j1-345._r-ccc-3._r-cctd.m1-1247.j1-344._r-cd.m1-1193.2..3..1-1..2.">
                 <uml_var>
-                    <uml_name>docNames</uml_name>
-                    <uml_type>java.util.Set</uml_type>
+                    <uml_name>docName</uml_name>
+                    <uml_type>java.lang.String</uml_type>
                 </uml_var>
             </uml_attribute>
+            <uml_attribute depicts="j1-345a" xml_id="_r-cfta.j1-345a._r-ccc-3._r-cctd.m1-1227.j1-232._r-cd.m1-1193.2..3..1-1..2.">
+	            <uml_var>
+	                <uml_name>key</uml_name>
+	                <uml_type>int</uml_type>
+	            </uml_var>
+	        </uml_attribute>
         </uml_compartment>
         <uml_compartment kind="operations" xml_id="_r-ccc-3._r-cctd.m1-1247.j1-344._r-cd.m1-1193.2..3..1-2.">
             <uml_operation depicts="j1-346" xml_id="_r-cmto.j1-346._r-ccc-3._r-cctd.m1-1247.j1-344._r-cd.m1-1193.2..3..1-2..2.">
@@ -116,11 +128,20 @@
 	attribute override {$action/@override}
 )
 </mixt_function>
+    <mixt_function name="muton" args="$action, $target, $effect, $desired">element a:muton {
+	attribute diagram {$target/root()/uml:diagram/@xml:id},
+	attribute target {$target/@xml:id},
+	attribute effect {$effect},
+	attribute key {string-join(($target/@xml:id, $effect), '-')},
+	attribute desired {$desired},
+	local:actionProperties($action)
+}
+</mixt_function>
     <mixt_rule desc="deconflict candidate actions" xml_id="r-dca">
         <mixt_for all="$candidates">/a:candidates</mixt_for>
-        <mixt_with some="$c0">$candidates/*</mixt_with>
-        <mixt_with distinct="$key">$c0/a:muton-key/@value</mixt_with>
-        <mixt_with some="$c1">$c0[a:muton-key/@value = $key]</mixt_with>
+        <mixt_with some="$c0">$candidates/a:muton</mixt_with>
+        <mixt_with distinct="$key">$c0/@key</mixt_with>
+        <mixt_with some="$c1">$c0[@key = $key]</mixt_with>
         <mixt_with some="$minserial">max((0, $c1[@override='true']/@serial))</mixt_with>
         <mixt_with some="$c2">$c1[@serial &gt;= $minserial]</mixt_with>
         <mixt_with some="$minspecificity">max((0, $c2/@specificity))</mixt_with>
@@ -128,11 +149,6 @@
         <mixt_with some="$highserial">max($c3/@serial)</mixt_with>
         <mixt_for each="target">/a:triggers[@kind = 'derived']</mixt_for>
         <mixt_insert>$c3[@serial = $highserial]</mixt_insert>
-    </mixt_rule>
-    <mixt_rule desc="derive keys for mutons" xml_id="r-dkfm">
-        <mixt_for each="$muton">/a:candidates/a:muton</mixt_for>
-        <mixt_for each="target">$muton</mixt_for>
-        <mixt_insert>element a:muton-key {attribute value {string-join(($muton/@target, $muton/@effect), "-")}}</mixt_insert>
     </mixt_rule>
     <mixt_rule desc="apply mutons" xml_id="r-am">
         <mixt_for each="$muton">/a:triggers/a:muton</mixt_for>
@@ -149,20 +165,13 @@
 (if ($action/@location='in-className') then .[ancestor::uml:class/uml:blockname=$action/@className] else .)
 </mixt_for>
         <mixt_for each="target">/a:candidates[@kind = 'derived']</mixt_for>
-        <mixt_insert>element a:muton {
-	attribute target {$attribute/@xml:id},
-	attribute diagram {$attribute/root()/*/@xml:id},
-	attribute effect {'visibility'},
-	attribute desired {'false'},
-	local:actionProperties($action)
-}</mixt_insert>
+        <mixt_insert>local:muton($action, $attribute, 'visibility', 'false')</mixt_insert>
     </mixt_rule>
 </mixt_rules>
 		
 <mod_modstore>
     <mod_mods rule="r-dca" xml_id="_r-dca."/>
     <mod_mods rule="r-adaa" xml_id="_r-adaa."/>
-    <mod_mods rule="r-dkfm" xml_id="_r-dkfm."/>
     <mod_mods rule="r-am" xml_id="_r-am."/>
 </mod_modstore>
 		
