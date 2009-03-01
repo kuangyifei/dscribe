@@ -4,7 +4,7 @@
 	<include href='diagrams/lib/uml-actions.lzx'/>
 	
 	<Editor x = '20' y = '20' width = '${parent.width - 40}' height = '360' editMode = 'true' highSerial = '0' actionIdBase = 'a2-6-'>
-		
+
 <uml_diagram diagram="d1-1192" kind="class" xml_id="_r-cd.m1-1193.2.">
     <uml_class depicts="j1-232" xml_id="_r-cctd.m1-1227.j1-232._r-cd.m1-1193.2..3.">
         <uml_blockname xml_id="_r-ccn.j1-232._r-cctd.m1-1227.j1-232._r-cd.m1-1193.2..3..2.">KeyMod</uml_blockname>
@@ -113,7 +113,7 @@
         </uml_compartment>
     </uml_class>
 </uml_diagram>
-		
+
 <mixt_rules>
     <mixt_function name="scope" args="$action">if ($action/@scope='diagram') then /id($action/@diagram) else /uml:diagram
 </mixt_function>
@@ -179,6 +179,7 @@
 <a_triggers kind="derived" xml_id="_r-ctc.1."/>
 
 <a_triggers kind = 'session' xml_id = 'history'/>
-		
+
 	</Editor>
+
 </canvas>

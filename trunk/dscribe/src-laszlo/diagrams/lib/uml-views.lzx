@@ -36,7 +36,6 @@
 		onmousedown = 'dragger.apply()'
 		onmouseup = 'dragger.remove()'
 		width = '150'>
-	<attribute name = 'defaultplacement' value = 'contents' type = 'string'/>
 	<attribute name = 'padding' value = '$style{"padding"}' type = 'size'/>
 	<attribute name = 'color' value = '$style{"color"}' type = 'color'/>
 	<attribute name = 'xml_id' type = 'string'/>
@@ -67,11 +66,11 @@
 			if (!this.findAncestorProperty("editMode")) this.remove();
 		</handler>
 	</resizestatelimits>
-	
+    
 	<rect width = '${parent.width}' height = '${parent.height}'
 		fillAlpha = '0.7' fillColor = 'white'
 		strokeAlpha = '1.0' strokeColor = '${parent.color}'/>
-    
+	
 	<view name = 'inside' x = '1' y = '1' width = '${parent.width-2}' height = '${parent.height-2}' clip = 'true'>
 		<vbox name = 'contents'
 			x = '${classroot.padding}' y = '${classroot.padding}'
@@ -81,10 +80,10 @@
 			side = 'bottom'/>
 	</view>
 
-	<sizecorner resizer = '$once{parent.resizer}' visible = '${this.findAncestor("editMode").editMode}'/>
-	
+	<sizecorner resizer = '$once{parent.resizer}' visible = '${this.findAncestorProperty("editMode")}'/>
+
 	<method name = 'init'><![CDATA[
-		super.init();
+		console.log('class init'); super.init();
 		var minheight = 19 + 2*padding;
 		var fullheight = inside.contents.height + 2*(padding + 1);
 		if (height < minheight) setAttribute("height", fullheight);

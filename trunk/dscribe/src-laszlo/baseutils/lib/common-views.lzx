@@ -55,30 +55,30 @@ bracketselector {
 	<handler name = 'onstrokeAlpha' method = 'redrawStroke'/>
 	<handler name = 'onstrokeColor' method = 'redrawStroke'/>
 	<method name = 'redraw' args = '_'>
-		if (!context) return;
-		clear();
-		beginPath();
-		this.drawRect(0, 0, width-1, height-1, cornerRadius);
-		redrawFill(null);
-		redrawStroke(null);
+		if (!this.context) return;
+		this.clear();
+		this.beginPath();
+		this.rect(0, 0, this.width-1, this.height-1, this.cornerRadius);
+		this.redrawFill(null);
+		this.redrawStroke(null);
 	</method>
 	<method name = 'redrawStroke' args = '_'>
-		if (!visible || !context) return;
-		this.globalAlpha = strokeAlpha;
-		this.strokeStyle = strokeColor;
+		if (!this.visible || !this.context) return;
+		this.globalAlpha = this.strokeAlpha;
+		this.strokeStyle = this.strokeColor;
 		this.lineWidth = 0;
-		stroke();
+		this.stroke();
 	</method>
 	<method name = 'redrawFill' args = '_'>
-		if (!visible || !context) return;
+		if (!this.visible || !this.context) return;
 		if (this['fillColor']) {
-			this.globalAlpha = fillAlpha;
-			this.fillStyle = fillColor;
+			this.globalAlpha = this.fillAlpha;
+			this.fillStyle = this.fillColor;
 		} else {
 			this.globalAlpha = 0;
-			this.fillColor = 0x000000;
+			this.fillStyle = 0x000000;
 		}
-		fill();
+		this.fill();
 	</method>
 </class>
 
