@@ -1,0 +1,179 @@
+<uml:diagram xmlns:uml="http://ideanest.com/dscribe/ns/uml" diagram="d1-1307" kind="class" xml:id="_r-cd.m1-1308.2.">
+    <uml:class depicts="j1-831" xml:id="_r-cctd.m1-1309.j1-831._r-cd.m1-1308.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-831._r-cctd.m1-1309.j1-831._r-cd.m1-1308.2..3..2.">ForSeg</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1309.j1-831._r-cd.m1-1308.2..3..1-1."/>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1309.j1-831._r-cd.m1-1308.2..3..1-2.">
+            <uml:operation depicts="j1-832" xml:id="_r-cmto.j1-832._r-ccc._r-cctd.m1-1309.j1-831._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>ForSeg</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>mod</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-833" xml:id="_r-cmto.j1-833._r-ccc._r-cctd.m1-1309.j1-831._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>bindVariable</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>value</uml:name>
+                        <uml:type>org.exist.fluent.Resource</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-834" xml:id="_r-cmto.j1-834._r-ccc._r-cctd.m1-1309.j1-831._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>analyze</uml:name>
+                <uml:args/>
+                <uml:type>QueryAnalysis</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-952" xml:id="_r-cctd.m1-1325.j1-952._r-cd.m1-1308.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-952._r-cctd.m1-1325.j1-952._r-cd.m1-1308.2..3..2.">SortByProxyBlock</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1325.j1-952._r-cd.m1-1308.2..3..1-1.">
+            <uml:attribute depicts="j1-955" xml:id="_r-cfta.j1-955._r-ccc._r-cctd.m1-1325.j1-952._r-cd.m1-1308.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>NODE_ORDER_COMPARATOR</uml:name>
+                    <uml:type>java.util.Comparator</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1325.j1-952._r-cd.m1-1308.2..3..1-2.">
+            <uml:operation depicts="j1-953" xml:id="_r-cmto.j1-953._r-ccc._r-cctd.m1-1325.j1-952._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>SortByProxyBlock</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>def</uml:name>
+                        <uml:type>org.exist.fluent.Node</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-954" xml:id="_r-cmto.j1-954._r-ccc._r-cctd.m1-1325.j1-952._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>resolveOrder</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>modBuilder</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod.Builder</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>node</uml:name>
+                        <uml:type>org.exist.fluent.Node</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-956" xml:id="_r-cmto.j1-956._r-ccc._r-cctd.m1-1325.j1-952._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>sort</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>segs</uml:name>
+                        <uml:type>java.util.Collection</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>graph</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.OrderGraph</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-957" xml:id="_r-cmto.j1-957._r-ccc._r-cctd.m1-1325.j1-952._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>createSeg</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>mod</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>com.ideanest.dscribe.mixt.Seg</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-1121" xml:id="_r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-1121._r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3..2.">TestClassRunnerForParameters</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3..1-1.">
+            <uml:attribute depicts="j1-1122" xml:id="_r-cfta.j1-1122._r-ccc._r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>parameters</uml:name>
+                    <uml:type>java.lang.Object[]</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1123" xml:id="_r-cfta.j1-1123._r-ccc._r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>constructor</uml:name>
+                    <uml:type>java.lang.reflect.Constructor</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1124" xml:id="_r-cfta.j1-1124._r-ccc._r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>runMethod</uml:name>
+                    <uml:type>java.lang.reflect.Method</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3..1-2.">
+            <uml:operation depicts="j1-1125" xml:id="_r-cmto.j1-1125._r-ccc._r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>TestClassRunnerForParameters</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>testClass</uml:name>
+                        <uml:type>org.junit.internal.runners.TestClass</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>runMethod</uml:name>
+                        <uml:type>java.lang.reflect.Method</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>parameters</uml:name>
+                        <uml:type>java.lang.Object[]</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-1126" xml:id="_r-cmto.j1-1126._r-ccc._r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>createTest</uml:name>
+                <uml:args/>
+                <uml:type>java.lang.Object</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1127" xml:id="_r-cmto.j1-1127._r-ccc._r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>getName</uml:name>
+                <uml:args/>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1128" xml:id="_r-cmto.j1-1128._r-ccc._r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>testName</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>method</uml:name>
+                        <uml:type>java.lang.reflect.Method</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1129" xml:id="_r-cmto.j1-1129._r-ccc._r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>getDescription</uml:name>
+                <uml:args/>
+                <uml:type>org.junit.runner.Description</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1130" xml:id="_r-cmto.j1-1130._r-ccc._r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>getOnlyConstructor</uml:name>
+                <uml:args/>
+                <uml:type>java.lang.reflect.Constructor</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1131" xml:id="_r-cmto.j1-1131._r-ccc._r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>validate</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1132" xml:id="_r-cmto.j1-1132._r-ccc._r-cctd.m1-1349.j1-1121._r-cd.m1-1308.2..3..1-2..2.">
+                <uml:name>run</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>notifier</uml:name>
+                        <uml:type>org.junit.runner.notification.RunNotifier</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+</uml:diagram>

@@ -1,0 +1,180 @@
+<uml:diagram xmlns:uml="http://ideanest.com/dscribe/ns/uml" diagram="d1-1180" kind="class" xml:id="_r-cd.m1-1181.2.">
+    <uml:class depicts="j1-1" xml:id="_r-cctd.m1-1182.j1-1._r-cd.m1-1181.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-1._r-cctd.m1-1182.j1-1._r-cd.m1-1181.2..3..2.">Accumulator</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1182.j1-1._r-cd.m1-1181.2..3..1-1.">
+            <uml:attribute depicts="j1-9" xml:id="_r-cfta.j1-9._r-ccc._r-cctd.m1-1182.j1-1._r-cd.m1-1181.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>head</uml:name>
+                    <uml:type>Cell</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1182.j1-1._r-cd.m1-1181.2..3..1-2.">
+            <uml:operation depicts="j1-10" xml:id="_r-cmto.j1-10._r-ccc._r-cctd.m1-1182.j1-1._r-cd.m1-1181.2..3..1-2..2.">
+                <uml:name>Accumulator</uml:name>
+                <uml:args/>
+            </uml:operation>
+            <uml:operation depicts="j1-11" xml:id="_r-cmto.j1-11._r-ccc._r-cctd.m1-1182.j1-1._r-cd.m1-1181.2..3..1-2..2.">
+                <uml:name>Accumulator</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>head</uml:name>
+                        <uml:type>Cell</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-12" xml:id="_r-cmto.j1-12._r-ccc._r-cctd.m1-1182.j1-1._r-cd.m1-1181.2..3..1-2..2.">
+                <uml:name>update</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-13" xml:id="_r-cmto.j1-13._r-ccc._r-cctd.m1-1182.j1-1._r-cd.m1-1181.2..3..1-2..2.">
+                <uml:name>add</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>element</uml:name>
+                        <uml:type>E</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-14" xml:id="_r-cmto.j1-14._r-ccc._r-cctd.m1-1182.j1-1._r-cd.m1-1181.2..3..1-2..2.">
+                <uml:name>addAll</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>elements</uml:name>
+                        <uml:type>java.util.Collection</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-15" xml:id="_r-cmto.j1-15._r-ccc._r-cctd.m1-1182.j1-1._r-cd.m1-1181.2..3..1-2..2.">
+                <uml:name>anchor</uml:name>
+                <uml:args/>
+                <uml:type>Locator</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-102" xml:id="_r-cctd.m1-1210.j1-102._r-cd.m1-1181.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-102._r-cctd.m1-1210.j1-102._r-cd.m1-1181.2..3..2.">Stats</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1210.j1-102._r-cd.m1-1181.2..3..1-1.">
+            <uml:attribute depicts="j1-103" xml:id="_r-cfta.j1-103._r-ccc._r-cctd.m1-1210.j1-102._r-cd.m1-1181.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>numCycles</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Counter</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-104" xml:id="_r-cfta.j1-104._r-ccc._r-cctd.m1-1210.j1-102._r-cd.m1-1181.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>numBlocksVerified</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Counter</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-105" xml:id="_r-cfta.j1-105._r-ccc._r-cctd.m1-1210.j1-102._r-cd.m1-1181.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>numBlocksResolved</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Counter</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-106" xml:id="_r-cfta.j1-106._r-ccc._r-cctd.m1-1210.j1-102._r-cd.m1-1181.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>numModsRestored</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Counter</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-107" xml:id="_r-cfta.j1-107._r-ccc._r-cctd.m1-1210.j1-102._r-cd.m1-1181.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>numModsCompleted</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Counter</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-108" xml:id="_r-cfta.j1-108._r-ccc._r-cctd.m1-1210.j1-102._r-cd.m1-1181.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>numModsWithdrawn</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Counter</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-109" xml:id="_r-cfta.j1-109._r-ccc._r-cctd.m1-1210.j1-102._r-cd.m1-1181.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>numOrdersChecked</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Counter</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-110" xml:id="_r-cfta.j1-110._r-ccc._r-cctd.m1-1210.j1-102._r-cd.m1-1181.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>numElementsMoved</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Counter</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1210.j1-102._r-cd.m1-1181.2..3..1-2."/>
+    </uml:class>
+    <uml:class depicts="j1-924" xml:id="_r-cctd.m1-1320.j1-924._r-cd.m1-1181.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-924._r-cctd.m1-1320.j1-924._r-cd.m1-1181.2..3..2.">Sort</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1320.j1-924._r-cd.m1-1181.2..3..1-1."/>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1320.j1-924._r-cd.m1-1181.2..3..1-2.">
+            <uml:operation depicts="j1-925" xml:id="_r-cmto.j1-925._r-ccc._r-cctd.m1-1320.j1-924._r-cd.m1-1181.2..3..1-2..2.">
+                <uml:name>version</uml:name>
+                <uml:args/>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-926" xml:id="_r-cmto.j1-926._r-ccc._r-cctd.m1-1320.j1-924._r-cd.m1-1181.2..3..1-2..2.">
+                <uml:name>xmlName</uml:name>
+                <uml:args/>
+                <uml:type>org.exist.fluent.QName</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-927" xml:id="_r-cmto.j1-927._r-ccc._r-cctd.m1-1320.j1-924._r-cd.m1-1181.2..3..1-2..2.">
+                <uml:name>define</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>def</uml:name>
+                        <uml:type>org.exist.fluent.Node</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>com.ideanest.dscribe.mixt.Block</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-1110" xml:id="_r-cctd.m1-1346.j1-1110._r-cd.m1-1181.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-1110._r-cctd.m1-1346.j1-1110._r-cd.m1-1181.2..3..2.">CollectionMatcher</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1346.j1-1110._r-cd.m1-1181.2..3..1-1.">
+            <uml:attribute depicts="j1-1111" xml:id="_r-cfta.j1-1111._r-ccc._r-cctd.m1-1346.j1-1110._r-cd.m1-1181.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>contents</uml:name>
+                    <uml:type>java.lang.Object[]</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1346.j1-1110._r-cd.m1-1181.2..3..1-2.">
+            <uml:operation depicts="j1-1112" xml:id="_r-cmto.j1-1112._r-ccc._r-cctd.m1-1346.j1-1110._r-cd.m1-1181.2..3..1-2..2.">
+                <uml:name>CollectionMatcher</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>contents</uml:name>
+                        <uml:type>java.lang.Object[]</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-1113" xml:id="_r-cmto.j1-1113._r-ccc._r-cctd.m1-1346.j1-1110._r-cd.m1-1181.2..3..1-2..2.">
+                <uml:name>matches</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>o</uml:name>
+                        <uml:type>java.lang.Object</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>boolean</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1114" xml:id="_r-cmto.j1-1114._r-ccc._r-cctd.m1-1346.j1-1110._r-cd.m1-1181.2..3..1-2..2.">
+                <uml:name>describeTo</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>description</uml:name>
+                        <uml:type>org.hamcrest.Description</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+</uml:diagram>

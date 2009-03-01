@@ -1,0 +1,22 @@
+<uml:diagram xmlns:uml="http://ideanest.com/dscribe/ns/uml" diagram="d1-1286" kind="class" xml:id="_r-cd.m1-1287.2.">
+    <uml:class depicts="j1-1037" xml:id="_r-cctd.m1-1339.j1-1037._r-cd.m1-1287.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-1037._r-cctd.m1-1339.j1-1037._r-cd.m1-1287.2..3..2.">WithAnySomeSeg</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1339.j1-1037._r-cd.m1-1287.2..3..1-1."/>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1339.j1-1037._r-cd.m1-1287.2..3..1-2.">
+            <uml:operation depicts="j1-1038" xml:id="_r-cmto.j1-1038._r-ccc._r-cctd.m1-1339.j1-1037._r-cd.m1-1287.2..3..1-2..2.">
+                <uml:name>WithAnySomeSeg</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>mod</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-1039" xml:id="_r-cmto.j1-1039._r-ccc._r-cctd.m1-1339.j1-1037._r-cd.m1-1287.2..3..1-2..2.">
+                <uml:name>restore</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+</uml:diagram>

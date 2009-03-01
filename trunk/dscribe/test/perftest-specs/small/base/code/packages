@@ -1,0 +1,5 @@
+<packages xmlns="http://ideanest.com/dscribe/ns/java">
+    <package xml:id="j1-1172">com.ideanest.dscribe.mixt</package>
+    <package xml:id="j1-1173">com.ideanest.dscribe.mixt.blocks</package>
+    <package xml:id="j1-1174">com.ideanest.dscribe.mixt.test</package>
+</packages>

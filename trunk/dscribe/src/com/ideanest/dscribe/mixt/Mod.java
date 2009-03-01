@@ -182,7 +182,9 @@ public class Mod {
 		references = Collections.unmodifiableList(Arrays.asList(
 				node.query().all(
 						// resolve all references, filling in ones that failed with a placeholder that could never be referenced
-						"for $ref in reference return (doc(concat($_1, '/', $ref/@doc))/id($ref/@refid), $_2)[1]",
+						"for $ref in reference return " +
+						"	let $docname := concat($_1, '/', $ref/@doc) " +
+						"	return if (doc-available($docname)) then (doc($docname)/id($ref/@refid), $_2)[1] else $_2",
 						Database.ROOT_PREFIX + rule.engine.workspace().path(), node).nodes().toArray()));
 		for (Node ref : references) {
 			if (ref.equals(node)) throw new TransformException("failed to resolve at least one reference");

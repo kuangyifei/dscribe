@@ -1,0 +1,251 @@
+<uml:diagram xmlns:uml="http://ideanest.com/dscribe/ns/uml" diagram="d1-1225" kind="class" xml:id="_r-cd.m1-1226.2.">
+    <uml:class depicts="j1-232" xml:id="_r-cctd.m1-1227.j1-232._r-cd.m1-1226.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-232._r-cctd.m1-1227.j1-232._r-cd.m1-1226.2..3..2.">KeyMod</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1227.j1-232._r-cd.m1-1226.2..3..1-1.">
+            <uml:attribute depicts="j1-233" xml:id="_r-cfta.j1-233._r-ccc._r-cctd.m1-1227.j1-232._r-cd.m1-1226.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>variableBindings</uml:name>
+                    <uml:type>java.util.Map</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-234" xml:id="_r-cfta.j1-234._r-ccc._r-cctd.m1-1227.j1-232._r-cd.m1-1226.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>key</uml:name>
+                    <uml:type>java.lang.String</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1227.j1-232._r-cd.m1-1226.2..3..1-2.">
+            <uml:operation depicts="j1-235" xml:id="_r-cmto.j1-235._r-ccc._r-cctd.m1-1227.j1-232._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>KeyMod</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>rule</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Rule</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-236" xml:id="_r-cmto.j1-236._r-ccc._r-cctd.m1-1227.j1-232._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>KeyMod</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>parent</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>key</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-237" xml:id="_r-cmto.j1-237._r-ccc._r-cctd.m1-1227.j1-232._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>variableBindings</uml:name>
+                <uml:args/>
+                <uml:type>java.util.Map</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-238" xml:id="_r-cmto.j1-238._r-ccc._r-cctd.m1-1227.j1-232._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>key</uml:name>
+                <uml:args/>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-239" xml:id="_r-cmto.j1-239._r-ccc._r-cctd.m1-1227.j1-232._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>toString</uml:name>
+                <uml:args/>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-444" xml:id="_r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-444._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..2.">OrderGraph</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-1.">
+            <uml:attribute depicts="j1-445" xml:id="_r-cfta.j1-445._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>target</uml:name>
+                    <uml:type>org.exist.fluent.Node</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-446" xml:id="_r-cfta.j1-446._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>numNodes</uml:name>
+                    <uml:type>int</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-447" xml:id="_r-cfta.j1-447._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>nodeIndex</uml:name>
+                    <uml:type>java.util.Map</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-448" xml:id="_r-cfta.j1-448._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>naturalNodeOrder</uml:name>
+                    <uml:type>int[]</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-449" xml:id="_r-cfta.j1-449._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>edges</uml:name>
+                    <uml:type>int[]</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-450" xml:id="_r-cfta.j1-450._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>maxes</uml:name>
+                    <uml:type>int[]</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-451" xml:id="_r-cfta.j1-451._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>placed</uml:name>
+                    <uml:type>boolean[]</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-2.">
+            <uml:operation depicts="j1-452" xml:id="_r-cmto.j1-452._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>OrderGraph</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>target</uml:name>
+                        <uml:type>org.exist.fluent.Node</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-453" xml:id="_r-cmto.j1-453._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>order</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>first</uml:name>
+                        <uml:type>org.exist.fluent.Node</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>second</uml:name>
+                        <uml:type>org.exist.fluent.Node</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>priority</uml:name>
+                        <uml:type>int</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-454" xml:id="_r-cmto.j1-454._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>order</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>firstNodeId</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>secondNodeId</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>priority</uml:name>
+                        <uml:type>int</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-455" xml:id="_r-cmto.j1-455._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>applyOrder</uml:name>
+                <uml:args/>
+                <uml:type>int</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-456" xml:id="_r-cmto.j1-456._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>minMax</uml:name>
+                <uml:args/>
+                <uml:type>int</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-457" xml:id="_r-cmto.j1-457._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>calculateMaxes</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-458" xml:id="_r-cmto.j1-458._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>calculateMaxIncomingPriority</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>toIndex</uml:name>
+                        <uml:type>int</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-459" xml:id="_r-cmto.j1-459._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>edge</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>fromIndex</uml:name>
+                        <uml:type>int</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>toIndex</uml:name>
+                        <uml:type>int</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>int</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-460" xml:id="_r-cmto.j1-460._r-ccc._r-cctd.m1-1251.j1-444._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>setEdge</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>fromIndex</uml:name>
+                        <uml:type>int</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>toIndex</uml:name>
+                        <uml:type>int</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>priority</uml:name>
+                        <uml:type>int</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-1120" xml:id="_r-cctd.m1-1348.j1-1120._r-cd.m1-1226.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-1120._r-cctd.m1-1348.j1-1120._r-cd.m1-1226.2..3..2.">ParameterizedShowingArgs</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1348.j1-1120._r-cd.m1-1226.2..3..1-1.">
+            <uml:attribute depicts="j1-1134" xml:id="_r-cfta.j1-1134._r-ccc._r-cctd.m1-1348.j1-1120._r-cd.m1-1226.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>testClass</uml:name>
+                    <uml:type>org.junit.internal.runners.TestClass</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1348.j1-1120._r-cd.m1-1226.2..3..1-2.">
+            <uml:operation depicts="j1-1135" xml:id="_r-cmto.j1-1135._r-ccc._r-cctd.m1-1348.j1-1120._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>ParameterizedShowingArgs</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>klass</uml:name>
+                        <uml:type>java.lang.Class</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-1136" xml:id="_r-cmto.j1-1136._r-ccc._r-cctd.m1-1348.j1-1120._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>run</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>notifier</uml:name>
+                        <uml:type>org.junit.runner.notification.RunNotifier</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1137" xml:id="_r-cmto.j1-1137._r-ccc._r-cctd.m1-1348.j1-1120._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>getParametersList</uml:name>
+                <uml:args/>
+                <uml:type>java.util.Collection</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1138" xml:id="_r-cmto.j1-1138._r-ccc._r-cctd.m1-1348.j1-1120._r-cd.m1-1226.2..3..1-2..2.">
+                <uml:name>getParametersMethod</uml:name>
+                <uml:args/>
+                <uml:type>java.lang.reflect.Method</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+</uml:diagram>

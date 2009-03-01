@@ -1,0 +1,8 @@
+## load rules resources/transforms/java-to-uml.mxc
+
+## load directory test/perftest-specs/small/base
+
+#### run 1
+
+## check directory test/perftest-specs/small/final
+

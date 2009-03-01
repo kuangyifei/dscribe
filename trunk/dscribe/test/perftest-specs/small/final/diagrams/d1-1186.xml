@@ -1,0 +1,199 @@
+<uml:diagram xmlns:uml="http://ideanest.com/dscribe/ns/uml" diagram="d1-1186" kind="class" xml:id="_r-cd.m1-1187.2.">
+    <uml:class depicts="j1-5" xml:id="_r-cctd.m1-1188.j1-5._r-cd.m1-1187.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-5._r-cctd.m1-1188.j1-5._r-cd.m1-1187.2..3..2.">Locator</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1188.j1-5._r-cd.m1-1187.2..3..1-1.">
+            <uml:attribute depicts="j1-6" xml:id="_r-cfta.j1-6._r-ccc._r-cctd.m1-1188.j1-5._r-cd.m1-1187.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>ref</uml:name>
+                    <uml:type>Cell</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1188.j1-5._r-cd.m1-1187.2..3..1-2.">
+            <uml:operation depicts="j1-7" xml:id="_r-cmto.j1-7._r-ccc._r-cctd.m1-1188.j1-5._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>Locator</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>ref</uml:name>
+                        <uml:type>Cell</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-8" xml:id="_r-cmto.j1-8._r-ccc._r-cctd.m1-1188.j1-5._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>catchUp</uml:name>
+                <uml:args/>
+                <uml:type>java.util.Set</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-344" xml:id="_r-cctd.m1-1241.j1-344._r-cd.m1-1187.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-344._r-cctd.m1-1241.j1-344._r-cd.m1-1187.2..3..2.">DependencyModifier</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1241.j1-344._r-cd.m1-1187.2..3..1-1.">
+            <uml:attribute depicts="j1-345" xml:id="_r-cfta.j1-345._r-ccc._r-cctd.m1-1241.j1-344._r-cd.m1-1187.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>docNames</uml:name>
+                    <uml:type>java.util.Set</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1241.j1-344._r-cd.m1-1187.2..3..1-2.">
+            <uml:operation depicts="j1-346" xml:id="_r-cmto.j1-346._r-ccc._r-cctd.m1-1241.j1-344._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>add</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>docName</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-347" xml:id="_r-cmto.j1-347._r-ccc._r-cctd.m1-1241.j1-344._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>addAll</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>docNames_</uml:name>
+                        <uml:type>java.util.Collection</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-348" xml:id="_r-cmto.j1-348._r-ccc._r-cctd.m1-1241.j1-344._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>unverified</uml:name>
+                <uml:args/>
+                <uml:type>com.ideanest.dscribe.mixt.Mod.Builder.DependencyModifier</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-735" xml:id="_r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-735._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..2.">Transformer</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-1.">
+            <uml:attribute depicts="j1-736" xml:id="_r-cfta.j1-736._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>LOG</uml:name>
+                    <uml:type>org.apache.log4j.Logger</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-737" xml:id="_r-cfta.j1-737._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>recordsRootPath</uml:name>
+                    <uml:type>java.lang.String</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-740" xml:id="_r-cfta.j1-740._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>workspace</uml:name>
+                    <uml:type>org.exist.fluent.Folder</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-741" xml:id="_r-cfta.j1-741._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>rulespace</uml:name>
+                    <uml:type>org.exist.fluent.Folder</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-742" xml:id="_r-cfta.j1-742._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>recordspace</uml:name>
+                    <uml:type>org.exist.fluent.Folder</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-2.">
+            <uml:operation depicts="j1-738" xml:id="_r-cmto.j1-738._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>recordsRootPath</uml:name>
+                <uml:args/>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-739" xml:id="_r-cmto.j1-739._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>setRecordsRootPath</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>path</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-743" xml:id="_r-cmto.j1-743._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>Transformer</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>workspace</uml:name>
+                        <uml:type>org.exist.fluent.Folder</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>ruleRepository</uml:name>
+                        <uml:type>org.exist.fluent.Folder</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-744" xml:id="_r-cmto.j1-744._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>Transformer</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>workspace</uml:name>
+                        <uml:type>org.exist.fluent.Folder</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>rulespace</uml:name>
+                        <uml:type>org.exist.fluent.Folder</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>recordspace</uml:name>
+                        <uml:type>org.exist.fluent.Folder</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-745" xml:id="_r-cmto.j1-745._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>createRecordspace</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-746" xml:id="_r-cmto.j1-746._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>executeOnce</uml:name>
+                <uml:args/>
+                <uml:type>com.ideanest.dscribe.mixt.Engine.Stats</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-747" xml:id="_r-cmto.j1-747._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>findXmlDocsModifiedSince</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>lastRunDate</uml:name>
+                        <uml:type>java.util.Date</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.util.Collection</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-748" xml:id="_r-cmto.j1-748._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>wipeRecords</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-749" xml:id="_r-cmto.j1-749._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>loadCompactRules</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>ruleDefinitionsFile</uml:name>
+                        <uml:type>java.io.File</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-750" xml:id="_r-cmto.j1-750._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>initModStore</uml:name>
+                <uml:args/>
+                <uml:type>org.exist.fluent.Node</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-751" xml:id="_r-cmto.j1-751._r-ccc._r-cctd.m1-1295.j1-735._r-cd.m1-1187.2..3..1-2..2.">
+                <uml:name>recordRun</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>lastRunDate</uml:name>
+                        <uml:type>java.util.Date</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+</uml:diagram>
