@@ -1,0 +1,166 @@
+<uml:diagram xmlns:uml="http://ideanest.com/dscribe/ns/uml" diagram="d1-1198" kind="class" xml:id="_r-cd.m1-1199.2.">
+    <uml:class depicts="j1-33" xml:id="_r-cctd.m1-1200.j1-33._r-cd.m1-1199.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-33._r-cctd.m1-1200.j1-33._r-cd.m1-1199.2..3..2.">CompactFormTranslator</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1200.j1-33._r-cd.m1-1199.2..3..1-1.">
+            <uml:attribute depicts="j1-34" xml:id="_r-cfta.j1-34._r-ccc._r-cctd.m1-1200.j1-33._r-cd.m1-1199.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>INDENT_PATTERN</uml:name>
+                    <uml:type>java.util.regex.Pattern</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-35" xml:id="_r-cfta.j1-35._r-ccc._r-cctd.m1-1200.j1-33._r-cd.m1-1199.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>RULE_PATTERN</uml:name>
+                    <uml:type>java.util.regex.Pattern</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-36" xml:id="_r-cfta.j1-36._r-ccc._r-cctd.m1-1200.j1-33._r-cd.m1-1199.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>FUNCTION_PATTERN</uml:name>
+                    <uml:type>java.util.regex.Pattern</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1200.j1-33._r-cd.m1-1199.2..3..1-2.">
+            <uml:operation depicts="j1-37" xml:id="_r-cmto.j1-37._r-ccc._r-cctd.m1-1200.j1-33._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>CompactFormTranslator</uml:name>
+                <uml:args/>
+            </uml:operation>
+            <uml:operation depicts="j1-38" xml:id="_r-cmto.j1-38._r-ccc._r-cctd.m1-1200.j1-33._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>compactToXml</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>compactFormTextReader</uml:name>
+                        <uml:type>java.io.Reader</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>org.exist.fluent.Source.XML</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-39" xml:id="_r-cmto.j1-39._r-ccc._r-cctd.m1-1200.j1-33._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>escapeXMLChars</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>raw</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-558" xml:id="_r-cctd.m1-1272.j1-558._r-cd.m1-1199.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-558._r-cctd.m1-1272.j1-558._r-cd.m1-1199.2..3..2.">_ConstructorTest</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1272.j1-558._r-cd.m1-1199.2..3..1-1.">
+            <uml:attribute depicts="j1-559" xml:id="_r-cfta.j1-559._r-ccc._r-cctd.m1-1272.j1-558._r-cd.m1-1199.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>engine</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Engine</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-560" xml:id="_r-cfta.j1-560._r-ccc._r-cctd.m1-1272.j1-558._r-cd.m1-1199.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>modStore</uml:name>
+                    <uml:type>org.exist.fluent.Node</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-561" xml:id="_r-cfta.j1-561._r-ccc._r-cctd.m1-1272.j1-558._r-cd.m1-1199.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>ruleDoc</uml:name>
+                    <uml:type>org.exist.fluent.XMLDocument</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-562" xml:id="_r-cfta.j1-562._r-ccc._r-cctd.m1-1272.j1-558._r-cd.m1-1199.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>mockery</uml:name>
+                    <uml:type>org.jmock.Mockery</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1272.j1-558._r-cd.m1-1199.2..3..1-2.">
+            <uml:operation depicts="j1-563" xml:id="_r-cmto.j1-563._r-ccc._r-cctd.m1-1272.j1-558._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>setUp</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-564" xml:id="_r-cmto.j1-564._r-ccc._r-cctd.m1-1272.j1-558._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>makeRule</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>attributes</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>xml</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>org.exist.fluent.Node</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-565" xml:id="_r-cmto.j1-565._r-ccc._r-cctd.m1-1272.j1-558._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>sameDefsWithName</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-566" xml:id="_r-cmto.j1-566._r-ccc._r-cctd.m1-1272.j1-558._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>sameDefsWithoutName</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-567" xml:id="_r-cmto.j1-567._r-ccc._r-cctd.m1-1272.j1-558._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>diffDefsStage0</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-568" xml:id="_r-cmto.j1-568._r-ccc._r-cctd.m1-1272.j1-558._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>diffDefsStage2</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-835" xml:id="_r-cctd.m1-1310.j1-835._r-cd.m1-1199.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-835._r-cctd.m1-1310.j1-835._r-cd.m1-1199.2..3..2.">ForEachSeg</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1310.j1-835._r-cd.m1-1199.2..3..1-1."/>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1310.j1-835._r-cd.m1-1199.2..3..1-2.">
+            <uml:operation depicts="j1-836" xml:id="_r-cmto.j1-836._r-ccc._r-cctd.m1-1310.j1-835._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>ForEachSeg</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>mod</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-837" xml:id="_r-cmto.j1-837._r-ccc._r-cctd.m1-1310.j1-835._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>restore</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-838" xml:id="_r-cmto.j1-838._r-ccc._r-cctd.m1-1310.j1-835._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>verify</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-839" xml:id="_r-cmto.j1-839._r-ccc._r-cctd.m1-1310.j1-835._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>insert</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>node</uml:name>
+                        <uml:type>org.exist.fluent.Node</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>org.exist.fluent.Node</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-840" xml:id="_r-cmto.j1-840._r-ccc._r-cctd.m1-1310.j1-835._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>canInsertMultiple</uml:name>
+                <uml:args/>
+                <uml:type>boolean</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-841" xml:id="_r-cmto.j1-841._r-ccc._r-cctd.m1-1310.j1-835._r-cd.m1-1199.2..3..1-2..2.">
+                <uml:name>targets</uml:name>
+                <uml:args/>
+                <uml:type>org.exist.fluent.ItemList</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+</uml:diagram>

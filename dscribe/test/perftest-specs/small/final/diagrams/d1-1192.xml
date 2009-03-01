@@ -1,0 +1,113 @@
+<uml:diagram xmlns:uml="http://ideanest.com/dscribe/ns/uml" diagram="d1-1192" kind="class" xml:id="_r-cd.m1-1193.2.">
+    <uml:class depicts="j1-141" xml:id="_r-cctd.m1-1214.j1-141._r-cd.m1-1193.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-141._r-cctd.m1-1214.j1-141._r-cd.m1-1193.2..3..2.">Function</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1214.j1-141._r-cd.m1-1193.2..3..1-1.">
+            <uml:attribute depicts="j1-142" xml:id="_r-cfta.j1-142._r-ccc._r-cctd.m1-1214.j1-141._r-cd.m1-1193.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>name</uml:name>
+                    <uml:type>org.exist.fluent.QName</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-143" xml:id="_r-cfta.j1-143._r-ccc._r-cctd.m1-1214.j1-141._r-cd.m1-1193.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>query</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Query.Items</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-144" xml:id="_r-cfta.j1-144._r-ccc._r-cctd.m1-1214.j1-141._r-cd.m1-1193.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>args</uml:name>
+                    <uml:type>java.lang.String</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-145" xml:id="_r-cfta.j1-145._r-ccc._r-cctd.m1-1214.j1-141._r-cd.m1-1193.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>referencedFunctionNames</uml:name>
+                    <uml:type>java.util.Set</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-146" xml:id="_r-cfta.j1-146._r-ccc._r-cctd.m1-1214.j1-141._r-cd.m1-1193.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>allReferencedFunctionsAndSelf</uml:name>
+                    <uml:type>java.util.Set</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1214.j1-141._r-cd.m1-1193.2..3..1-2.">
+            <uml:operation depicts="j1-147" xml:id="_r-cmto.j1-147._r-ccc._r-cctd.m1-1214.j1-141._r-cd.m1-1193.2..3..1-2..2.">
+                <uml:name>Function</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>def</uml:name>
+                        <uml:type>org.exist.fluent.Node</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-148" xml:id="_r-cmto.j1-148._r-ccc._r-cctd.m1-1214.j1-141._r-cd.m1-1193.2..3..1-2..2.">
+                <uml:name>isModified</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>prevModule</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Engine.Module</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>boolean</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-149" xml:id="_r-cmto.j1-149._r-ccc._r-cctd.m1-1214.j1-141._r-cd.m1-1193.2..3..1-2..2.">
+                <uml:name>resolveReferencedFunctions</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>module</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Engine.Module</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-150" xml:id="_r-cmto.j1-150._r-ccc._r-cctd.m1-1214.j1-141._r-cd.m1-1193.2..3..1-2..2.">
+                <uml:name>appendTo</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>out</uml:name>
+                        <uml:type>java.lang.StringBuilder</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-151" xml:id="_r-cmto.j1-151._r-ccc._r-cctd.m1-1214.j1-141._r-cd.m1-1193.2..3..1-2..2.">
+                <uml:name>compareTo</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>o</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Engine.Module.Function</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>int</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-821" xml:id="_r-cctd.m1-1305.j1-821._r-cd.m1-1193.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-821._r-cctd.m1-1305.j1-821._r-cd.m1-1193.2..3..2.">ForAllSeg</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1305.j1-821._r-cd.m1-1193.2..3..1-1."/>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1305.j1-821._r-cd.m1-1193.2..3..1-2.">
+            <uml:operation depicts="j1-822" xml:id="_r-cmto.j1-822._r-ccc._r-cctd.m1-1305.j1-821._r-cd.m1-1193.2..3..1-2..2.">
+                <uml:name>ForAllSeg</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>mod</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-823" xml:id="_r-cmto.j1-823._r-ccc._r-cctd.m1-1305.j1-821._r-cd.m1-1193.2..3..1-2..2.">
+                <uml:name>restore</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-824" xml:id="_r-cmto.j1-824._r-ccc._r-cctd.m1-1305.j1-821._r-cd.m1-1193.2..3..1-2..2.">
+                <uml:name>verify</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+</uml:diagram>

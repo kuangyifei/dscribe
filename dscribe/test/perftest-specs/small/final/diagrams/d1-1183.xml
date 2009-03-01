@@ -1,0 +1,211 @@
+<uml:diagram xmlns:uml="http://ideanest.com/dscribe/ns/uml" diagram="d1-1183" kind="class" xml:id="_r-cd.m1-1184.2.">
+    <uml:class depicts="j1-2" xml:id="_r-cctd.m1-1185.j1-2._r-cd.m1-1184.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-2._r-cctd.m1-1185.j1-2._r-cd.m1-1184.2..3..2.">Cell</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1185.j1-2._r-cd.m1-1184.2..3..1-1.">
+            <uml:attribute depicts="j1-3" xml:id="_r-cfta.j1-3._r-ccc._r-cctd.m1-1185.j1-2._r-cd.m1-1184.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>contents</uml:name>
+                    <uml:type>java.util.Set</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-4" xml:id="_r-cfta.j1-4._r-ccc._r-cctd.m1-1185.j1-2._r-cd.m1-1184.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>next</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Accumulator.Cell</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1185.j1-2._r-cd.m1-1184.2..3..1-2."/>
+    </uml:class>
+    <uml:class depicts="j1-618" xml:id="_r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-618._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..2.">_ModTest</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-1.">
+            <uml:attribute depicts="j1-619" xml:id="_r-cfta.j1-619._r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>blocks</uml:name>
+                    <uml:type>java.util.List</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-2.">
+            <uml:operation depicts="j1-620" xml:id="_r-cmto.j1-620._r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>setUp</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-621" xml:id="_r-cmto.j1-621._r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>mockModRestoreSequence</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>lastStage</uml:name>
+                        <uml:type>int</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.util.List</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-622" xml:id="_r-cmto.j1-622._r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>restoreMod1</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-623" xml:id="_r-cmto.j1-623._r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>restoreMod2</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-624" xml:id="_r-cmto.j1-624._r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>restoreMod3</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-625" xml:id="_r-cmto.j1-625._r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>processStageAtRootStageNoKeyHasMod</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-626" xml:id="_r-cmto.j1-626._r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>processStageAtRootStageIsKeyHasMod</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-627" xml:id="_r-cmto.j1-627._r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>processStageAtRootStageNoKeyNoMod</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-628" xml:id="_r-cmto.j1-628._r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>processStageAtRootStageIsKeyNoMod</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-629" xml:id="_r-cmto.j1-629._r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>processStageAtPreKeyStage</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-630" xml:id="_r-cmto.j1-630._r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>processStageAtPreLinearStageHasMod</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-631" xml:id="_r-cmto.j1-631._r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>processStageAtPreLinearStageNoMod</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-632" xml:id="_r-cmto.j1-632._r-ccc._r-cctd.m1-1278.j1-618._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>processStageUsesPrevMod</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-672" xml:id="_r-cctd.m1-1284.j1-672._r-cd.m1-1184.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-672._r-cctd.m1-1284.j1-672._r-cd.m1-1184.2..3..2.">Seg</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1284.j1-672._r-cd.m1-1184.2..3..1-1.">
+            <uml:attribute depicts="j1-673" xml:id="_r-cfta.j1-673._r-ccc._r-cctd.m1-1284.j1-672._r-cd.m1-1184.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>mod</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1284.j1-672._r-cd.m1-1184.2..3..1-2.">
+            <uml:operation depicts="j1-674" xml:id="_r-cmto.j1-674._r-ccc._r-cctd.m1-1284.j1-672._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>Seg</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>mod</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-675" xml:id="_r-cmto.j1-675._r-ccc._r-cctd.m1-1284.j1-672._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>analyze</uml:name>
+                <uml:args/>
+                <uml:type>org.exist.fluent.QueryService.QueryAnalysis</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-676" xml:id="_r-cmto.j1-676._r-ccc._r-cctd.m1-1284.j1-672._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>restore</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-677" xml:id="_r-cmto.j1-677._r-ccc._r-cctd.m1-1284.j1-672._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>verify</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-1006" xml:id="_r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-1006._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..2.">_SortBySiblingTest</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-1."/>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-2.">
+            <uml:operation depicts="j1-1007" xml:id="_r-cmto.j1-1007._r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>parse1</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1008" xml:id="_r-cmto.j1-1008._r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>parse2</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1009" xml:id="_r-cmto.j1-1009._r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>parse3</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1010" xml:id="_r-cmto.j1-1010._r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>resolveOrder1</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1011" xml:id="_r-cmto.j1-1011._r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>resolveOrder2</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1012" xml:id="_r-cmto.j1-1012._r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>resolveOrderEmpty</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1013" xml:id="_r-cmto.j1-1013._r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>resolveOrderNotSibling</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1014" xml:id="_r-cmto.j1-1014._r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>restore</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1015" xml:id="_r-cmto.j1-1015._r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>verify</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1016" xml:id="_r-cmto.j1-1016._r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>verifyMismatch</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1017" xml:id="_r-cmto.j1-1017._r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>verifyNotSibling</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1018" xml:id="_r-cmto.j1-1018._r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>sortBefore</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1019" xml:id="_r-cmto.j1-1019._r-ccc._r-cctd.m1-1334.j1-1006._r-cd.m1-1184.2..3..1-2..2.">
+                <uml:name>sortAfter</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+</uml:diagram>

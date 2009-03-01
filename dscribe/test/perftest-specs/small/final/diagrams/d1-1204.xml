@@ -1,0 +1,115 @@
+<uml:diagram xmlns:uml="http://ideanest.com/dscribe/ns/uml" diagram="d1-1204" kind="class" xml:id="_r-cd.m1-1205.2.">
+    <uml:class depicts="j1-86" xml:id="_r-cctd.m1-1206.j1-86._r-cd.m1-1205.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-86._r-cctd.m1-1206.j1-86._r-cd.m1-1205.2..3..2.">Counter</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1206.j1-86._r-cd.m1-1205.2..3..1-1.">
+            <uml:attribute depicts="j1-87" xml:id="_r-cfta.j1-87._r-ccc._r-cctd.m1-1206.j1-86._r-cd.m1-1205.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>value</uml:name>
+                    <uml:type>long</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-88" xml:id="_r-cfta.j1-88._r-ccc._r-cctd.m1-1206.j1-86._r-cd.m1-1205.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>messageFormat</uml:name>
+                    <uml:type>java.text.MessageFormat</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1206.j1-86._r-cd.m1-1205.2..3..1-2.">
+            <uml:operation depicts="j1-89" xml:id="_r-cmto.j1-89._r-ccc._r-cctd.m1-1206.j1-86._r-cd.m1-1205.2..3..1-2..2.">
+                <uml:name>Counter</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>pattern</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-90" xml:id="_r-cmto.j1-90._r-ccc._r-cctd.m1-1206.j1-86._r-cd.m1-1205.2..3..1-2..2.">
+                <uml:name>value</uml:name>
+                <uml:args/>
+                <uml:type>long</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-91" xml:id="_r-cmto.j1-91._r-ccc._r-cctd.m1-1206.j1-86._r-cd.m1-1205.2..3..1-2..2.">
+                <uml:name>increment</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-92" xml:id="_r-cmto.j1-92._r-ccc._r-cctd.m1-1206.j1-86._r-cd.m1-1205.2..3..1-2..2.">
+                <uml:name>increment</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>increment</uml:name>
+                        <uml:type>long</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-93" xml:id="_r-cmto.j1-93._r-ccc._r-cctd.m1-1206.j1-86._r-cd.m1-1205.2..3..1-2..2.">
+                <uml:name>toString</uml:name>
+                <uml:args/>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-94" xml:id="_r-cmto.j1-94._r-ccc._r-cctd.m1-1206.j1-86._r-cd.m1-1205.2..3..1-2..2.">
+                <uml:name>format</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>count</uml:name>
+                        <uml:type>long</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-95" xml:id="_r-cmto.j1-95._r-ccc._r-cctd.m1-1206.j1-86._r-cd.m1-1205.2..3..1-2..2.">
+                <uml:name>english</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>singular</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>plural</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>verb</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>com.ideanest.dscribe.mixt.Counter</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-947" xml:id="_r-cctd.m1-1324.j1-947._r-cd.m1-1205.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-947._r-cctd.m1-1324.j1-947._r-cd.m1-1205.2..3..2.">SortByValueSeg</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1324.j1-947._r-cd.m1-1205.2..3..1-1.">
+            <uml:attribute depicts="j1-948" xml:id="_r-cfta.j1-948._r-ccc._r-cctd.m1-1324.j1-947._r-cd.m1-1205.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>values</uml:name>
+                    <uml:type>java.util.List</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1324.j1-947._r-cd.m1-1205.2..3..1-2.">
+            <uml:operation depicts="j1-949" xml:id="_r-cmto.j1-949._r-ccc._r-cctd.m1-1324.j1-947._r-cd.m1-1205.2..3..1-2..2.">
+                <uml:name>SortByValueSeg</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>mod</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-950" xml:id="_r-cmto.j1-950._r-ccc._r-cctd.m1-1324.j1-947._r-cd.m1-1205.2..3..1-2..2.">
+                <uml:name>restore</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-951" xml:id="_r-cmto.j1-951._r-ccc._r-cctd.m1-1324.j1-947._r-cd.m1-1205.2..3..1-2..2.">
+                <uml:name>verify</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+</uml:diagram>

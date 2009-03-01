@@ -1,0 +1,62 @@
+<uml:diagram xmlns:uml="http://ideanest.com/dscribe/ns/uml" diagram="d1-1269" kind="class" xml:id="_r-cd.m1-1270.2.">
+    <uml:class depicts="j1-1024" xml:id="_r-cctd.m1-1336.j1-1024._r-cd.m1-1270.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-1024._r-cctd.m1-1336.j1-1024._r-cd.m1-1270.2..3..2.">WithBlock</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1336.j1-1024._r-cd.m1-1270.2..3..1-1.">
+            <uml:attribute depicts="j1-1025" xml:id="_r-cfta.j1-1025._r-ccc._r-cctd.m1-1336.j1-1024._r-cd.m1-1270.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>variableName</uml:name>
+                    <uml:type>org.exist.fluent.QName</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1026" xml:id="_r-cfta.j1-1026._r-ccc._r-cctd.m1-1336.j1-1024._r-cd.m1-1270.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>query</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Query.Items</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1027" xml:id="_r-cfta.j1-1027._r-ccc._r-cctd.m1-1336.j1-1024._r-cd.m1-1270.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>requiredVariables</uml:name>
+                    <uml:type>java.util.Collection</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1336.j1-1024._r-cd.m1-1270.2..3..1-2.">
+            <uml:operation depicts="j1-1028" xml:id="_r-cmto.j1-1028._r-ccc._r-cctd.m1-1336.j1-1024._r-cd.m1-1270.2..3..1-2..2.">
+                <uml:name>WithBlock</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>def</uml:name>
+                        <uml:type>org.exist.fluent.Node</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-1107" xml:id="_r-cctd.m1-1345.j1-1107._r-cd.m1-1270.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-1107._r-cctd.m1-1345.j1-1107._r-cd.m1-1270.2..3..2.">Matchers</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1345.j1-1107._r-cd.m1-1270.2..3..1-1."/>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1345.j1-1107._r-cd.m1-1270.2..3..1-2.">
+            <uml:operation depicts="j1-1108" xml:id="_r-cmto.j1-1108._r-ccc._r-cctd.m1-1345.j1-1107._r-cd.m1-1270.2..3..1-2..2.">
+                <uml:name>collection</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>contents</uml:name>
+                        <uml:type>T</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>org.hamcrest.Matcher</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1109" xml:id="_r-cmto.j1-1109._r-ccc._r-cctd.m1-1345.j1-1107._r-cd.m1-1270.2..3..1-2..2.">
+                <uml:name>emptyCollectionOf</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>clazz</uml:name>
+                        <uml:type>java.lang.Class</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>org.hamcrest.Matcher</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+</uml:diagram>

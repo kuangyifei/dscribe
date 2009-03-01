@@ -1,0 +1,82 @@
+<uml:diagram xmlns:uml="http://ideanest.com/dscribe/ns/uml" diagram="d1-1262" kind="class" xml:id="_r-cd.m1-1263.2.">
+    <uml:class depicts="j1-507" xml:id="_r-cctd.m1-1264.j1-507._r-cd.m1-1263.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-507._r-cctd.m1-1264.j1-507._r-cd.m1-1263.2..3..2.">Text</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1264.j1-507._r-cd.m1-1263.2..3..1-1."/>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1264.j1-507._r-cd.m1-1263.2..3..1-2.">
+            <uml:operation depicts="j1-508" xml:id="_r-cmto.j1-508._r-ccc._r-cctd.m1-1264.j1-507._r-cd.m1-1263.2..3..1-2..2.">
+                <uml:name>Text</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>def</uml:name>
+                        <uml:type>org.exist.fluent.Node</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-509" xml:id="_r-cmto.j1-509._r-ccc._r-cctd.m1-1264.j1-507._r-cd.m1-1263.2..3..1-2..2.">
+                <uml:name>runOn</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>qs</uml:name>
+                        <uml:type>org.exist.fluent.QueryService</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-807" xml:id="_r-cctd.m1-1302.j1-807._r-cd.m1-1263.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-807._r-cctd.m1-1302.j1-807._r-cd.m1-1263.2..3..2.">ForEachBlock</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1302.j1-807._r-cd.m1-1263.2..3..1-1."/>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1302.j1-807._r-cd.m1-1263.2..3..1-2.">
+            <uml:operation depicts="j1-808" xml:id="_r-cmto.j1-808._r-ccc._r-cctd.m1-1302.j1-807._r-cd.m1-1263.2..3..1-2..2.">
+                <uml:name>ForEachBlock</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>def</uml:name>
+                        <uml:type>org.exist.fluent.Node</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-809" xml:id="_r-cmto.j1-809._r-ccc._r-cctd.m1-1302.j1-807._r-cd.m1-1263.2..3..1-2..2.">
+                <uml:name>resolve</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>modBuilder</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.KeyMod.Builder</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-810" xml:id="_r-cmto.j1-810._r-ccc._r-cctd.m1-1302.j1-807._r-cd.m1-1263.2..3..1-2..2.">
+                <uml:name>createSeg</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>mod</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>com.ideanest.dscribe.mixt.Seg</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-1029" xml:id="_r-cctd.m1-1337.j1-1029._r-cd.m1-1263.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-1029._r-cctd.m1-1337.j1-1029._r-cd.m1-1263.2..3..2.">WithSeg</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1337.j1-1029._r-cd.m1-1263.2..3..1-1."/>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1337.j1-1029._r-cd.m1-1263.2..3..1-2.">
+            <uml:operation depicts="j1-1030" xml:id="_r-cmto.j1-1030._r-ccc._r-cctd.m1-1337.j1-1029._r-cd.m1-1263.2..3..1-2..2.">
+                <uml:name>WithSeg</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>mod</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-1031" xml:id="_r-cmto.j1-1031._r-ccc._r-cctd.m1-1337.j1-1029._r-cd.m1-1263.2..3..1-2..2.">
+                <uml:name>analyze</uml:name>
+                <uml:args/>
+                <uml:type>QueryAnalysis</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+</uml:diagram>

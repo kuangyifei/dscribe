@@ -1,0 +1,75 @@
+<uml:diagram xmlns:uml="http://ideanest.com/dscribe/ns/uml" diagram="d1-1195" kind="class" xml:id="_r-cd.m1-1196.2.">
+    <uml:class depicts="j1-261" xml:id="_r-cctd.m1-1232.j1-261._r-cd.m1-1196.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-261._r-cctd.m1-1232.j1-261._r-cd.m1-1196.2..3..2.">_ModTest</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1232.j1-261._r-cd.m1-1196.2..3..1-1."/>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1232.j1-261._r-cd.m1-1196.2..3..1-2.">
+            <uml:operation depicts="j1-262" xml:id="_r-cmto.j1-262._r-ccc._r-cctd.m1-1232.j1-261._r-cd.m1-1196.2..3..1-2..2.">
+                <uml:name>constructorFromRule</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-263" xml:id="_r-cmto.j1-263._r-ccc._r-cctd.m1-1232.j1-261._r-cd.m1-1196.2..3..1-2..2.">
+                <uml:name>constructorFromParentMod</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-264" xml:id="_r-cmto.j1-264._r-ccc._r-cctd.m1-1232.j1-261._r-cd.m1-1196.2..3..1-2..2.">
+                <uml:name>constructorFromParentNullKey</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-936" xml:id="_r-cctd.m1-1322.j1-936._r-cd.m1-1196.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-936._r-cctd.m1-1322.j1-936._r-cd.m1-1196.2..3..2.">SortSeg</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1322.j1-936._r-cd.m1-1196.2..3..1-1."/>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1322.j1-936._r-cd.m1-1196.2..3..1-2.">
+            <uml:operation depicts="j1-937" xml:id="_r-cmto.j1-937._r-ccc._r-cctd.m1-1322.j1-936._r-cd.m1-1196.2..3..1-2..2.">
+                <uml:name>SortSeg</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>mod</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-938" xml:id="_r-cmto.j1-938._r-ccc._r-cctd.m1-1322.j1-936._r-cd.m1-1196.2..3..1-2..2.">
+                <uml:name>analyze</uml:name>
+                <uml:args/>
+                <uml:type>QueryAnalysis</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-1044" xml:id="_r-cctd.m1-1341.j1-1044._r-cd.m1-1196.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-1044._r-cctd.m1-1341.j1-1044._r-cd.m1-1196.2..3..2.">WithDistinctSeg</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1341.j1-1044._r-cd.m1-1196.2..3..1-1.">
+            <uml:attribute depicts="j1-1045" xml:id="_r-cfta.j1-1045._r-ccc._r-cctd.m1-1341.j1-1044._r-cd.m1-1196.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>value</uml:name>
+                    <uml:type>org.exist.fluent.Item</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1341.j1-1044._r-cd.m1-1196.2..3..1-2.">
+            <uml:operation depicts="j1-1046" xml:id="_r-cmto.j1-1046._r-ccc._r-cctd.m1-1341.j1-1044._r-cd.m1-1196.2..3..1-2..2.">
+                <uml:name>WithDistinctSeg</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>mod</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-1047" xml:id="_r-cmto.j1-1047._r-ccc._r-cctd.m1-1341.j1-1044._r-cd.m1-1196.2..3..1-2..2.">
+                <uml:name>restore</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1048" xml:id="_r-cmto.j1-1048._r-ccc._r-cctd.m1-1341.j1-1044._r-cd.m1-1196.2..3..1-2..2.">
+                <uml:name>verify</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+</uml:diagram>

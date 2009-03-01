@@ -1,0 +1,148 @@
+<uml:diagram xmlns:uml="http://ideanest.com/dscribe/ns/uml" diagram="d1-1222" kind="class" xml:id="_r-cd.m1-1223.2.">
+    <uml:class depicts="j1-778" xml:id="_r-cctd.m1-1299.j1-778._r-cd.m1-1223.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-778._r-cctd.m1-1299.j1-778._r-cd.m1-1223.2..3..2.">CreateDocSeg</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1299.j1-778._r-cd.m1-1223.2..3..1-1.">
+            <uml:attribute depicts="j1-779" xml:id="_r-cfta.j1-779._r-ccc._r-cctd.m1-1299.j1-778._r-cd.m1-1223.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>name</uml:name>
+                    <uml:type>java.lang.String</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1299.j1-778._r-cd.m1-1223.2..3..1-2.">
+            <uml:operation depicts="j1-780" xml:id="_r-cmto.j1-780._r-ccc._r-cctd.m1-1299.j1-778._r-cd.m1-1223.2..3..1-2..2.">
+                <uml:name>CreateDocSeg</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>mod</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-781" xml:id="_r-cmto.j1-781._r-ccc._r-cctd.m1-1299.j1-778._r-cd.m1-1223.2..3..1-2..2.">
+                <uml:name>restore</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-782" xml:id="_r-cmto.j1-782._r-ccc._r-cctd.m1-1299.j1-778._r-cd.m1-1223.2..3..1-2..2.">
+                <uml:name>analyze</uml:name>
+                <uml:args/>
+                <uml:type>org.exist.fluent.QueryService.QueryAnalysis</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-783" xml:id="_r-cmto.j1-783._r-ccc._r-cctd.m1-1299.j1-778._r-cd.m1-1223.2..3..1-2..2.">
+                <uml:name>verify</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-784" xml:id="_r-cmto.j1-784._r-ccc._r-cctd.m1-1299.j1-778._r-cd.m1-1223.2..3..1-2..2.">
+                <uml:name>insert</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>node</uml:name>
+                        <uml:type>org.exist.fluent.Node</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>org.exist.fluent.Node</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-785" xml:id="_r-cmto.j1-785._r-ccc._r-cctd.m1-1299.j1-778._r-cd.m1-1223.2..3..1-2..2.">
+                <uml:name>canInsertMultiple</uml:name>
+                <uml:args/>
+                <uml:type>boolean</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-873" xml:id="_r-cctd.m1-1313.j1-873._r-cd.m1-1223.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-873._r-cctd.m1-1313.j1-873._r-cd.m1-1223.2..3..2.">InsertBlock</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1313.j1-873._r-cd.m1-1223.2..3..1-1.">
+            <uml:attribute depicts="j1-874" xml:id="_r-cfta.j1-874._r-ccc._r-cctd.m1-1313.j1-873._r-cd.m1-1223.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>DIGEST_TYPE</uml:name>
+                    <uml:type>java.lang.String</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-875" xml:id="_r-cfta.j1-875._r-ccc._r-cctd.m1-1313.j1-873._r-cd.m1-1223.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>query</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Query.Items</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-876" xml:id="_r-cfta.j1-876._r-ccc._r-cctd.m1-1313.j1-873._r-cd.m1-1223.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>requiredVariables</uml:name>
+                    <uml:type>java.util.Collection</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-877" xml:id="_r-cfta.j1-877._r-ccc._r-cctd.m1-1313.j1-873._r-cd.m1-1223.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>inOrder</uml:name>
+                    <uml:type>boolean</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-878" xml:id="_r-cfta.j1-878._r-ccc._r-cctd.m1-1313.j1-873._r-cd.m1-1223.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>priority</uml:name>
+                    <uml:type>int</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1313.j1-873._r-cd.m1-1223.2..3..1-2.">
+            <uml:operation depicts="j1-879" xml:id="_r-cmto.j1-879._r-ccc._r-cctd.m1-1313.j1-873._r-cd.m1-1223.2..3..1-2..2.">
+                <uml:name>InsertBlock</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>def</uml:name>
+                        <uml:type>org.exist.fluent.Node</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-880" xml:id="_r-cmto.j1-880._r-ccc._r-cctd.m1-1313.j1-873._r-cd.m1-1223.2..3..1-2..2.">
+                <uml:name>resolve</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>modBuilder</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod.Builder</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-881" xml:id="_r-cmto.j1-881._r-ccc._r-cctd.m1-1313.j1-873._r-cd.m1-1223.2..3..1-2..2.">
+                <uml:name>calculateDigest</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>digestType</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>nodesToInsert</uml:name>
+                        <uml:type>org.exist.fluent.ItemList</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-882" xml:id="_r-cmto.j1-882._r-ccc._r-cctd.m1-1313.j1-873._r-cd.m1-1223.2..3..1-2..2.">
+                <uml:name>sort</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>segs</uml:name>
+                        <uml:type>java.util.Collection</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>graph</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.OrderGraph</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-883" xml:id="_r-cmto.j1-883._r-ccc._r-cctd.m1-1313.j1-873._r-cd.m1-1223.2..3..1-2..2.">
+                <uml:name>createSeg</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>mod</uml:name>
+                        <uml:type>com.ideanest.dscribe.mixt.Mod</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>com.ideanest.dscribe.mixt.Seg</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+</uml:diagram>

@@ -1,0 +1,348 @@
+<uml:diagram xmlns:uml="http://ideanest.com/dscribe/ns/uml" diagram="d1-1218" kind="class" xml:id="_r-cd.m1-1219.2.">
+    <uml:class depicts="j1-208" xml:id="_r-cctd.m1-1220.j1-208._r-cd.m1-1219.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-208._r-cctd.m1-1220.j1-208._r-cd.m1-1219.2..3..2.">_TestModule</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1220.j1-208._r-cd.m1-1219.2..3..1-1.">
+            <uml:attribute depicts="j1-209" xml:id="_r-cfta.j1-209._r-ccc._r-cctd.m1-1220.j1-208._r-cd.m1-1219.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>mockery</uml:name>
+                    <uml:type>org.jmock.Mockery</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1220.j1-208._r-cd.m1-1219.2..3..1-2.">
+            <uml:operation depicts="j1-210" xml:id="_r-cmto.j1-210._r-ccc._r-cctd.m1-1220.j1-208._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>makeRules</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>fn</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>org.exist.fluent.XMLDocument</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-211" xml:id="_r-cmto.j1-211._r-ccc._r-cctd.m1-1220.j1-208._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>defineModule</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>functions</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>com.ideanest.dscribe.mixt.Engine.Module</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-212" xml:id="_r-cmto.j1-212._r-ccc._r-cctd.m1-1220.j1-208._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>defineFunctionGood</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-213" xml:id="_r-cmto.j1-213._r-ccc._r-cctd.m1-1220.j1-208._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>defineFunctionExtraNamespaces</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-214" xml:id="_r-cmto.j1-214._r-ccc._r-cctd.m1-1220.j1-208._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>defineFunctionOverload</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-215" xml:id="_r-cmto.j1-215._r-ccc._r-cctd.m1-1220.j1-208._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>saveTo</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-216" xml:id="_r-cmto.j1-216._r-ccc._r-cctd.m1-1220.j1-208._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>areFunctionsModified</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+    <uml:class depicts="j1-1139" xml:id="_r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3.">
+        <uml:blockname xml:id="_r-ccn.j1-1139._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..2.">SystemTest</uml:blockname>
+        <uml:compartment kind="attributes" xml:id="_r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-1.">
+            <uml:attribute depicts="j1-1140" xml:id="_r-cfta.j1-1140._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>TEST_SPEC_DIR</uml:name>
+                    <uml:type>java.io.File</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1144" xml:id="_r-cfta.j1-1144._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>previousLoggerLevel</uml:name>
+                    <uml:type>org.apache.log4j.Level</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1145" xml:id="_r-cfta.j1-1145._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>previousAppenderThreshold</uml:name>
+                    <uml:type>org.apache.log4j.Priority</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1148" xml:id="_r-cfta.j1-1148._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>LOG</uml:name>
+                    <uml:type>org.apache.log4j.Logger</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1149" xml:id="_r-cfta.j1-1149._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>STAGE_RE</uml:name>
+                    <uml:type>java.util.regex.Pattern</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1150" xml:id="_r-cfta.j1-1150._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>INSTRUCTION_RE</uml:name>
+                    <uml:type>java.util.regex.Pattern</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1151" xml:id="_r-cfta.j1-1151._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>STATS_RE</uml:name>
+                    <uml:type>java.util.regex.Pattern</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1152" xml:id="_r-cfta.j1-1152._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>workspace</uml:name>
+                    <uml:type>org.exist.fluent.Folder</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1153" xml:id="_r-cfta.j1-1153._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>rulespace</uml:name>
+                    <uml:type>org.exist.fluent.Folder</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1154" xml:id="_r-cfta.j1-1154._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>transformer</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Transformer</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1155" xml:id="_r-cfta.j1-1155._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>run</uml:name>
+                    <uml:type>int</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1156" xml:id="_r-cfta.j1-1156._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>specFile</uml:name>
+                    <uml:type>java.io.File</uml:type>
+                </uml:var>
+            </uml:attribute>
+            <uml:attribute depicts="j1-1157" xml:id="_r-cfta.j1-1157._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-1..2.">
+                <uml:var>
+                    <uml:name>stats</uml:name>
+                    <uml:type>com.ideanest.dscribe.mixt.Engine.Stats</uml:type>
+                </uml:var>
+            </uml:attribute>
+        </uml:compartment>
+        <uml:compartment kind="operations" xml:id="_r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2.">
+            <uml:operation depicts="j1-1141" xml:id="_r-cmto.j1-1141._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>main</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>args</uml:name>
+                        <uml:type>java.lang.String[]</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1142" xml:id="_r-cmto.j1-1142._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>findSpecFiles</uml:name>
+                <uml:args/>
+                <uml:type>java.util.Collection</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1143" xml:id="_r-cmto.j1-1143._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>stripExtension</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>filename</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1146" xml:id="_r-cmto.j1-1146._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>configureLogging</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1147" xml:id="_r-cmto.j1-1147._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>unconfigureLogging</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1158" xml:id="_r-cmto.j1-1158._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>SystemTest</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>name</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>specFile</uml:name>
+                        <uml:type>java.io.File</uml:type>
+                    </uml:var>
+                </uml:args>
+            </uml:operation>
+            <uml:operation depicts="j1-1159" xml:id="_r-cmto.j1-1159._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>setUp</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1160" xml:id="_r-cmto.j1-1160._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>run</uml:name>
+                <uml:args/>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1161" xml:id="_r-cmto.j1-1161._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>doLoadRules</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>reader</uml:name>
+                        <uml:type>java.io.BufferedReader</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>path</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1162" xml:id="_r-cmto.j1-1162._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>doReloadRules</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>reader</uml:name>
+                        <uml:type>java.io.BufferedReader</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1163" xml:id="_r-cmto.j1-1163._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>doLoadFile</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>reader</uml:name>
+                        <uml:type>java.io.BufferedReader</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>line</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>path</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1164" xml:id="_r-cmto.j1-1164._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>doModifyFile</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>reader</uml:name>
+                        <uml:type>java.io.BufferedReader</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>line</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>path</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1165" xml:id="_r-cmto.j1-1165._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>doLoadMods</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>reader</uml:name>
+                        <uml:type>java.io.BufferedReader</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1166" xml:id="_r-cmto.j1-1166._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>doCheckFile</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>reader</uml:name>
+                        <uml:type>java.io.BufferedReader</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>line</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>path</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1167" xml:id="_r-cmto.j1-1167._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>listWorkspaceDocuments</uml:name>
+                <uml:args/>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1168" xml:id="_r-cmto.j1-1168._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>doCheckMods</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>reader</uml:name>
+                        <uml:type>java.io.BufferedReader</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1169" xml:id="_r-cmto.j1-1169._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>assertXMLMatches</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>what</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>expected</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>actual</uml:name>
+                        <uml:type>java.lang.String</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>void</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1170" xml:id="_r-cmto.j1-1170._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>doCheckStats</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>reader</uml:name>
+                        <uml:type>java.io.BufferedReader</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+            <uml:operation depicts="j1-1171" xml:id="_r-cmto.j1-1171._r-ccc._r-cctd.m1-1350.j1-1139._r-cd.m1-1219.2..3..1-2..2.">
+                <uml:name>readUntilNextInstruction</uml:name>
+                <uml:args>
+                    <uml:var>
+                        <uml:name>reader</uml:name>
+                        <uml:type>java.io.BufferedReader</uml:type>
+                    </uml:var>
+                    <uml:var>
+                        <uml:name>buf</uml:name>
+                        <uml:type>java.lang.StringBuilder</uml:type>
+                    </uml:var>
+                </uml:args>
+                <uml:type>java.lang.String</uml:type>
+            </uml:operation>
+        </uml:compartment>
+    </uml:class>
+</uml:diagram>

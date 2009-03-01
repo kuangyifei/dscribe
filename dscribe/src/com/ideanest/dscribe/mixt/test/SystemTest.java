@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.regex.*;
 
 import org.apache.log4j.*;
+import org.apache.tools.ant.DirectoryScanner;
 import org.custommonkey.xmlunit.*;
 import org.exist.fluent.*;
 import org.junit.*;
@@ -24,24 +25,47 @@ public class SystemTest extends DatabaseTestCase {
 	private static final File TEST_SPEC_DIR = new File("test/systest-specs");
 	
 	public static void main(String args[]) throws Exception {
-		configureLogging();
-		SystemTest test = new SystemTest(args[1], new File(TEST_SPEC_DIR, args[1]));
+		if (!args[1].startsWith("test/perf")) configureLogging();
+		SystemTest test = new SystemTest(args[1], new File(args[1]));
 		test.startupDatabase();
 		try {
-			for (int i = Integer.parseInt(args[0], 10); i > 0; i--) {
-				test = new SystemTest(args[1], new File(TEST_SPEC_DIR, args[1]));
+			int numRuns = Integer.parseInt(args[0], 10);
+			for (int i = numRuns; i > 0; i--) {
+				test = new SystemTest(args[1], new File(args[1]));
 				test.setUp();
 				test.run();
+				if (numRuns == 1 && args[1].startsWith("test/perf")) dumpDatabase();
 				db.getFolder("/workspace").delete();
 				db.getFolder("/rulespace").delete();
 				db.getFolder(Transformer.recordsRootPath()).delete();
 			}
 			System.out.println(QueryService.statistics().toStringTop(20));
 		} finally {
-			SystemTest.shutdownDatabase();
+			try {
+				SystemTest.shutdownDatabase();
+			} catch (Exception e) {
+				System.err.println("exception trying to shut down:");
+				e.printStackTrace();
+			}
 		}
 	}
 
+	private static void dumpDatabase() {
+		try {
+			File debugDest = new File("test/debug-dump");
+			deleteDir(debugDest);
+			db.getFolder("/").export(debugDest);
+			LOG.debug("dumped final database into '" + debugDest + "'");
+		} catch (IOException e) {
+			LOG.error("failed to dump database for debugging", e);
+		}
+	}
+
+	private static void deleteDir(File dir) {
+		if (dir.isDirectory()) for (File child : dir.listFiles()) deleteDir(child);
+		dir.delete();
+	}
+	
 	@Parameters public static Collection<Object[]> findSpecFiles() {
 		List<Object[]> list = new ArrayList<Object[]>();
 		for (File file : TEST_SPEC_DIR.listFiles()) {
@@ -73,7 +97,7 @@ public class SystemTest extends DatabaseTestCase {
 	private static final Logger LOG = Logger.getLogger(SystemTest.class);
 	
 	private static final Pattern STAGE_RE = Pattern.compile("#### run (\\d+)");
-	private static final Pattern INSTRUCTION_RE = Pattern.compile("## (load|reload|modify|check) (file|rules|mods|stats)(.*)");
+	private static final Pattern INSTRUCTION_RE = Pattern.compile("## (load|reload|modify|check) (file|directory|rules|mods|stats)(.*)");
 	private static final Pattern STATS_RE = Pattern.compile("(\\w+)\\s*=\\s*(\\d+)");
 	
 	private Folder workspace, rulespace;
@@ -94,7 +118,7 @@ public class SystemTest extends DatabaseTestCase {
 	}
 	
 	@Test public void run() throws IOException, ParseException, RuleBaseException, TransformException, InterruptedException, SAXException, IllegalArgumentException, SecurityException, IllegalAccessException, NoSuchFieldException {
-		LOG.debug("starting system test " + specFile);
+		LOG.info("starting system test " + specFile);
 		BufferedReader reader = new BufferedReader(new FileReader(specFile));
 		String line = reader.readLine();
 		while (line != null) {
@@ -105,11 +129,11 @@ public class SystemTest extends DatabaseTestCase {
 				if (!matcher.matches()) throw new IOException("bad #### line: " + line);
 				int nextStage = Integer.parseInt(matcher.group(1));
 				if (nextStage != ++run) throw new IOException("non-consecutive cycle: " + line);
-				LOG.debug("system test " + specFile + " starting run " + run);
+				LOG.info("system test " + specFile + " starting run " + run);
 				long startTime = System.currentTimeMillis();
 				stats = transformer.executeOnce();
 				double runTime = (System.currentTimeMillis() - startTime) / 1000.0;
-				LOG.debug("system test " + specFile + " finished run " + run + " in " + new DecimalFormat("0.000").format(runTime) + "s");
+				LOG.info("system test " + specFile + " finished run " + run + " in " + new DecimalFormat("0.000").format(runTime) + "s");
 				line = reader.readLine();
 			} else if (line.startsWith("##")) {
 				Matcher matcher = INSTRUCTION_RE.matcher(line);
@@ -117,8 +141,10 @@ public class SystemTest extends DatabaseTestCase {
 				String instruction = matcher.group(1) + " " + matcher.group(2);
 				if (instruction.equals("load file")) {
 					line = doLoadFile(reader, line, matcher.group(3).trim());
+				} else if (instruction.equals("load directory")) {
+					line = doLoadDirectory(reader, line, matcher.group(3).trim());
 				} else if (instruction.equals("load rules")) {
-						line = doLoadRules(reader, matcher.group(3).trim());
+					line = doLoadRules(reader, matcher.group(3).trim());
 				} else if (instruction.equals("load mods")) {
 					line = doLoadMods(reader);
 				} else if (instruction.equals("modify file")) {
@@ -127,6 +153,8 @@ public class SystemTest extends DatabaseTestCase {
 					line = doReloadRules(reader);
 				} else if (instruction.equals("check file")) {
 					line = doCheckFile(reader, line, matcher.group(3).trim());
+				} else if (instruction.equals("check directory")) {
+					line = doCheckDirectory(reader, line, matcher.group(3).trim());
 				} else if (instruction.equals("check mods")) {
 					line = doCheckMods(reader);
 				} else if (instruction.equals("check stats")) {
@@ -138,7 +166,7 @@ public class SystemTest extends DatabaseTestCase {
 				throw new IOException("unexpected non-instruction line: " + line);
 			}
 		}
-		LOG.debug("finished system test " + specFile);
+		LOG.info("finished system test " + specFile);
 	}
 
 	private String doLoadRules(BufferedReader reader, String path) throws IOException, ParseException {
@@ -183,6 +211,18 @@ public class SystemTest extends DatabaseTestCase {
 		return line;
 	}
 	
+	private String doLoadDirectory(BufferedReader reader, String line, String path) throws IOException {
+		if (path.isEmpty()) throw new IOException("no directory path: " + line);
+		DirectoryScanner scanner = new DirectoryScanner();
+		scanner.setBasedir(path);
+		scanner.addDefaultExcludes();
+		scanner.scan();
+		for (String relativeName : scanner.getIncludedFiles()) {
+			workspace.documents().load(Name.overwrite(relativeName.replace('\\', '/')), Source.xml(new File(path, relativeName)));
+		}
+		return reader.readLine();
+	}
+	
 	private String doModifyFile(BufferedReader reader, String line, String path) throws IOException {
 		if (path.isEmpty()) throw new IOException("no file path: " + line);
 		StringBuilder buf = new StringBuilder();
@@ -205,20 +245,36 @@ public class SystemTest extends DatabaseTestCase {
 		if (path.isEmpty()) throw new IOException("no file path: " + line);
 		StringBuilder buf = new StringBuilder();
 		line = readUntilNextInstruction(reader, buf);
+		assertSourceXmlMatches(path, Source.xml(buf.toString()));
+		return line;
+	}
+	
+	private String doCheckDirectory(BufferedReader reader, String line, String path) throws IOException, SAXException {
+		if (path.isEmpty()) throw new IOException("no file path: " + line);
+		DirectoryScanner scanner = new DirectoryScanner();
+		scanner.setBasedir(path);
+		scanner.addDefaultExcludes();
+		scanner.scan();
+		for (String relativeName : scanner.getIncludedFiles()) {
+			assertSourceXmlMatches(relativeName.replace('\\', '/'), Source.xml(new File(path, relativeName)));
+		}
+		return reader.readLine();
+	}
+	
+	private void assertSourceXmlMatches(String path, Source.XML expectedSource) throws SAXException, IOException {
 		XMLDocument actual;
 		try {
 			actual = workspace.documents().get(path).xml();
 		} catch (DatabaseException e) {
 			fail(e.getMessage() + "\nDocuments in workspace:\n" + listWorkspaceDocuments());
-			return line;
+			return;
 		}
-		XMLDocument expected = workspace.documents().load(Name.generate(), Source.xml(buf.toString()));
+		XMLDocument expected = workspace.documents().load(Name.generate(), expectedSource);
 		try {
 			assertXMLMatches(path, expected.contentsAsString(), actual.contentsAsString());
 		} finally {
 			expected.delete();
 		}
-		return line;
 	}
 	
 	private String listWorkspaceDocuments() {
