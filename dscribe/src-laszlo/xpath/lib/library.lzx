@@ -85,7 +85,7 @@ lz.node.prototype.query = function(xpath, env) {
 	for (var v in env.vars) {
 		vars.push(v + ' = ' + env.vars[v]);
 	}
-	console.log((t5 - t1) + "ms (" + (t3-t2) + "ms parse, " + (t4-t3) + "ms eval), " + len + " result".pluralize(len) + ", for query " + xpath + (vars.length ? ' {' + vars.join(', ') + '}' : ''));
+	// console.log((t5 - t1) + "ms (" + (t3-t2) + "ms parse, " + (t4-t3) + "ms eval), " + len + " result".pluralize(len) + ", for query " + xpath + (vars.length ? ' {' + vars.join(', ') + '}' : ''));
 	return result;
 };
 

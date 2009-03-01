@@ -45,7 +45,6 @@ Viewer {
 		if (nodeName == '*') {
 			delegate.register(this, 'onanynodechanged');
 		} else {
-			if (this[nodeName]) new LzEvent(this, 'onnodechanged_' + nodeName);
 			delegate.register(this, 'onnodechanged_' + nodeName);
 		}
 	</method>

@@ -1,10 +1,13 @@
 lz.uml_diagram.addProperty('gatherPossibleActions', function(box, targets) {
 	box.setTitle("Diagram");
 	box.addLink({icon: 'iconSave', text: "Save edits", actionCreator: function(parent) {
-		var oldKind = parent.kind;
-		parent.setAttribute('kind', 'stored');
-		lz.Browser.setClipboard(XPath.Semantics.serializeToXML(parent));
-		parent.setAttribute('kind', oldKind);
+		var lines = [];
+		lines.push('<a_triggers kind="submitted">');
+		parent.xchildren().forEach(function(action) {
+			if (action.enabled == 'true') lines.push(XPath.Semantics.serializeToXML(action));
+		});
+		lines.push('</a_triggers>\n');
+		lz.Browser.setClipboard(lines.join('\n'));
 	}});
 });
 

@@ -130,7 +130,9 @@
 				}
 			});
 		}
-		for (var key in values) new lz.mod_mod(baseMod, {values: [key], key: sanitizeKey(key)});
+		for (var key in values) {
+			new lz.mod_mod(baseMod, {values: [key], key: sanitizeKey(key)});
+		}
 	]]></method>
 	<method name = 'sanitizeKey' args = 'key'><![CDATA[
 		var encodedChars = [];
@@ -195,16 +197,11 @@
 
 	<method name = 'prepareForCycle'>
 		var changed = false;
-		this.forEachReversedBlock(function(block) {
+		for (var i = this.subnodes.length - 1; i >= 0; i--) {
+			var block = this.subnodes[i];
 			block.prepareForCycle(changed);
 			changed |= block.mayHaveChanged;
-		});
-	</method>
-		
-	<method name = 'forEachReversedBlock' args = 'fn'>
-		var reversedBlocks = this.subnodes.slice();
-		reversedBlocks.reverse();
-		reversedBlocks.forEach(fn);
+		};
 	</method>
 </class>
 
@@ -274,6 +271,7 @@
 	]]></handler>
 	
 	<handler name = 'ondestroy'>
+		this.delegate.unregisterAll();
 		if (this['affected']) this.affected.forEach(function(node) {
 			node.destroy();
 		});
@@ -296,6 +294,7 @@
 	</method>
 	
 	<method name = 'recompute' args = 'env'><![CDATA[
+	    var t1 = new Date().getTime();
 	    if (this.rule.subnodes.length <= this.stage + 1) return;
 		var nextBlock = this.rule.subnodes[this.stage + 1];
 		
@@ -303,23 +302,31 @@
 				this.mayHaveChanged || this.descendantsMayHaveChanged)) return;
 		
 		if (this.stage >= 0) this.rule.subnodes[this.stage].bind(this, env);
+		var t2 = new Date().getTime();
 		if (this.mayHaveChanged || nextBlock.mayHaveChanged) {
 			nextBlock.recompute(this, env);
 			this.setAttribute('mayHaveChanged', false);
 		}
+		var t3 = new Date().getTime();
 		if (this.subnodes && (this.descendantsMayHaveChanged || nextBlock.followingMayHaveChanged)) {
 			this.subnodes.forEach(function(child) {child.recompute(env);});
 		}
+		var t4 = new Date().getTime()
 		this.setAttribute('descendantsMayHaveChanged', false);
 		if (this.stage >= 0) env.popVar();
+		var t5 = new Date().getTime()
+		console.log((t5 - t1) + "ms to recompute " + this.rule.xml_id + "@" + (this.stage + 1) + " " + nextBlock.constructor.tagname + ": " + nextBlock.query.queryText);
 	]]></method>
 </class>
 
 <class name = 'mod_mods' extends = 'mod_mod'>
 	<attribute name = 'stage' value = '-1' type = 'number'/>
 	<method name = 'recompute' args = 'env'>
+		var t1 = new Date().getTime();
 		this.rule.prepareForCycle();
 		super.recompute(env);
+		var t2 = new Date().getTime();
+		console.log("-- " + this.rule.xml_id + " done in " + (t2-t1) + "ms");
 	</method>
 </class>
 
@@ -378,7 +385,10 @@
 			}
 			console.log('--- MIXT iteration ' + iter);
 			this.setAttribute('changesMade', false);
+			var t3 = new Date().getTime();
 			modstore.recompute(this.env);
+			var t4 = new Date().getTime();
+			console.log("--- iteration done in " + (t4 - t3) + "ms ");
 		} while (this.changesMade);
 		var t2 = new Date().getTime();
 		console.log((t2 - t1) + "ms for MIXT run, " + iter + " iterations");
