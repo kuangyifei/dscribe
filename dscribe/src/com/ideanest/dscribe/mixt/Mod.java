@@ -27,7 +27,7 @@ public class Mod {
 	final int stage;
 	final Mod parent;
 	
-	private boolean previouslyResolved;
+	boolean previouslyResolved;
 	private Set<QName> boundVariables;
 	private List<Node> references = Collections.emptyList();
 	private Seg seg;
@@ -152,7 +152,7 @@ public class Mod {
 		}
 		
 		if (!previouslyResolved) {
-			node.update().delAttr("new").commit();
+			node.update().attr("status", "normal").commit();
 			previouslyResolved = true;
 		}
 		
@@ -167,28 +167,43 @@ public class Mod {
 	}
 	
 	Mod restoreChild(Block block, Node modNode) throws TransformException {
+		LOG.debug("restoring child of " + this);
 		Mod mod = self.deriveChild(block, modNode.query().optional("@xml:id").value());
 		mod.setNode(modNode);
 		mod.restore();
 		return mod;
 	}
+	
+	private static QName MOD_REFERENCE = QName.parse("reference", MOD_NAMESPACE);
 
 	void restore() throws TransformException {
 		final int storedStage = node.query().single("@stage").intValue();
 		if (this.stage != storedStage)
 			throw new IllegalArgumentException("stage mismatch on node restore, given " + stage + ", stored " + storedStage);
 		
-		previouslyResolved = !node.query().exists("@new");
-		references = Collections.unmodifiableList(Arrays.asList(
-				node.query().all(
-						// resolve all references, filling in ones that failed with a placeholder that could never be referenced
-						"for $ref in reference return " +
-						"	let $docname := concat($_1, '/', $ref/@doc) " +
-						"	return if (doc-available($docname)) then (doc($docname)/id($ref/@refid), $_2)[1] else $_2",
-						Database.ROOT_PREFIX + rule.engine.workspace().path(), node).nodes().toArray()));
-		for (Node ref : references) {
-			if (ref.equals(node)) throw new TransformException("failed to resolve at least one reference");
+		previouslyResolved = !"new".equals(node.query().single("@status").value());
+		references = new ArrayList<Node>();
+		for (Node child : node.query().all("*").nodes()) {
+			if (!child.qname().equals(MOD_REFERENCE)) continue;
+			ItemList refs = rule.engine.workspace().query().all(
+					"let $docname := concat($_1, '/', $_2/@doc) " +
+					"return if (doc-available($docname)) then doc($docname)/id($_2/@refid) else ()",
+					Database.ROOT_PREFIX + rule.engine.workspace().path(), child);
+			if (refs.isEmpty()) throw new TransformException("failed to resolve reference (referent gone): " + child);
+			if (refs.size() > 1) throw new TransformException("failed to resolve reference (" + refs.size() + " referents): " + child);
+			references.add(refs.get(0).node());
 		}
+		references = Collections.unmodifiableList(references);
+//		references = Collections.unmodifiableList(Arrays.asList(
+//				node.query().all(
+//						// resolve all references, filling in ones that failed with a placeholder that could never be referenced
+//						"for $ref in reference return " +
+//						"	let $docname := concat($_1, '/', $ref/@doc) " +
+//						"	return if (doc-available($docname)) then (doc($docname)/id($ref/@refid), $_2)[1] else $_2",
+//						Database.ROOT_PREFIX + rule.engine.workspace().path(), node).nodes().toArray()));
+//		for (Node ref : references) {
+//			if (ref.equals(node)) throw new TransformException("failed to resolve at least one reference");
+//		}
 		
 		seg.restore();
 	}
@@ -201,7 +216,14 @@ public class Mod {
 	}
 	
 	public List<String> affectedIds() {
-		return node.query().all("affected/@refid").values().asList();
+		// return node.query().all("affected/@refid").values().asList();
+		List<String> ids = new ArrayList<String>();
+		for (Node child : node.query().all("*").nodes()) {
+			if ("affected".equals(child.qname().getLocalPart()) && Engine.MOD_NS.equals(child.qname().getNamespaceURI())) {
+				ids.add(child.query().single("@refid").value());
+			}
+		}
+		return ids;
 	}
 	
 	void verify() throws TransformException {
@@ -228,7 +250,7 @@ public class Mod {
 	
 	static Mod bootstrap(Rule rule) {
 		Mod root = new KeyMod(rule) {
-			@Override public String toString() {return "rootmod[" +rule + "]";} 
+			@Override public String toString() {return "mod<root, stage -1> of " + rule;} 
 			@Override Mod nearestAncestorOrSelfImplementing(Class<?> clazz) throws TransformException {
 				throw new TransformException("no ancestor found that implements " + clazz);
 			}
@@ -328,7 +350,7 @@ public class Mod {
 			builder.elem("mod")
 				.attrIf(key != null, "xml:id", key)
 				.attr("stage", parent.stage + 1)
-				.attr("new", "");
+				.attr("status", lastBlock ? "full" : "new");
 			for (String docName : dependentDocNames) {
 				builder.elem("dependency")
 					.attr("kind", unverifiedDocNames.contains(docName) ? "unverified" : "verified")
@@ -1180,7 +1202,7 @@ public class Mod {
 		@Test public void resolveChildren() throws TransformException {
 			final Mod mod = new Mod(parentMod);
 			mod.setNode(modStore.append()
-					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4).attr("new", "")
+					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4).attr("status", "new")
 					.end("mod").commit());
 			final LinearBlock linearBlock = mockery.mock(LinearBlock.class);
 			mod.self = mockery.mock(Mod.Shim.class);
@@ -1191,7 +1213,7 @@ public class Mod {
 			}});
 			mod.resolveChildren(linearBlock, false, null);
 			assertTrue(mod.previouslyResolved);
-			assertFalse(mod.node.query().exists("@new"));
+			assertFalse(mod.node.query().single("@status = 'new'").booleanValue());
 		}
 
 		@Test public void resolveChildrenLastBlock() throws TransformException {
@@ -1211,7 +1233,7 @@ public class Mod {
 		@Test public void resolveChildrenKeyBlock() throws TransformException {
 			final Mod mod = new Mod(parentMod);
 			mod.setNode(modStore.append()
-					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4).attr("new", "")
+					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4).attr("status", "new")
 					.end("mod").commit());
 			final KeyBlock keyBlock = mockery.mock(KeyBlock.class);
 			mod.self = mockery.mock(Mod.Shim.class);
@@ -1222,7 +1244,7 @@ public class Mod {
 			}});
 			mod.resolveChildren(keyBlock, false, modStore.query());
 			assertTrue(mod.previouslyResolved);
-			assertFalse(mod.node.query().exists("@new"));
+			assertFalse(mod.node.query().single("@status = 'new'").booleanValue());
 		}
 		
 		@Test public void restoreChild() throws TransformException {
@@ -1256,7 +1278,7 @@ public class Mod {
 		@Test public void restoreNoReferences() throws TransformException {
 			final Mod mod = new Mod(parentMod);
 			mod.setNode(modStore.append()
-					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4).attr("new", "")
+					.elem("mod").attr("xml:id", "_r1.e13.g23.").attr("stage", 4).attr("satus", "new")
 					.end("mod").commit());
 			mod.seg = mockery.mock(Seg.class);
 			mockery.checking(new Expectations() {{

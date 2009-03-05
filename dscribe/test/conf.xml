@@ -4,7 +4,7 @@
 
 	<db-connection cacheSize="48M" collectionCache="24M" database="native" files="data" pageSize="4096">
 		<pool min="1" max="20" sync-period="120000" wait-before-shutdown="120000"/>
-		<query-pool max-stack-size="5" size="256" timeout="50000" timeout-check-interval="10000"/>
+		<query-pool max-stack-size="8" size="256" timeout="50000" timeout-check-interval="10000"/>
 		<recovery enabled="yes" sync-on-commit="no" group-commit="no" size="100M" journal-dir="data"/>
 		<watchdog output-size-limit="10000" query-timeout="-1"/>
 	</db-connection>

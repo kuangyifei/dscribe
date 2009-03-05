@@ -32,9 +32,12 @@ public class SystemTest extends DatabaseTestCase {
 			int numRuns = Integer.parseInt(args[0], 10);
 			for (int i = numRuns; i > 0; i--) {
 				test = new SystemTest(args[1], new File(args[1]));
-				test.setUp();
-				test.run();
-				if (numRuns == 1 && args[1].startsWith("test/perf")) dumpDatabase();
+				try {
+					test.setUp();
+					test.run();
+				} finally {
+					if (numRuns == 1 && args[1].startsWith("test/perf")) dumpDatabase();
+				}
 				db.getFolder("/workspace").delete();
 				db.getFolder("/rulespace").delete();
 				db.getFolder(Transformer.recordsRootPath()).delete();
