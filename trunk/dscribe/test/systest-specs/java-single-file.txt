@@ -2,8 +2,8 @@
 
 ## load file mappings.xml
 <mappings xmlns='http://ideanest.com/dscribe/ns/mapping'>
-	<create-diagram diagram='d1'/>
-	<java-element-to-diagram java-element='j1' diagram='d1'/>
+	<create-diagram diagram='d1' xml:id='m1'/>
+	<java-element-to-diagram java-element='j1' diagram='d1' xml:id='m2'/>
 </mappings>
 
 ## load file code/HelloWorld.java
@@ -48,3 +48,4 @@
 		</compartment>
 	</class>
 </diagram>
+

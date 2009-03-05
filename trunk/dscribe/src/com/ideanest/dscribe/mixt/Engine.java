@@ -478,7 +478,7 @@ public class Engine {
 		
 		// Touch only the dependencies of the highest withdrawn mods, since any children will be resolved in global scope anyway.
 		mods = mods.query().namespace("", Engine.MOD_NS).unordered("$_1 except $_1/descendant::*", mods);
-		
+
 		for (String ruleId : utilQuery.unordered("distinct-values($_1/ancestor-or-self::*/@rule)", mods).values()) {
 			Rule rule = ruleMap.get(ruleId);
 			if (rule == null) continue;

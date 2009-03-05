@@ -1,0 +1,24 @@
+## load file source.xml
+<foo xml:id='f'>hello</foo>
+
+## load file target.xml
+<root xml:id='r'/>
+
+## load rules
+rule insert bar into foo [r1]
+	for each $source: /foo
+	for each target: /root
+	insert: $source
+
+#### run 1
+
+## check file target.xml
+<root xml:id='r'><foo xml:id='_r1.f.r.2.'>hello</foo></root>
+
+## load file source.xml
+<foo xml:id='f'>bye</foo>
+
+#### run 2
+
+## check file target.xml
+<root xml:id='r'><foo xml:id='_r1.f.r.2.'>bye</foo></root>

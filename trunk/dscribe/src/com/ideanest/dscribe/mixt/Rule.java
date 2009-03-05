@@ -80,7 +80,7 @@ public class Rule {
 	private final List<Block> blocks = new ArrayList<Block>();
 	private Set<XMLDocument> touched = new HashSet<XMLDocument>();
 	private final Accumulator.Locator<XMLDocument> modifiedDocsLocator;
-	private int firstDifferentStage;
+	private int firstDifferentStage, lastKeyStage = -1;
 	private final Node rootModNode;
 	private final QueryService globalScope;
 
@@ -107,7 +107,8 @@ public class Rule {
 		
 		rootModNode = self.rootMod().node();
 
-		firstDifferentStage = parseBlocks(def, prevDef, module, prevModule);
+		// parsing blocks initializes firstDifferentStage and lastKeyStage
+		parseBlocks(def, prevDef, module, prevModule);
 		
 		if (firstDifferentStage < Integer.MAX_VALUE) {
 			LOG.debug(this + " has changed starting at stage " + firstDifferentStage + ", withdrawing affected mods");
@@ -168,22 +169,21 @@ public class Rule {
 	 * 		can be an inexistent node
 	 * @param module the module holding the function definitions for this rule
 	 * @param prevModule the matching previous module or <code>null</code>
-	 * @return the index of the first block whose definition differs from the previous version, or
-	 * 		<code>Integer.MAX_VALUE</code> if both versions of the rule are exactly the same
 	 * @throws RuleBaseException if unable to instantiate a block from its definition at any point
 	 */
-	private int parseBlocks(Node def, Node prevDef, Engine.Module module, Engine.Module prevModule) throws RuleBaseException {
-		int firstDiff = Integer.MAX_VALUE;
+	private void parseBlocks(Node def, Node prevDef, Engine.Module module, Engine.Module prevModule) throws RuleBaseException {
+		firstDifferentStage = Integer.MAX_VALUE;
 		try {
 			Mod mod = self.rootMod();
 			Iterator<Node> prevBlocksIterator = prevDef.query().all("* except alias").nodes().iterator();
 			for (Node blockDef : def.query().all("* except alias").nodes()) {
 				
 				Block block = defineBlock(blockDef);
+				if (block instanceof KeyBlock) lastKeyStage = blocks.size();
 				mod = mod.deriveChild(block, block instanceof KeyBlock ? "fakeKey" : null);		// a bogus key, just to make the mod believable
 				QueryService.QueryAnalysis analysis = mod.analyze();
 
-				if (firstDiff == Integer.MAX_VALUE) {
+				if (firstDifferentStage == Integer.MAX_VALUE) {
 					Node prevBlockDef = prevBlocksIterator.hasNext() ? prevBlocksIterator.next() : null;
 					if (prevBlockDef == null || !equalBlocks(blockDef, prevBlockDef)
 							|| module.areFunctionsModified(analysis.requiredFunctions(), prevModule)) {
@@ -194,15 +194,14 @@ public class Rule {
 									"--- previous block:\n" + prevBlockDef + (prevBlockDef == null ? "" : " with ns prefixes " + prevBlockDef.query().all("in-scope-prefixes(.)")) + "\n" +
 									"--- required functions:\n" + analysis.requiredFunctions());
 						}
-						firstDiff = blocks.size();
+						firstDifferentStage = blocks.size();
 					}
 				}
 				
 				blocks.add(block);
 				
 			}
-			if (firstDiff == Integer.MAX_VALUE && prevBlocksIterator.hasNext()) firstDiff = blocks.size();
-			return firstDiff;
+			if (firstDifferentStage == Integer.MAX_VALUE && prevBlocksIterator.hasNext()) firstDifferentStage = blocks.size();
 		} catch (DatabaseException e) {
 			throw new RuleBaseException(this + " definition in error", e);
 		} catch (TransformException e) {
@@ -281,7 +280,7 @@ public class Rule {
 		block.sort(segs, graph);
 	}
 	
-	void process(boolean doGlobalProcessing) throws TransformException {
+	void process1(boolean doGlobalProcessing) throws TransformException {
 		LOG.debug("processing " + this);
 		if (blocks.size() == 0) return;
 		
@@ -304,9 +303,112 @@ public class Rule {
 		for (int stage = 0; stage < blocks.size(); stage++) {
 			lastStageNumModsResolved = self.processStage(stage, touchedScope);
 		}
+
+		engine.stats.numModsCompleted.increment(lastStageNumModsResolved);
+		firstDifferentStage = Integer.MAX_VALUE;
+	}
+	
+	void process(boolean doGlobalProcessing) throws TransformException {
+		LOG.debug("processing " + this);
+		if (blocks.size() == 0) return;
+		
+		Set<XMLDocument> modifiedDocs = modifiedDocsLocator.catchUp();
+		ItemList modsToVerify = null;
+		QueryService touchedScope = null;
+		if (!doGlobalProcessing) {
+			Collection<String> modifiedDocsNames = convertDocsToNames(modifiedDocs);		
+			LOG.debug("modified docs names: " + modifiedDocsNames);
+			modsToVerify = rootModNode.query().unordered(
+					".//dependency[@doc=$_1][@kind='verified']/parent::mod", modifiedDocsNames);			
+			touched.addAll(modifiedDocs);
+			touchedScope = globalScope.database().query().limitRootDocuments(touched).importSameModulesAs(globalScope);
+		}
+		touched = new HashSet<XMLDocument>();	// don't clear, old set still referenced by touchedScope
+				
+		int lastStageNumModsResolved = processSubtree(self.rootMod(), false, false, touchedScope, modsToVerify);
 		
 		engine.stats.numModsCompleted.increment(lastStageNumModsResolved);
 		firstDifferentStage = Integer.MAX_VALUE;
+	}
+	
+	private static boolean nodeIsMod(Node node) {
+		return "mod".equals(node.qname().getLocalPart()) && Engine.MOD_NS.equals(node.qname().getNamespaceURI());		
+	}
+	
+	private static boolean hasModChild(Node node) {
+		// The following mess is equivalent to the following, but faster:
+		//   mod.node().query().exists("mod")
+		for (Node child :node.query().unordered("*").nodes()) {
+			if (nodeIsMod(child)) return true;
+		}
+		return false;
+	}
+	
+	private int processSubtree(Mod mod, boolean verifyOnly, boolean resolveOnly, QueryService touchedScope, ItemList modsToVerify) throws TransformException {
+		final int nextStage = mod.stage + 1;
+		final Block block = nextStage < blocks.size() ? blocks.get(nextStage) : null;
+		final boolean lastBlock = nextStage == blocks.size() - 1;
+		final QueryService stageScope = nextStage >= firstDifferentStage ? null : touchedScope;
+		
+		int numFullyResolved = 0;
+		if (!verifyOnly && (block instanceof KeyBlock || !hasModChild(mod.node()))) {
+			LOG.debug("resolving children of " + mod);
+			int numResolved = mod.resolveChildren(block, lastBlock, stageScope);
+			engine.stats.numBlocksResolved.increment();
+			if (lastBlock) numFullyResolved += numResolved;
+		}
+		
+		if (block == null || lastBlock && resolveOnly) return numFullyResolved;
+
+		for (Node childNode : mod.node().query().unordered("*").nodes()) {
+			if (!(childNode.extant() && nodeIsMod(childNode))) continue;
+			// Calculating whether the branch is complete is not worth it, since running the query (or storing a
+			// precomputed flag) is expensive, and the benefit is low for typical rules that have a bunch of key
+			// blocks followed by one or two cheap linear ones.
+			// boolean branchComplete = verifyOnly || (nextStage == lastKeyStage && rootModNode.query().exists("//mod[@stage=$_1] intersect $_2/descendant::*", blocks.size()-1, childNode));
+			boolean mustVerifyChild = !resolveOnly && modsToVerify != null && engine.utilQuery().exists("$_1 intersect $_2", modsToVerify, childNode);
+			boolean mustVerifyDescendant = !resolveOnly && modsToVerify != null && engine.utilQuery().exists("$_1 intersect $_2/descendant::*", modsToVerify, childNode);
+			LOG.debug("child of " + mod + ": " + (mustVerifyChild ? "verify; " : "don't verify; ") + (mustVerifyDescendant ? "verify below; " : "don't verify below; "));
+			
+			Mod childMod = null;
+			if (mustVerifyChild) {
+				try {
+					childMod = mod.restoreChild(block, childNode);
+					engine.stats.numModsRestored.increment();
+					childMod.verify();
+					engine.stats.numBlocksVerified.increment();
+				} catch (TransformException e) {
+					if (childMod == null) {
+						LOG.debug("failed to restore a child of " + mod + " with modified depencencies: " + e.getMessage());
+					} else {
+						LOG.debug("failed to verify " + childMod + ": " + e.getMessage());
+					}
+					engine.withdrawMod(childNode);
+					childMod = null;
+					modsToVerify.removeDeletedNodes();
+				}
+			} else if (!lastBlock || mustVerifyDescendant) {
+				try {
+					childMod = mod.restoreChild(block, childNode);
+					engine.stats.numModsRestored.increment();
+				} catch (TransformException e) {
+					LOG.error("failed to restore " + this + " " + childNode + " with no modified dependencies", e);
+					// This should never happen, but we could try to recover by withdrawing the rule and
+					// recomputing all mods from scratch.
+					// engine.withdrawRule(id);
+					throw e;
+				}
+			}
+			// We only want to descend if we either need to resolve more (!lastBlock) or verify more
+			// (mustVerifyDescendant) in this branch.  If either of those is true, then childMod should
+			// have been restored, unless it failed verification in which case we have nothing to descend
+			// into and we'll deal with this branch again in the next cycle.
+			if (childMod != null && (!lastBlock || mustVerifyDescendant)) {
+				numFullyResolved += processSubtree(
+						childMod, lastBlock, !mustVerifyDescendant, touchedScope, modsToVerify);
+			}
+		}
+		return numFullyResolved;
 	}
 
 	private int processStage(int stage, QueryService touchedScope) throws TransformException {
@@ -316,7 +418,7 @@ public class Rule {
 		final Block block = blocks.get(stage);
 		boolean lastBlock = stage == blocks.size() - 1;
 		QueryService stageScope = stage >= firstDifferentStage ? null : touchedScope;
-		boolean mustRestore = blocks.get(stage) instanceof KeyBlock;
+		boolean mustRestore = block instanceof KeyBlock;
 		
 		if (stage == 0) {
 			if (mustRestore || !rootModNode.query().exists("mod")) {
@@ -416,6 +518,7 @@ public class Rule {
 		mods.add(self.rootMod());
 		while(!mods.isEmpty()) {
 			Mod mod = mods.remove(mods.size()-1);
+			modsToVerify.removeDeletedNodes();
 			ItemList childNodes = mod.node().query().unordered("mod[exists(descendant-or-self::* intersect $_1)]", modsToVerify);
 			ItemList childrenToVerify = engine.utilQuery().unordered("$_1 intersect $_2", childNodes, modsToVerify);
 			ItemList childrenNotToVerify = engine.utilQuery().unordered("$_1 except $_2", childNodes, modsToVerify);
@@ -433,7 +536,6 @@ public class Rule {
 					} else {
 						LOG.debug("failed to verify " + childMod + ": " + e.getMessage());
 					}
-					modsToVerify = engine.utilQuery().unordered("$_1 except ($_2 union $_2//*)", modsToVerify, childNode);
 					engine.withdrawMod(childNode);
 				}
 			}
@@ -795,101 +897,101 @@ public class Rule {
 		}
 		
 		@Test public void noPrevDef1() throws RuleBaseException {
-			int firstDiff = rule.parseBlocks(
+			rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for>"),
 					db.query().optional("inexistent").node(),
 					module, prevModule);
-			assertEquals(0, firstDiff);
+			assertEquals(0, rule.firstDifferentStage);
 			assertEquals(1, rule.blocks.size());
 		}
 		
 		@Test public void noPrevDef2() throws RuleBaseException {
-			int firstDiff = rule.parseBlocks(
+			rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><insert> <operation/> </insert>"),
 					db.query().optional("inexistent").node(),
 					module, prevModule);
-			assertEquals(0, firstDiff);
+			assertEquals(0, rule.firstDifferentStage);
 			assertEquals(2, rule.blocks.size());
 		}
 		
 		@Test public void prevUnknownBlock() throws RuleBaseException {
-			int firstDiff = rule.parseBlocks(
+			rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for>"),
 					makeRule("<foo each='$x'> //method </foo>"),
 					module, prevModule);
-			assertEquals(0, firstDiff);
+			assertEquals(0, rule.firstDifferentStage);
 			assertEquals(1, rule.blocks.size());
 		}
 		
 		@Test public void samePrevDef1() throws RuleBaseException {
-			int firstDiff = rule.parseBlocks(
+			rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for>"),
 					makeRule("<for each='$x'> //method </for>"),
 					module, prevModule);
-			assertEquals(Integer.MAX_VALUE, firstDiff);
+			assertEquals(Integer.MAX_VALUE, rule.firstDifferentStage);
 			assertEquals(1, rule.blocks.size());
 		}
 
 		@Test public void samePrevDef2() throws RuleBaseException {
-			int firstDiff = rule.parseBlocks(
+			rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><insert> <operation/> </insert>"),
 					makeRule("<for each='$x'> //method </for><insert> <operation/> </insert>"),
 					module, prevModule);
-			assertEquals(Integer.MAX_VALUE, firstDiff);
+			assertEquals(Integer.MAX_VALUE, rule.firstDifferentStage);
 			assertEquals(2, rule.blocks.size());
 		}
 		
 		@Test public void lastBlockDiff() throws RuleBaseException {
-			int firstDiff = rule.parseBlocks(
+			rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><insert> <operation/> </insert>"),
 					makeRule("<for each='$x'> //method </for><insert> <op/> </insert>"),
 					module, prevModule);
-			assertEquals(1, firstDiff);
+			assertEquals(1, rule.firstDifferentStage);
 			assertEquals(2, rule.blocks.size());
 		}
 		
 		@Test public void middleBlockDiff() throws RuleBaseException {
-			int firstDiff = rule.parseBlocks(
+			rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with><insert> <operation/> </insert>"),
 					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with><insert> <operation/> </insert>"),
 					module, prevModule);
-			assertEquals(1, firstDiff);
+			assertEquals(1, rule.firstDifferentStage);
 			assertEquals(3, rule.blocks.size());
 		}
 		
 		@Test public void twoBlocksDiff() throws RuleBaseException {
-			int firstDiff = rule.parseBlocks(
+			rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with><insert> <operation/> </insert>"),
 					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with><insert> <op/> </insert>"),
 					module, prevModule);
-			assertEquals(1, firstDiff);
+			assertEquals(1, rule.firstDifferentStage);
 			assertEquals(3, rule.blocks.size());
 		}
 		
 		@Test public void prevDefLonger() throws RuleBaseException {
-			int firstDiff = rule.parseBlocks(
+			rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with>"),
 					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with><insert> <operation/> </insert>"),
 					module, prevModule);
-			assertEquals(2, firstDiff);
+			assertEquals(2, rule.firstDifferentStage);
 			assertEquals(2, rule.blocks.size());
 		}
 
 		@Test public void prevDefShorter() throws RuleBaseException {
-			int firstDiff = rule.parseBlocks(
+			rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with><insert> <operation/> </insert>"),
 					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with>"),
 					module, prevModule);
-			assertEquals(2, firstDiff);
+			assertEquals(2, rule.firstDifferentStage);
 			assertEquals(3, rule.blocks.size());
 		}
 		
 		@Test public void noPrevDefModifiedFunction() throws RuleBaseException {
-			int firstDiff = rule.parseBlocks(
+			rule.parseBlocks(
 					makeRule("<for each='$x'> local:foo(//method) </for>"),
 					db.query().optional("inexistent").node(),
 					module, prevModule);
-			assertEquals(0, firstDiff);
+			assertEquals(0, rule.firstDifferentStage);
 			assertEquals(1, rule.blocks.size());
 		}
 		
@@ -900,11 +1002,11 @@ public class Rule {
 						prevModule);
 				will(returnValue(true));
 			}});
-			int firstDiff = rule.parseBlocks(
+			rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><insert> <operation x='{local:value()}'/> </insert>"),
 					makeRule("<for each='$x'> //method </for><insert> <operation x='{local:value()}'/> </insert>"),
 					module, prevModule);
-			assertEquals(1, firstDiff);
+			assertEquals(1, rule.firstDifferentStage);
 			assertEquals(2, rule.blocks.size());
 		}
 		
@@ -915,20 +1017,20 @@ public class Rule {
 						prevModule);
 				will(returnValue(false));
 			}});
-			int firstDiff = rule.parseBlocks(
+			rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><insert> <operation x='{local:value()}'/> </insert>"),
 					makeRule("<for each='$x'> //method </for><insert> <operation x='{local:value()}'/> </insert>"),
 					module, prevModule);
-			assertEquals(Integer.MAX_VALUE, firstDiff);
+			assertEquals(Integer.MAX_VALUE, rule.firstDifferentStage);
 			assertEquals(2, rule.blocks.size());
 		}
 		
 		@Test public void middleBlockDiffLastBlockModifiedFunction() throws RuleBaseException {
-			int firstDiff = rule.parseBlocks(
+			rule.parseBlocks(
 					makeRule("<for each='$x'> //method </for><with some='$y'> $x/foo </with> <insert> <operation x='{local:value()}'/> </insert>"),
 					makeRule("<for each='$x'> //method </for><with any='$y'> $x/foo </with> <insert> <operation x='{local:value()}'/> </insert>"),
 					module, prevModule);
-			assertEquals(1, firstDiff);
+			assertEquals(1, rule.firstDifferentStage);
 			assertEquals(3, rule.blocks.size());
 		}
 		
