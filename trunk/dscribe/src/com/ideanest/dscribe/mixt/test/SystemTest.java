@@ -32,6 +32,7 @@ public class SystemTest extends DatabaseTestCase {
 			int numRuns = Integer.parseInt(args[0], 10);
 			for (int i = numRuns; i > 0; i--) {
 				test = new SystemTest(args[1], new File(args[1]));
+				test.dumpAndResetStatsAfterEachCycle = true;
 				try {
 					test.setUp();
 					test.run();
@@ -42,7 +43,6 @@ public class SystemTest extends DatabaseTestCase {
 				db.getFolder("/rulespace").delete();
 				db.getFolder(Transformer.recordsRootPath()).delete();
 			}
-			System.out.println(QueryService.statistics().toStringTop(20));
 		} finally {
 			try {
 				SystemTest.shutdownDatabase();
@@ -108,6 +108,7 @@ public class SystemTest extends DatabaseTestCase {
 	private int run = 0;
 	private File specFile;
 	private Engine.Stats stats;
+	private boolean dumpAndResetStatsAfterEachCycle;
 	
 	public SystemTest(String name, File specFile) {
 		this.specFile = specFile;
@@ -137,6 +138,10 @@ public class SystemTest extends DatabaseTestCase {
 				stats = transformer.executeOnce();
 				double runTime = (System.currentTimeMillis() - startTime) / 1000.0;
 				LOG.info("system test " + specFile + " finished run " + run + " in " + new DecimalFormat("0.000").format(runTime) + "s");
+				if (dumpAndResetStatsAfterEachCycle) {
+					System.out.println(QueryService.statistics().toStringTop(20));
+					QueryService.statistics().reset();
+				}
 				line = reader.readLine();
 			} else if (line.startsWith("##")) {
 				Matcher matcher = INSTRUCTION_RE.matcher(line);

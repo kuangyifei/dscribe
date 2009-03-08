@@ -138,8 +138,13 @@ public class KeyMod extends Mod {
 		}
 
 		@Test public void commitTwice() throws TransformException {
+			final Mod[] children = new Mod[]{mockery.mock(Mod.class, "mod1"), mockery.mock(Mod.class, "mod2")};
 			mockery.checking(new Expectations() {{
 				allowing(parentMod).node();  will(returnValue(modStore));
+				one(parentMod).restoreChild(with(equal(block)), with(any(Node.class)));
+				will(returnValue(children[0]));
+				one(parentMod).restoreChild(with(equal(block)), with(any(Node.class)));
+				will(returnValue(children[1]));
 			}});
 			builder.commit();
 			builder.referenceKey(doc1.query().single("//e1").node());

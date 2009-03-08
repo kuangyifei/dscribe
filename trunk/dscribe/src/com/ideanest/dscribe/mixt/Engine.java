@@ -31,9 +31,9 @@ public class Engine {
 				numCycles = Counter.english("cycle", "cycles", null),
 				numBlocksVerified = Counter.english("block", "blocks", "verified"),
 				numBlocksResolved = Counter.english("block", "blocks", "resolved"),
-				numModsRestored = Counter.english("mod", "mods", "restored"),
+				numBlocksRestored = Counter.english("block", "blocks", "restored"),
 				numModsCompleted = Counter.english("mod", "mods", "completed"),
-				numModsWithdrawn = Counter.english("mod", "mods", "withdrawn"),
+				numBlocksWithdrawn = Counter.english("block", "blocks", "withdrawn"),
 				numOrdersChecked = Counter.english("order", "orders", "checked"),
 				numElementsMoved = Counter.english("element", "elements", "moved");
 	}
@@ -439,8 +439,10 @@ public class Engine {
 			} while (didWork || docsModified);
 			assert sortController.done();
 			LOG.info("MIXT transformation complete; "
-					+ stats.numCycles + ", " + stats.numBlocksResolved + ", "
-					+ stats.numBlocksVerified + ", " + stats.numModsCompleted + ", " + stats.numModsWithdrawn);
+					+ stats.numCycles + ", " + stats.numBlocksRestored + ", " + stats.numBlocksVerified + ", "
+					+ stats.numBlocksWithdrawn + ", " + stats.numBlocksResolved + ", "
+					+ stats.numModsCompleted + ", " 
+					+ stats.numOrdersChecked + ", " + stats.numElementsMoved);
 			return lastRun;
 		} finally {
 			workspace.listeners().remove(modifiedDocListener);
@@ -468,12 +470,9 @@ public class Engine {
 			ItemList newAffected = workspace.query().unordered("/id($_1//mod:affected/@refid)", newMods);
 			affected = utilQuery.unordered("$_1 union $_2", affected, newAffected);
 			mods = utilQuery.unordered("$_1 union $_2", mods, newMods);
-			// TODO: refactor query to use idref() once we can declare @refid as type IDREF
-			List<String> newAffectedDocNames = new ArrayList<String>();
-			for (Document doc : newAffected.nodes().documents()) newAffectedDocNames.add(workspace.relativePath(doc.path()));
 			newMods = modStore.query().unordered(
-					"//reference[@doc = $_4][let $refid := @refid return exists($_3/id($refid)/ancestor-or-self::* intersect $_1)]/parent::mod except $_2",
-					newAffected, mods, workspace, newAffectedDocNames);
+					"let $affectedIds := $_1//@xml:id return //reference[@refid = $affectedIds]/parent::* except $_2",
+					newAffected, mods);
 		}
 		
 		// Touch only the dependencies of the highest withdrawn mods, since any children will be resolved in global scope anyway.
@@ -496,7 +495,7 @@ public class Engine {
 		
 		LOG.debug("deleting " + modCountFormatter.format(mods.size()) + " and " + affectedCountFormatter.format(affected.size()));
 		
-		stats.numModsWithdrawn.increment(
+		stats.numBlocksWithdrawn.increment(
 				mods.query().namespace("", Engine.MOD_NS).single("count(descendant-or-self::mod)").intValue());
 		affected.deleteAllNodes();
 		mods.deleteAllNodes();
@@ -796,7 +795,7 @@ public class Engine {
 			assertFalse(modStore.query().exists("/id('m1')"));
 			assertTrue(modStore.query().exists("/id('m2')"));
 			assertEquals(1, modStore.query().all("//mod").size());
-			assertEquals(1, engine.stats.numModsWithdrawn.value());
+			assertEquals(1, engine.stats.numBlocksWithdrawn.value());
 		}
 
 		@Test public void withdrawModsWithDescendants() {
@@ -819,7 +818,7 @@ public class Engine {
 			assertFalse(modStore.query().exists("/id('m1.1')"));
 			assertTrue(modStore.query().exists("/id('m2')"));
 			assertEquals(1, modStore.query().all("//mod").size());
-			assertEquals(2, engine.stats.numModsWithdrawn.value());
+			assertEquals(2, engine.stats.numBlocksWithdrawn.value());
 		}
 		
 		@Test public void withdrawModsWithAffectedDocs() {
@@ -843,7 +842,7 @@ public class Engine {
 			assertEquals(1, modStore.query().all("//mod").size());
 			assertFalse(workspace.query().exists("/id('b1')"));
 			assertTrue(workspace.query().exists("/id('b2')"));
-			assertEquals(1, engine.stats.numModsWithdrawn.value());
+			assertEquals(1, engine.stats.numBlocksWithdrawn.value());
 		}
 
 		@Test public void withdrawModsWithAffectedDocsAndDependencies() {
@@ -874,7 +873,7 @@ public class Engine {
 			assertEquals(1, modStore.query().all("//mod").size());
 			assertFalse(workspace.query().exists("/id('b1')"));
 			assertTrue(workspace.query().exists("/id('b2')"));
-			assertEquals(2, engine.stats.numModsWithdrawn.value());
+			assertEquals(2, engine.stats.numBlocksWithdrawn.value());
 		}
 		
 		@Test public void withdrawModsWithAffectedDocsAndKnockOnReferences() {
@@ -905,7 +904,7 @@ public class Engine {
 			assertFalse(workspace.query().exists("/id('b1')"));
 			assertTrue(workspace.query().exists("/id('b2')"));
 			assertFalse(workspace.query().exists("/id('b3')"));
-			assertEquals(3, engine.stats.numModsWithdrawn.value());
+			assertEquals(3, engine.stats.numBlocksWithdrawn.value());
 		}
 
 		@Test public void withdrawModsWithOrderedNodes() throws SecurityException, NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
@@ -933,7 +932,7 @@ public class Engine {
 			assertEquals(1, modStore.query().all("//mod").size());
 			assertTrue(workspace.query().exists("/id('b1')"));
 			assertTrue(workspace.query().exists("/id('b2')"));
-			assertEquals(1, engine.stats.numModsWithdrawn.value());
+			assertEquals(1, engine.stats.numBlocksWithdrawn.value());
 		}
 
 		@Test public void withdrawRule() {
@@ -955,7 +954,7 @@ public class Engine {
 			assertFalse(modStore.query().exists("/id('m1')"));
 			assertTrue(modStore.query().exists("/id('m2')"));
 			assertEquals(1, modStore.query().all("//mod").size());
-			assertEquals(1, engine.stats.numModsWithdrawn.value());
+			assertEquals(1, engine.stats.numBlocksWithdrawn.value());
 		}
 
 		@Test public void withdrawMod() {
@@ -975,7 +974,7 @@ public class Engine {
 			assertFalse(modStore.query().exists("/id('m1')"));
 			assertTrue(modStore.query().exists("/id('m2')"));
 			assertEquals(1, modStore.query().all("//mod").size());
-			assertEquals(1, engine.stats.numModsWithdrawn.value());
+			assertEquals(1, engine.stats.numBlocksWithdrawn.value());
 		}
 
 		private <E> Matcher<Collection<E>> aCollectionOf(E... items) {

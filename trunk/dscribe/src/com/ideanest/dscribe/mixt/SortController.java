@@ -80,10 +80,10 @@ public class SortController {
 		for (XMLDocument doc : docsPending) {
 			if (!documentsChangedLastCycle.contains(doc)) docPathsToSort.add(engine.relativePath(doc));
 		}
-		for (String parentId : engine.modStore().query().unordered(
-				"distinct-values(//order[@doc=$_1]/@refid)", docPathsToSort).values()) {
-			sort(parentId);
-		}
+		ItemList nodesToSort = engine.modStore().query().unordered(
+				"for $d in $_1 let $ids := //order[@doc=$d]/@refid return doc(concat($_2, '/', $d))/id($ids)",
+				docPathsToSort, Database.ROOT_PREFIX + engine.workspace().path());
+		for (Node node : nodesToSort.nodes()) self.sort(node);
 	}
 
 	private void recomputeDocsPending(Set<XMLDocument> documentsChangedLastCycle) {
