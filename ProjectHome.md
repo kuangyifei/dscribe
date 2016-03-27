@@ -1,0 +1,3 @@
+dScribe is an autonomic design scribe that maintains design-level UML diagrams of Java code in a semi-automated fashion.  The diagrams are initially extracted using reverse-engineering techniques, then integrated with human corrections that raise the level of abstraction, and kept up-to-date with the code with minimal human intervention.
+
+dScribe was originally called Reef, and you'll still see this name used in a number of places.
